@@ -235,7 +235,17 @@ body {
 }
 
 .p-toolbar {
-  border-radius: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: inherit !important;
+  padding: var(--p-toolbar-padding);
+  background: var(--p-toolbar-background);
+  border: 0px solid var(--p-toolbar-border-color);
+  color: var(--p-toolbar-color);
+  border-radius: var(--p-toolbar-border-radius);
+  gap: var(--p-toolbar-gap);
+  border-radius: 0px !important;
 }
 
 .p-dialog {
@@ -254,10 +264,10 @@ body {
       display: none;
     }
   }
-  // .p-dialog-footer {
-  //   // border-top: 1px solid #d8d8d8;
-  //   padding: 16px;
-  // }
+  .p-dialog-footer {
+    // border-top: 1px solid #d8d8d8;
+    padding: 10px !important;
+  }
 }
 
 .p-select-list {

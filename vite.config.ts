@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  base: "/neoform/front/",
+  base: "/neoformext/front/",
   esbuild: {
     pure: mode === "client" ? ["logger.error"] : [],
   },

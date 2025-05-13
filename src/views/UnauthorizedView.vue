@@ -17,7 +17,7 @@
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { defineAsyncComponent } from "vue";
 const app = useHttpRequest();
-const goHome = () => window.location.replace(app.eliseUrl);
+const goHome = () => {};
 const Unauthorized = defineAsyncComponent(
   () => import(`@/assets/svg/unauthorized.svg`)
 );

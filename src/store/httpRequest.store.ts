@@ -3,6 +3,7 @@ import axios from "axios";
 import router from "@/router";
 import { usePVToastService } from "@/composable/usePVToastService";
 import { logger } from "@/api/api";
+import { ext } from "@vee-validate/rules";
 
 axios.interceptors.request.use(
   (config) => {
@@ -28,7 +29,7 @@ axios.interceptors.response.use(null, (error) => {
       life: 3000,
     });
   }
-  if (error.response?.status === 401) router.push({ name: "unauthorized" });
+  //if (error.response?.status === 401) router.push({ name: "unauthorized" });
   return Promise.reject(error);
 });
 
@@ -36,10 +37,9 @@ export const useHttpRequest = defineStore("httpRequest", {
   state: () => ({
     jwt: "",
     apiUrl: "",
-    eliseUrl: "",
+    externalUrl: "",
     loading: false,
     version: "",
-    instance: "",
     userIsAdmin: false,
     debugMode: true,
   }),
@@ -49,9 +49,8 @@ export const useHttpRequest = defineStore("httpRequest", {
       const { data } = await axios.get(
         import.meta.env.BASE_URL + "config.json"
       );
-      this.apiUrl = data.GLB_API_URL;
-      this.eliseUrl = data.GLB_ELISE_URL;
-      this.instance = data.GLB_ELISE_INSTANCE;
+      this.apiUrl = data.API_URL + data.CLIENT_ID;
+      this.externalUrl = data.API_URL;
       this.userIsAdmin = data.GLB_USER === "admin";
       this.debugMode = data.ENABLE_SERVER_LOG;
     },
@@ -71,27 +70,6 @@ export const useHttpRequest = defineStore("httpRequest", {
         throw error;
       }
     },
-    async storeGuidDevMode(guid: string) {
-      try {
-        await axios.post(this.apiUrl + "/hook/storeNewGuid", {
-          parameters: {
-            instance: "GED",
-            documentsId: "COURRIERS_210",
-            user: "AdminGED",
-            userLogin: "AdminGED",
-            userDisplayName: "AdminGED",
-            userMail: "AdminGED",
-            debugMode: false,
-            guid,
-          },
-        });
-      } catch (error) {
-        console.error("Error fetching JWT:", error);
-        logger.error(error);
-        throw error;
-      }
-    },
-
     sendGetRequest(options: any) {
       return new Promise<any>((resolve, reject) => {
         if (options.data == undefined) {

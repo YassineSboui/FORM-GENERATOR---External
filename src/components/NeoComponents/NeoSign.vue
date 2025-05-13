@@ -78,31 +78,6 @@
           </div>
         </div>
       </div>
-
-      <div
-        class="photo-preview-container"
-        v-if="signatures.length && showEliseSignatures"
-      >
-        <div
-          class="photo-preview-box"
-          :style="{
-            minWidth: `${options.width}px`,
-            maxWidth: `${options.width}px`,
-          }"
-        >
-          <div
-            class="photo-preview"
-            v-for="(signature, index) in signatures"
-            :key="index"
-          >
-            <img
-              :src="getSignatureUrl(signature)"
-              :alt="signature.name"
-              @click="handleSignatureClick(signature)"
-            />
-          </div>
-        </div>
-      </div>
       <small class="p-error" v-if="errorState.errorMessage">{{
         errorState.errorMessage
       }}</small>
@@ -112,7 +87,6 @@
 
 <script lang="ts">
 import { ref, computed, reactive, watch, onMounted } from "vue";
-import { getUser, getSignatures } from "@/api/api";
 import { useHttpRequest } from "@/store/httpRequest.store";
 interface OptionConfig {
   label_AR: string;
@@ -173,9 +147,7 @@ export default {
     const readOnly = computed(() => localOptions.readonly);
     const isHidden = computed(() => localOptions.hidden);
     const signatureCanvas = ref<InstanceType<any> | null>(null);
-    const User = ref(null as any);
     const signatures = ref([] as any);
-    const httpRequest = useHttpRequest();
     const showEliseSignatures = ref(false);
 
     const getValue = () => {
@@ -290,20 +262,6 @@ export default {
     const clearFieldError = () => {
       errorState.errorMessage = "";
     };
-
-    const getSignatureUrl = (signature: any) => {
-      return `${httpRequest.eliseUrl}/${httpRequest.instance}/elise/api/administration/signatures/${signature.ownerUid}/${signature.identifier}`;
-    };
-
-    const handleSignatureClick = async (signature: any) => {
-      clear();
-      const url = getSignatureUrl(signature);
-      signatureCanvas.value.fromDataURL(url);
-      // Add a small delay to ensure the image is loaded before saving
-      setTimeout(() => {
-        save("image/jpeg");
-      }, 100);
-    };
     // Validation rules computation
     const computedRules = computed(() => {
       if (Array.isArray(localOptions.rules)) {
@@ -352,8 +310,6 @@ export default {
       enableField,
       formattedSigOption,
       signatures,
-      getSignatureUrl,
-      handleSignatureClick,
       showEliseSignatures,
     };
   },

@@ -554,19 +554,6 @@ export const useAppStore = defineStore("AppStore", {
         logger.error(error);
       }
       try {
-        var value = await fetchObjects({ objectType: "XMLSEARCH" });
-        this.xmlSearch = [];
-        value?.forEach((obj: any) => {
-          this.setXmlSearch({
-            guid: obj.guid,
-            ...JSON.parse(obj?.objectJson)?.objectConfig.XmlSearchConfig,
-          });
-        });
-      } catch (error) {
-        console.error("error", error);
-        logger.error(error);
-      }
-      try {
         var forms = await fetchObjects({ objectType: "FORM" });
         this.forms = [];
         forms.forEach((obj: any) => {
@@ -576,33 +563,6 @@ export const useAppStore = defineStore("AppStore", {
               " - " +
               JSON.parse(obj.objectJson).objectConfig.formConfig.formName,
             code: obj.guid,
-          });
-        });
-      } catch (error) {
-        console.error("error", error);
-        logger.error(error);
-      }
-      try {
-        var elise = await fetchObjects({ objectType: "ELISE" });
-        this.eliseCollections = [];
-        elise.forEach((obj: any) => {
-          this.eliseCollections.push({
-            name: obj.objectName,
-            params: JSON.parse(obj.objectJson).objectConfig
-              .eliseWebServiceConfig.parameters,
-          });
-        });
-      } catch (error) {
-        console.error("error", error);
-        logger.error(error);
-      }
-      try {
-        var mailTemplates = await fetchObjects({ objectType: "MailTemplate" });
-        this.mailTemplate = [];
-        mailTemplates.forEach((obj: any) => {
-          this.setMailsTemplates({
-            guid: obj.guid,
-            ...JSON.parse(obj.objectJson).objectConfig.emailTemplateConfig,
           });
         });
       } catch (error) {

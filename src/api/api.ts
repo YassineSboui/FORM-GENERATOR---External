@@ -810,28 +810,6 @@ export const getMetaData = async (formGuid: string) => {
   const response = await axios.get(apiUrl);
   return response.data;
 };
-export const getUser = async () => {
-  const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.eliseUrl}/${httpRequest.instance}/elise/api/connection/user`;
-  const response = await axios.get(apiUrl);
-
-  return response.data.data;
-};
-
-export const getSignatures = async (id: string) => {
-  const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.eliseUrl}/${httpRequest.instance}/elise/api/administration/signatures/${id}`;
-  const response = await axios.get(apiUrl);
-  return response.data.data;
-};
-
-export const getVersion = async () => {
-  const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.eliseUrl}/${httpRequest.instance}/elise/api/connection/version`;
-  const response = await axios.get(apiUrl);
-  return response.data.data;
-};
-
 // SETUP CONFIG
 
 export const getAllObjectTree = async () => {
@@ -993,5 +971,29 @@ export const postAiChatMessage = async (payload: any) => {
   const httpRequest = useHttpRequest();
   const apiUrl = `${httpRequest.apiUrl}/api/Ecs/message`;
   const response = await axios.post(apiUrl, payload);
+  return response.data;
+};
+
+// MANAGE CLIENTS
+
+export const fetchClients = async () => {
+  const httpRequest = useHttpRequest();
+  const apiUrl = `${httpRequest.externalUrl}clients`;
+  const { data } = await axios.get(apiUrl);
+  return data; // returns Dictionary: { clientId: url }
+};
+
+export const addClient = async (clientId: string, url: string) => {
+  const httpRequest = useHttpRequest();
+  const apiUrl = `${httpRequest.externalUrl}clients`;
+  const payload = { clientId, url };
+  const response = await axios.post(apiUrl, payload);
+  return response.data;
+};
+
+export const deleteClientById = async (clientId: string) => {
+  const httpRequest = useHttpRequest();
+  const apiUrl = `${httpRequest.externalUrl}clients/${clientId}`;
+  const response = await axios.delete(apiUrl);
   return response.data;
 };

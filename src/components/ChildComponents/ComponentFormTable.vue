@@ -441,8 +441,6 @@ import {
   generateModel,
   fetchNotice,
   fetchMetadata,
-  getUser,
-  getVersion,
   updateNotice,
   fetchDataByTableGuid,
   logger,
@@ -1153,17 +1151,6 @@ onMounted(async () => {
   setFields(itemsFormCopy.value, 0);
   internalFormConfig.value = props.configForm;
   QueryParameters.value = { ...route.query };
-  if (!props.isEdit) {
-    isLoadingComponent.value = true;
-    try {
-      User.value = await getUser();
-      Version.value = await getVersion();
-    } catch (error) {
-      console.error("error", error);
-      logger.error(error);
-    }
-    console.log("QueryParameters.value", QueryParameters.value);
-  }
   internalFormConfig.value?.variables?.forEach((element: any) => {
     Variables.value[element.key] = element.value;
   });

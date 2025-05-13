@@ -23,7 +23,7 @@
         <div class="grid p-0">
           <div class="col-12 p-0">
             <Toolbar class="menu-bar">
-              <template #start>
+              <!-- <template #start>
                 <Button
                   class="menu-icon ml-3"
                   icon="pi pi-bars"
@@ -31,7 +31,7 @@
                   text
                   rounded
                 ></Button>
-              </template>
+              </template> -->
               <template #end>
                 <Button class="menu-icon p-1" text rounded>
                   <span class="material-icons"> notifications </span>
@@ -125,7 +125,6 @@ const containerHeight = computed(() => {
 const visible = ref(false);
 const onLogout = () => {
   app.logout();
-  location.replace(app.eliseUrl);
 };
 const message = ref("");
 const discussion = ref([] as any[]);

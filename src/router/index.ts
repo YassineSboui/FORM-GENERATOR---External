@@ -6,6 +6,12 @@ import { logger } from "@/api/api";
 
 const routes = [
   {
+    path: "/",
+    name: "home",
+    component: () => import("../views/HomeView.vue"),
+    meta: { fullMode: false },
+  },
+  {
     path: "/form/:guid",
     name: "form",
     component: () => import("../views/Form.vue"),
@@ -40,17 +46,9 @@ router.beforeEach(async (to, from) => {
   if (!httpRequest.jwt && to.name !== "unauthorized") {
     try {
       if (import.meta.env.DEV && !from.name) {
-        await httpRequest.storeGuidDevMode(
-          "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-        );
-        await httpRequest.fetchJwt("3fa85f64-5717-4562-b3fc-2c963f66afa6");
         httpRequest.version = await getNeoFormVersion();
         await initLoader();
       } else {
-        const { Guid } = to.query;
-        if (Guid && !from.name) {
-          await httpRequest.fetchJwt(Guid.toString());
-        }
         httpRequest.version = await getNeoFormVersion();
         // if (import.meta.env.MODE !== "client") {
         await initLoader();
@@ -59,7 +57,7 @@ router.beforeEach(async (to, from) => {
     } catch (error) {
       console.error("error jwt", error);
       logger.error(error);
-      return { name: "unauthorized" };
+      // return { name: "unauthorized" };
     }
   }
   // Check if the current route is not '/form/:guid' and '/ref/:guid' and set loading to false
