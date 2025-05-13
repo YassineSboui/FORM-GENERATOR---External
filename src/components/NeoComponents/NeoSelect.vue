@@ -1,0 +1,673 @@
+<template>
+  <div class="neoselect" v-show="!isHidden">
+    <div class="label" v-if="!isParentNeoTable">
+      <label class="label-container">
+        <span>{{
+          language === "FR"
+            ? label
+            : language === "AR"
+            ? options.label_AR
+            : language === "ENG"
+            ? options.label_ENG
+            : label
+        }}</span>
+        <span
+          v-show="options.required"
+          style="color: red; margin-left: 5px; margin-right: 5px"
+        >
+          *
+        </span>
+        <i
+          v-if="options.tooltip"
+          class="pi pi-info-circle"
+          v-tooltip.top="options.tooltip"
+          style="
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 5px;
+            margin-right: 5px;
+          "
+        ></i>
+      </label>
+    </div>
+
+    <div
+      class="input-container input-select"
+      :style="{
+        height: isParentNeoTable ? '30px' : '60px',
+        'max-height': isParentNeoTable ? '30px' : '60px',
+      }"
+    >
+      <!-- rest of the template -->
+      <Select
+        v-if="returnObject || options.returnObject"
+        v-model="itemValue"
+        :disabled="isDisabled"
+        :readonly="options.readonly"
+        :options="internalItems"
+        :optionLabel="options.key ?? 'name'"
+        class="w-full"
+        :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
+        @click.stop
+        @focus="$emit('focus', $event)"
+        @blur="$emit('blur', $event)"
+        @mouseenter="$emit('mouseenter', $event)"
+        @mouseleave="$emit('mouseleave', $event)"
+        :loading="isLoading"
+      />
+      <Select
+        v-else
+        v-model="itemValue"
+        :disabled="isDisabled"
+        :readonly="options.readonly"
+        :options="internalItems"
+        :optionLabel="options.key ?? 'name'"
+        :optionValue="options.value ?? 'code'"
+        class="w-full"
+        :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
+        @click.stop
+        @focus="$emit('focus', $event)"
+        @blur="$emit('blur', $event)"
+        @mouseenter="$emit('mouseenter', $event)"
+        @mouseleave="$emit('mouseleave', $event)"
+        :loading="isLoading"
+      ></Select>
+      <small class="p-error" id="text-error" v-if="errorState.errorMessage">
+        {{ errorState.errorMessage || "&nbsp;" }}
+      </small>
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+import { eliseEnumeration, fetchDataByTableGuid } from "@/api/api";
+import { useAppStore } from "@/store/app.store";
+import { ref, computed, onMounted, watch, reactive, nextTick } from "vue";
+import { logger } from "@/api/api";
+interface OptionConfig {
+  label_AR: string;
+  label_ENG: string;
+  name: string;
+  label: string;
+  tooltip: string;
+  rows: number;
+  required: boolean | null;
+  readonly: boolean | null;
+  disabled: boolean | null;
+  hidden: boolean | null;
+  relatedToElise: boolean | null;
+  rules: { expression: string }[];
+  events: any[];
+  type: string;
+  key: string;
+  value: string;
+  selectedSource: string;
+  selectedTable: string;
+  selectedColumn: string;
+  eliseEnumerate: string;
+  selectedVariable: string;
+  elements: any[];
+}
+
+export default {
+  props: {
+    items: {
+      type: Array,
+      // required: true,
+    },
+    label: {
+      type: String,
+      required: false,
+    },
+    label_AR: {
+      type: String,
+      required: false,
+    },
+    label_ENG: {
+      type: String,
+      required: false,
+    },
+    // type: Object,
+    modelValue: {
+      // type: Object,
+      required: true,
+    },
+    returnObject: {
+      type: Boolean,
+      default: false,
+    },
+    options: {
+      type: Object,
+      default: () => ({
+        label_AR: "",
+        label_ENG: "",
+        defaultValue: "",
+        relatedToElise: false,
+        type: "Text",
+        name: "CF_Select",
+        label: "Select",
+        key: "name",
+        value: "code",
+        required: false,
+        readonly: false,
+        disabled: false,
+        hidden: false,
+        selectedSource: "manual",
+        selectedTable: "",
+        selectedColumn: "",
+        eliseEnumerate: "",
+        selectedVariable: "",
+        elements: [{ code: "", name: "" }],
+        rules: [],
+        events: [],
+        tooltip: "",
+        keys: [
+          { key: "name", required: true },
+          { key: "code", required: true },
+        ],
+      }),
+    },
+    isParentNeoTable: {
+      type: Boolean,
+      default: false,
+    },
+    isRTL: {
+      type: Boolean,
+      default: false,
+    },
+    language: {
+      type: String,
+      default: "FR",
+    },
+  },
+  emits: [
+    "update:options",
+    "update:modelValue",
+    "focus",
+    "blur",
+    "mouseenter",
+    "mouseleave",
+  ],
+  setup(props, { emit }) {
+    const store = useAppStore();
+    const itemValue = computed({
+      get() {
+        return props.modelValue;
+      },
+      set(newValue): void {
+        emit("update:modelValue", newValue);
+      },
+    });
+    const isLoading = ref(false);
+    // Create a local copy of options to manage mutability
+    const localOptions = reactive({ ...props.options });
+
+    // Computed properties for disabled and hidden states
+    const isDisabled = computed(() => localOptions.disabled);
+    const isHidden = computed(() => localOptions.hidden);
+    const setValue = (value: string | object) => {
+      // Temporary variable depends on the props.options.key and props.options.value
+      const temporary = ref({} as any);
+      let parsedValue = value;
+
+      // Check if the value is a string but represents an object, attempt to parse it
+      if (typeof value === "string") {
+        try {
+          parsedValue = JSON.parse(value);
+        } catch (e) {
+          parsedValue = value; // If it's not parsable, keep it as a string
+        }
+      }
+
+      // Handle if returnObject is true
+      if (props.options.returnObject) {
+        if ((parsedValue as any)[props.options.key]) {
+          temporary.value = parsedValue;
+        } else {
+          console.error("Data does not contain the correct key");
+        }
+      } else {
+        // Handle normal string case
+        temporary.value = {
+          [props.options.key]: parsedValue,
+          [props.options.value]: parsedValue,
+        };
+      }
+
+      // Check if the element already exists in the list, if not, push the new one
+      if (
+        !props.options.elements.find(
+          (item: any) =>
+            item[props.options.key] === temporary.value[props.options.key]
+        )
+      ) {
+        props.options.elements.push(temporary.value);
+      }
+
+      // Set the final value for itemValue and emit the event
+      itemValue.value = temporary.value[props.options.key];
+
+      emit(
+        "update:modelValue",
+        props.options.returnObject ? temporary.value : value
+      );
+    };
+
+    const updateField = (value: string | object) => {
+      // Temporary variable depends on the props.options.key and props.options.value
+      const temporary = ref({} as any);
+      let parsedValue = value;
+
+      // Check if the value is a string but represents an object, attempt to parse it
+      if (typeof value === "string") {
+        try {
+          parsedValue = JSON.parse(value);
+        } catch (e) {
+          parsedValue = value; // If it's not parsable, keep it as a string
+        }
+      }
+      // Handle if returnObject is true
+      if (props.options.returnObject) {
+        if ((parsedValue as any)[props.options.key]) {
+          temporary.value = {
+            [props.options.key]: (parsedValue as any)[props.options.key],
+            [props.options.value]: (parsedValue as any)[props.options.value],
+          };
+        } else {
+          temporary.value = {
+            [props.options.key]: parsedValue,
+            [props.options.value]: parsedValue,
+          };
+        }
+      } else {
+        // Handle normal string case
+        temporary.value = {
+          [props.options.key]: parsedValue,
+          [props.options.value]: parsedValue,
+        };
+      }
+
+      // Check if the element already exists in the list, if not, push the new one
+      if (
+        !props.options.elements.find(
+          (item: any) =>
+            item[props.options.key] === temporary.value[props.options.key]
+        )
+      ) {
+        props.options.elements.push(temporary.value);
+      }
+
+      // Set the final value for itemValue and emit the event
+      itemValue.value = temporary.value[props.options.key];
+      emit(
+        "update:modelValue",
+        props.options.returnObject ? temporary.value : value
+      );
+    };
+    // Function to get current value
+    const getValue = () => {
+      const value = itemValue.value as any;
+      if (typeof value != "string" && "id" in value) {
+        delete (value as Record<string, any>).id;
+      }
+      return value;
+    };
+
+    // Function to update options
+    const updateOptions = async (updates: Partial<OptionConfig>) => {
+      Object.assign(localOptions, updates);
+      emit("update:options", localOptions);
+      await nextTick();
+    };
+
+    // Function to disable field
+    const disableField = () => updateOptions({ disabled: true });
+    // Function to enable field
+    const enableField = () => updateOptions({ disabled: false });
+    // Function to hide field
+    const hideField = () => updateOptions({ hidden: true });
+    // Function to show field
+    const showField = () => updateOptions({ hidden: false });
+
+    const setElements = (newElements: string | any[]) => {
+      let parsedElements: any[] = [];
+      // Check if newElements is a string, and try to parse it
+      if (typeof newElements === "string") {
+        try {
+          parsedElements = JSON.parse(newElements);
+        } catch (error) {
+          console.error(
+            "Failed to parse elements. Invalid JSON string:",
+            error
+          );
+          logger.error(error);
+          return; // Exit if parsing fails
+        }
+      } else {
+        // If already an array, assign it directly
+        parsedElements = newElements;
+      }
+      let formattedElements: any[];
+
+      if (props.options.returnObject) {
+        // If returnObject is true, format as an array of objects
+        formattedElements = parsedElements.map((item) => {
+          // Ensure each item is an object
+          if (typeof item === "object" && item !== null) {
+            // Create a new object to hold the formatted keys
+            const formattedItem: Record<string, any> = {};
+
+            // Map each key to the corresponding property of the item
+            for (const key of props.options.keys) {
+              // Directly assign the value from the item to the formatted item
+              formattedItem[key.key] = item[key.key];
+            }
+            return formattedItem; // Return the formatted item
+          }
+          return {}; // Return an empty object if the item is not valid
+        });
+      } else {
+        // If returnObject is false, format as an array of strings
+        formattedElements = parsedElements.map((item) => {
+          const formattedItem: Record<string, any> = {};
+
+          // Assign each attribute in props.options.key to the same string value
+          for (const key of props.options.keys) {
+            formattedItem[key.key] = item; // Set each key to the string value
+          }
+          return formattedItem; // Return the formatted item
+        });
+      }
+
+      internalItems.value = formattedElements;
+
+      // Update the options with the formatted elements
+      updateOptions({ elements: formattedElements });
+    };
+
+    const itemsFromStore = computed(() => {
+      return store.tableVariables.find((item) => item.key == store.currentTable)
+        ?.value;
+    });
+    watch(
+      () => itemsFromStore.value,
+      (newValue: any, oldValue) => {
+        if (props.options.selectedVariable) {
+          if (newValue) {
+            const tempArray = ref([] as any);
+            const array = ref([] as any);
+            newValue.forEach((element: any) => {
+              if (element.key == props.options.selectedVariable) {
+                element.value.forEach((value: any) => array.value.push(value));
+                array.value.forEach((item: any) => {
+                  if (
+                    tempArray.value.findIndex(
+                      (element: any) => element.code == item
+                    ) == -1
+                  ) {
+                    tempArray.value.push({
+                      code: item,
+                      name: item,
+                    });
+                  }
+                });
+              }
+            });
+            updateItems(array.value);
+          }
+        }
+      },
+      { deep: true }
+    );
+
+    const internalItems = computed({
+      get() {
+        return props.items ?? props.options.elements;
+      },
+      set(newValue): void {
+        props.options.elements = newValue;
+        emit("update:options", props.options);
+      },
+    });
+    const myCurrentTable = store.currentTable as string;
+    const vars = store.tableVariables.find(
+      (item) => item.key == myCurrentTable
+    )?.value;
+
+    const selectionItems = computed(() => {
+      if (props.options.selectedSource == "manual") {
+        return props.options.elements;
+      } else {
+        return props.items;
+      }
+    });
+
+    const updateItems = async (newElements: string | any[]) => {
+      let parsedElements: any[] = [];
+      if (typeof newElements === "string") {
+        try {
+          parsedElements = JSON.parse(newElements);
+        } catch (error) {
+          console.error(
+            "Failed to parse elements. Invalid JSON string:",
+            error
+          );
+          return; // Exit if parsing fails
+        }
+      } else {
+        parsedElements = newElements;
+      }
+
+      let formattedElements: any[];
+
+      if (props.options.returnObject) {
+        formattedElements = parsedElements
+          .map((item) => {
+            if (typeof item === "object" && item !== null) {
+              const formattedItem: Record<string, any> = {};
+              for (const key of props.options.keys) {
+                if (key.required && !item[key.key]) {
+                  return null; // Skip this item if the required key is not present
+                }
+                formattedItem[key.key] = item[key.key] || item; // Set each key to the string value
+              }
+              return formattedItem; // Return the formatted item
+            }
+            return null; // Return null if the item is not valid
+          })
+          .filter((item) => item !== null); // Filter out null items
+      } else {
+        formattedElements = parsedElements
+          .map((item) => {
+            const formattedItem: Record<string, any> = {};
+            for (const key of props.options.keys) {
+              // Check if the key is required and present
+              // if (key.required && !item[key.key]) {
+              //   return null; // Skip this item if the required key is not present
+              // }
+              formattedItem[key.key] = item[key.key] || item; // Set each key to the string value
+            }
+            return formattedItem; // Return the formatted item
+          })
+          .filter((item) => item !== null); // Filter out null items
+      }
+      console.log("formattedElements", formattedElements);
+      // Log the formatted elements for debugging
+      internalItems.value = formattedElements;
+      // await nextTick();
+
+      // Update the options with the formatted elements
+      // updateOptions({ elements: formattedElements });
+    };
+
+    // Watcher for options changes
+    watch(
+      () => props.options,
+      (newOptions) => {
+        Object.assign(localOptions, newOptions);
+      },
+      { deep: true }
+    );
+    watch(
+      () => props.options.eliseEnumerate,
+      async (newValue, oldValue) => {
+        if (newValue && newValue !== oldValue && oldValue !== undefined) {
+          fetchEnumerations();
+        }
+      },
+      { immediate: true }
+    );
+    // Validation rules computation
+    const computedRules = computed(() => {
+      if (Array.isArray(localOptions.rules)) {
+        let expression = localOptions.rules
+          .map((item) => item.expression)
+          .join("|");
+
+        if (localOptions.required) {
+          expression += expression ? "|required" : "required";
+        }
+
+        if (localOptions.hidden || localOptions.disabled) {
+          expression = "";
+        }
+
+        return expression;
+      }
+      return "";
+    });
+    // Error state
+    const errorState = reactive({
+      errorMessage: "",
+    });
+    // Function to set error
+    const setFieldError = (errorMessage: string) => {
+      errorState.errorMessage = errorMessage;
+    };
+    // Function to remove error
+    const clearFieldError = () => {
+      errorState.errorMessage = "";
+    };
+    const fetchEnumerations = async () => {
+      let res: any = await eliseEnumeration(props.options.eliseEnumerate);
+      const tempArray = ref([] as any);
+      res.forEach((element: any) => {
+        tempArray.value.push({
+          code: element.key,
+          name: element.value,
+        });
+      });
+      internalItems.value = tempArray.value;
+    };
+    onMounted(async () => {
+      isLoading.value = true;
+      if (props.options.selectedSource == "elise") {
+        await fetchEnumerations();
+      }
+
+      if (props.options.selectedTable) {
+        await handleSelectedTableChange(props.options.selectedTable);
+      }
+
+      isLoading.value = false;
+    });
+
+    async function handleSelectedTableChange(newTable: string) {
+      if (newTable) {
+        let res: any = await fetchDataByTableGuid(newTable as any);
+        const tempArray = [] as any;
+        res.forEach((element: any) => {
+          var elemJSON = JSON.parse(element.dataJson);
+          if (elemJSON.datas[props.options.selectedColumn]) {
+            if (elemJSON.datas["code"]) {
+              if (
+                tempArray.findIndex(
+                  (item: any) =>
+                    item.name == elemJSON.datas[props.options.selectedColumn]
+                ) == -1
+              ) {
+                tempArray.push({
+                  code: elemJSON.datas["code"],
+                  name: elemJSON.datas[props.options.selectedColumn],
+                });
+              } else {
+                return;
+              }
+            } else {
+              if (
+                tempArray.findIndex(
+                  (item: any) =>
+                    item.code == elemJSON.datas[props.options.selectedColumn]
+                ) == -1
+              ) {
+                if (!props.options.returnObject) {
+                  tempArray.push({
+                    code: elemJSON.datas[props.options.selectedColumn],
+                    name: elemJSON.datas[props.options.selectedColumn],
+                  });
+                } else {
+                  tempArray.push({
+                    code: elemJSON.datas[props.options.selectedColumn],
+                    name: elemJSON.datas[props.options.selectedColumn],
+                    ...elemJSON.datas,
+                  });
+                }
+              } else {
+                return;
+              }
+            }
+          }
+        });
+        // Only update internalItems if the new data is different
+        if (JSON.stringify(internalItems.value) !== JSON.stringify(tempArray)) {
+          internalItems.value = tempArray;
+        }
+      }
+    }
+    watch(
+      () => props.options.selectedTable,
+      async (newTable) => {
+        await handleSelectedTableChange(newTable);
+      }
+    );
+
+    watch(
+      () => props.options.eliseEnumerate,
+      async (newValue, oldValue) => {
+        if (newValue && newValue !== oldValue && oldValue !== undefined) {
+          fetchEnumerations();
+        }
+      },
+      { immediate: true }
+    );
+
+    return {
+      isDisabled,
+      isHidden,
+      isLoading,
+      itemValue,
+      selectionItems,
+      internalItems,
+      computedRules,
+      errorState,
+      setValue,
+      updateField,
+      getValue,
+      updateOptions,
+      disableField,
+      enableField,
+      hideField,
+      showField,
+      updateItems,
+      setFieldError,
+      clearFieldError,
+      setElements,
+    };
+  },
+};
+</script>
+<style lang="scss">
+.input-select .p-select {
+  padding: 0.1rem !important;
+}
+</style>

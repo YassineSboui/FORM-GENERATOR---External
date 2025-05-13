@@ -1,0 +1,37 @@
+@import "./variables.scss";
+@import "./layout.scss";
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e6e6e6;
+  border-left: 1px solid #dadada;
+  // border-radius: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b0b0b0;
+  border: solid 1px #e6e6e6;
+  // border-radius: 7px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #165c77;
+}
+
+html {
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+}

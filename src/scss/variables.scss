@@ -1,0 +1,169 @@
+/// FONTS
+///
+
+$font-family: "Trebuchet MS", sans-serif;
+$font-family-arabic: "Tahoma", sans-serif;
+$elise-font-style: "Trebuchet MS", sans-serif;
+$elise-font-size-4: 14px;
+$elise-font-size-3: 12px;
+
+/// SPACING ux/ui
+$new-spacing-xs: 2px;
+$new-spacing-sm: 5px;
+$new-spacing: 10px;
+$new-spacing-md-modal: 16px;
+$new-spacing-md: 15px;
+$new-spacing-input: $new-spacing-md;
+$new-spacing-lg: 20px;
+$new-spacing-lg-md: 30px;
+$new-spacing-big: 40px;
+$new-spacing-huge: 60px;
+
+/// OLD SPACING
+$spacing-sm: 4px;
+$spacing: 9px;
+$spacing-lg: $spacing * 2;
+$spacing-cp: $new-spacing * 3;
+
+/// FONT SIZES
+$icon-font-size: 16px;
+$elise-icon-font-size-sm: 14px;
+$elise-icon-font-size: 20px;
+$elise-icon-medium-size: 30px;
+$elise-icon-huge-size: 60px;
+
+$modal-title-font-size: 20px;
+$huge-title-font-size: 18px;
+$big-title-font-size: 16px;
+$title-font-size: 14px;
+$content-font-size: 12px;
+$sub-font-size: 10px;
+
+$list-item-size: 25px;
+$tablet-max-width: 1200px;
+$animation-duration: 0.2s;
+
+$radius-sm: 4px;
+$radius-m: 5px;
+$modal-radius: $radius-sm;
+$radius: 10px;
+$radius-lg: 15px;
+
+$top-menu-height: 40px;
+$toolbar-height: 40px;
+$attachments-infos-height: 40px;
+$task-height: 40px;
+$icon-size: 40px;
+$button-height: 40px;
+$list-element-height: 80px;
+$side-menu-width: 350px;
+$side-menu-width-large: 400px;
+$user-preferences-width: 400px;
+$tooltip-width: 400px;
+$tooltip-height: 500px;
+$menu-icon-font-size: 18px;
+$lighten-amount-element: 5%;
+$lighten-amount-hover: 2.5%;
+$soft-black-lighten-amount: 90%;
+$transition-menu: 0.4s;
+$edition-panel-width: 400px;
+$edit-task-panel-width: 440px;
+
+/// COLORS ///
+$color-internal-document: #00a819;
+$color-outgoing-document: #e84481;
+$color-incoming-document: #0c89b5;
+
+$color-white: white;
+$color-black: black;
+
+$color-orange-burning: #ff6e40;
+$color-green-shamrock: #57d39d;
+$color-blue-blumine: #165c77;
+$color-blue-glacier: #8abac7;
+$color-blue-squeeze: #e8f3f6;
+$color-blue-catskill: #e1edf0;
+$color-blue-catskill-white: #f3f8f9;
+$color-blue-tiber: #0c3849;
+$color-blue-horizon: #5b8c9f;
+$color-blue-venice: #075675;
+$color-blue-teal: #054062;
+$color-dark-cyan: #085a70;
+$color-alice-blue: #fafcff;
+$color-ghost-white: #f4f4fb;
+
+$color-blue-jungle-mist: #b6cbd4;
+$color-green-leaf: #417505;
+$color-grey-gallery: #ececec;
+$color-grey-mercury: #e1e1e1;
+$color-grey-tundora-opacity-10: rgba(74, 74, 74, 0.1);
+$color-grey-tundora: #4a4a4a;
+$color-white-sprint-wood: #f3f1e5;
+$color-whisper: #e5e5e5;
+
+$color-grey-light-lighter: #f5f5f5;
+$color-grey-light: #f9f8f2;
+$color-grey-soft: #f8f7f7;
+$color-grey-medium: #d8d8d8;
+$color-dimgrey: dimgrey;
+$color-grey-dusty: #9b9b9b;
+$color-grey-dusty-opacity-10: rgba(155, 155, 155, 0.1);
+$color-grey-dusty-opacity-80: rgba(155, 155, 155, 0.8);
+$color-grey-blue: #898e9b;
+$color-grey-scorpion: #565656;
+$color-grey: #808080;
+$color-grey-dull: #706e6e;
+$color-white-rock: #f1efe1;
+$color-white-gallery: #f0f0f0;
+$color-blue-deep: #1b1f2d;
+$color-blue-dark: #0a6e89;
+$color-white-smoke: #f5f5f5;
+
+$color-white-opacity-20: rgba(255, 255, 255, 0.2);
+$color-grey-opacity-25: rgba(238, 238, 238, 0.25);
+$color-blue-dark-opacity-10: rgba(10, 110, 137, 0.1);
+$color-blue-dark-opacity-15: rgba(10, 110, 137, 0.15);
+$color-blue-dark-opacity-20: rgba(10, 110, 137, 0.2);
+$color-blue-dark-opacity-40: rgba(10, 110, 137, 0.4);
+$color-blue-dark-opacity-50: rgba(10, 110, 137, 0.5);
+$color-blue-dark-opacity-80: rgba(10, 110, 137, 0.8);
+$color-dark-grey-opacity-10: rgba(74, 74, 74, 0.1);
+$color-dark-grey-opacity-20: rgba(74, 74, 74, 0.2);
+$color-dark-opacity-20: rgba(0, 0, 0, 0.2);
+$color-dark-opacity-25: rgba(0, 0, 0, 0.25);
+$color-dark-opacity-40: rgba(0, 0, 0, 0.4);
+$color-dark-opacity-70: rgba(0, 0, 0, 0.7);
+$color-invalid-opacity-20: rgba(255, 165, 0, 0.2);
+$color-invalid-opacity-40: rgba(255, 165, 0, 0.4);
+$color-required-opacity-20: rgba(244, 67, 44, 0.4);
+$color-required-opacity-40: rgba(244, 67, 44, 0.4);
+
+$color-blue-medium: #0b7b99;
+$color-blue-regular: #1c91ba;
+$color-blue-light: #5298a9;
+$color-blue-mystic: #dbe7eb;
+$color-aqua-haze-light: #fafcfc;
+$color-aqua-haze: #e8f1f2;
+$color-swans-down: #dbecee;
+$color-green-fruit-salad: #4caf50;
+
+$color-red: #f44336;
+$color-red-dark: #b22600;
+$color-orange: orange;
+$color-yellow: #fbc02d;
+$color-invalid: $color-orange;
+$color-required: $color-red;
+$color-raisin-black: #202020;
+
+$error-color-bg: #f8d7da;
+$warn-color-bg: #fff3cd;
+$info-color-bg: #d4edda;
+
+$error-color-text: #721c24;
+$warn-color-text: #856404;
+$info-color-text: #155724;
+
+$focus-thickness: 2px;
+$focus-color: #13ccff;
+
+$scrollbar-thumb-color: rgba(169, 169, 169, 0.274);
