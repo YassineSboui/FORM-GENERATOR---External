@@ -12,7 +12,7 @@ const routes = [
     meta: { fullMode: false },
   },
   {
-    path: "/form/:guid",
+    path: "/form/:client/:guid",
     name: "form",
     component: () => import("../views/Form.vue"),
     meta: { fullMode: true },
@@ -45,15 +45,15 @@ router.beforeEach(async (to, from) => {
   }
   if (!httpRequest.jwt && to.name !== "unauthorized") {
     try {
-      if (import.meta.env.DEV && !from.name) {
-        httpRequest.version = await getNeoFormVersion();
-        await initLoader();
-      } else {
-        httpRequest.version = await getNeoFormVersion();
-        // if (import.meta.env.MODE !== "client") {
-        await initLoader();
-        // }
+      if (to.name == "form") {
+        // Extract the client parameter from the route
+        const client = to.params.client as string;
+        // Use the setApiUrl method to set the API URL
+        if (client) {
+          httpRequest.setApiUrl(httpRequest.externalUrl + client);
+        }
       }
+      await initLoader();
     } catch (error) {
       console.error("error jwt", error);
       logger.error(error);

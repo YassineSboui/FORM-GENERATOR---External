@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5174",
     "dev-client": "vite --mode client",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",

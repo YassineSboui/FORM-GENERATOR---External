@@ -106,10 +106,14 @@ import { useRoute, useRouter } from "vue-router";
 import { fetchOneObject } from "@/api/api";
 import { useI18n } from "vue-i18n";
 import { i18n } from "@/main"; // Import i18n from main.ts
-import { is } from "@vee-validate/rules";
+import { useAppStore } from "@/store/app.store";
+import { useHttpRequest } from "@/store/httpRequest.store";
+
 export default defineComponent({
   setup() {
     const { t } = useI18n();
+    const appStore = useAppStore();
+    const httpRequest = useHttpRequest();
     const object: Ref<ObjectModel | null> = ref(null);
     const route = useRoute();
     const router = useRouter();
@@ -136,6 +140,11 @@ export default defineComponent({
     const languagesList: Ref<any[]> = ref([]);
 
     onBeforeMount(async () => {
+      appStore.setExternalAuth(
+        route.query.code as string,
+        route.params.guid as string
+      );
+      console.log("Auth Updated");
       object.value = await fetchOneObject(formID.value);
       const localFormConfig = ref(
         JSON.parse(object.value?.objectJson).objectConfig.formConfig
@@ -158,10 +167,10 @@ export default defineComponent({
     });
 
     onMounted(() => {
-      removeGuidFromUrl();
+      // removeCodeFromUrl();
     });
 
-    const removeGuidFromUrl = () => {
+    const removeCodeFromUrl = () => {
       // Get the current URL
       const url = window.location.href;
 

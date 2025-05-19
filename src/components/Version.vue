@@ -1,5 +1,7 @@
 <template>
+  {}
   <Button
+    v-if="version"
     text
     rounded
     style="

@@ -13,7 +13,7 @@ const logToServer = async (level: any, message: any) => {
   const httpRequest = useHttpRequest();
   try {
     if (!httpRequest.debugMode) return;
-    const apiUrl = `${httpRequest.apiUrl}/api/logs`; // Adjust endpoint as needed
+    const apiUrl = `${httpRequest.externalUrl}/api/logs`; // Adjust endpoint as needed
 
     const logPayload = {
       level,
@@ -32,7 +32,7 @@ const logToServer = async (level: any, message: any) => {
 export const uploadFile = async (base64: string, fileName?: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/File`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/File`;
     const payload = {
       bs64: base64 || "",
       fileName: fileName || "",
@@ -51,7 +51,7 @@ export const uploadFile = async (base64: string, fileName?: string) => {
 export const getFileByGuid = async (guid: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/File/${guid}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/File/${guid}`;
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
@@ -83,7 +83,7 @@ export const logger = {
 export const getNeoFormVersion = async () => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Dashboard/version`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Dashboard/version`;
     const { data }: { data: string } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -95,7 +95,7 @@ export const getNeoFormVersion = async () => {
 export const importObject = async (Object: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects/import`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Objects/import`;
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, Object);
     return data;
   } catch (error) {
@@ -107,7 +107,7 @@ export const importObject = async (Object: any) => {
 
 export const fetchObjects = async ({ objectType }: { objectType: string }) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects`;
+  const apiUrl = `${httpRequest.externalUrl}local/objects`;
   const { data }: { data: ObjectModel[] } = await axios.get(apiUrl, {
     params: { objectType },
   });
@@ -117,7 +117,7 @@ export const fetchObjects = async ({ objectType }: { objectType: string }) => {
 export const createObject = async ({ objectJson }: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Objects`;
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, {
       objectJson,
     });
@@ -131,7 +131,7 @@ export const createObject = async ({ objectJson }: any) => {
 export const updateObject = async ({ id, objectJson }: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Objects/${id}`;
     const { data }: { data: ObjectModel } = await axios.put(apiUrl, {
       objectJson,
     });
@@ -146,7 +146,7 @@ export const updateObject = async ({ id, objectJson }: any) => {
 export const deleteObject = async (id: number) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Objects/${id}`;
     const response = await axios.delete(apiUrl);
     return response.data;
   } catch (error) {
@@ -198,7 +198,7 @@ export const updateNotice = async ({
 }) => {
   const httpRequest = useHttpRequest();
   try {
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Notice/Update`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Notice/Update`;
     const { data }: { data: { url: string } } = await axios.post(apiUrl, {
       objectId,
       noticeId,
@@ -218,7 +218,7 @@ export const updateNotice = async ({
 export const fetchNotice = async (noticeType: NoticeType) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Notice`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Notice`;
     const { data }: { data: any } = await axios.get(apiUrl, {
       params: { noticeType },
     });
@@ -234,7 +234,7 @@ export const fetchNotice = async (noticeType: NoticeType) => {
 export const fetchMetadata = async (formGuid: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Notice/form/metadata/${formGuid}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Notice/form/metadata/${formGuid}`;
     const { data }: { data: { eliseDocument: any; metadatas: any } } =
       await axios.get(apiUrl);
     return data;
@@ -248,7 +248,7 @@ export const fetchMetadata = async (formGuid: string) => {
 export const fetchOneObject = async (id: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects/form/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}local/objects/guid/${id}`;
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -260,7 +260,7 @@ export const fetchOneObject = async (id: string) => {
 export const fetchOneTable = async (id: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects/ref/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Objects/ref/${id}`;
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -272,7 +272,7 @@ export const fetchOneTable = async (id: string) => {
 export const getConnexion = async (connection: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/ExternalDatabase/test`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/ExternalDatabase/test`;
     const response = await axios.post(apiUrl, connection);
     return response.data;
   } catch (error) {
@@ -294,7 +294,7 @@ export const fetchDataTest = async ({
 }) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/ExternalDatabase/executetest`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/ExternalDatabase/executetest`;
     const response = await axios.post(apiUrl, {
       databaseConfigGuid,
       query,
@@ -321,7 +321,7 @@ export const fetchData = async ({
 }) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/ExternalDatabase/execute`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/ExternalDatabase/execute`;
     const response = await axios.post(apiUrl, {
       connectionString,
       request,
@@ -338,7 +338,7 @@ export const fetchData = async ({
 export const getNoticesByCourriesId = async (id: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Notice/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Notice/${id}`;
     // const { data }: { data: any } = await axios.get(apiUrl);
     const response = await axios.get(apiUrl);
     return response.data;
@@ -351,7 +351,7 @@ export const getNoticesByCourriesId = async (id: string) => {
 export const getNoticesByFormId = async (id: number) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Notice/form/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Notice/form/${id}`;
     // const { data }: { data: any } = await axios.get(apiUrl);
     const response = await axios.get(apiUrl);
     console.log("response", response.data);
@@ -365,7 +365,7 @@ export const getNoticesByFormId = async (id: number) => {
 export const getNoticesCountByFormId = async (id: number) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Notice/form/${id}/count`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Notice/form/${id}/count`;
     // const { data }: { data: any } = await axios.get(apiUrl);
     const response = await axios.get(apiUrl);
     return response.data;
@@ -378,7 +378,7 @@ export const getNoticesCountByFormId = async (id: number) => {
 export const createData = async ({ dataJson }: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas`;
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, {
       dataJson,
     });
@@ -397,7 +397,7 @@ export const importData = async ({
 }) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/import`; // Updated endpoint
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/import`; // Updated endpoint
     const { data }: { data: ObjectModel[] } = await axios.post(
       apiUrl,
       dataJsonArray // Send the array in the request body
@@ -413,7 +413,7 @@ export const importData = async ({
 export const fetchDataByObjectID = async (id: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/form/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/form/${id}`;
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -426,7 +426,7 @@ export const fetchDataByObjectID = async (id: string) => {
 export const fetchDataByTableGuid = async (guid: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/table/${guid}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/table/${guid}`;
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -439,7 +439,7 @@ export const fetchDataByTableGuid = async (guid: string) => {
 export const fetchObjectByGuid = async (guid: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects/guid/${guid}`;
+    const apiUrl = `${httpRequest.externalUrl}local/objects/guid/${guid}`;
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -451,7 +451,7 @@ export const fetchObjectByGuid = async (guid: string) => {
 export const updateData = async ({ id, dataJson }: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/${id}`;
     const { data }: { data: ObjectModel } = await axios.put(apiUrl, {
       dataJson,
     });
@@ -465,7 +465,7 @@ export const updateData = async ({ id, dataJson }: any) => {
 export const deleteData = async (id: number) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/${id}`;
     const response = await axios.delete(apiUrl);
     return response.data;
   } catch (error) {
@@ -479,7 +479,7 @@ export const fileUpload = async (file: any) => {
     const formData = new FormData();
     formData.append("file", file);
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/Document/UploadFile`;
+    const apiUrl = `${httpRequest.externalUrl}/Document/UploadFile`;
     const response = await axios.post(apiUrl, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -497,7 +497,7 @@ export const AifileUpload = async (file: any) => {
     const formData = new FormData();
     formData.append("file", file);
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/api/Ecs/file`;
+    const apiUrl = `${httpRequest.externalUrl}/api/Ecs/file`;
     const response = await axios.post(apiUrl, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -513,7 +513,7 @@ export const AifileUpload = async (file: any) => {
 export const fetchActionConfigurations = async () => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/ActionConfiguration`;
+    const apiUrl = `${httpRequest.externalUrl}/ActionConfiguration`;
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
@@ -525,7 +525,7 @@ export const fetchActionConfigurations = async () => {
 export const fetchActionConfigurationById = async (id: number) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/ActionConfiguration/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/ActionConfiguration/${id}`;
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
@@ -537,7 +537,7 @@ export const fetchActionConfigurationById = async (id: number) => {
 export const createActionConfiguration = async (obj: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/ActionConfiguration`;
+    const apiUrl = `${httpRequest.externalUrl}/ActionConfiguration`;
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, obj);
     return data;
   } catch (error) {
@@ -549,7 +549,7 @@ export const createActionConfiguration = async (obj: any) => {
 export const updateActionConfiguration = async (id: any, obj: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/ActionConfiguration/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/ActionConfiguration/${id}`;
     const { data }: { data: ObjectModel } = await axios.put(apiUrl, obj);
     return data;
   } catch (error) {
@@ -561,7 +561,7 @@ export const updateActionConfiguration = async (id: any, obj: any) => {
 export const deleteActionConfiguration = async (id: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/ActionConfiguration/${id}`;
+    const apiUrl = `${httpRequest.externalUrl}/ActionConfiguration/${id}`;
     const { data }: { data: ObjectModel } = await axios.delete(apiUrl);
     return data;
   } catch (error) {
@@ -573,7 +573,7 @@ export const deleteActionConfiguration = async (id: any) => {
 export const executeAPI = async (dataJson: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/ExternalApi/Execute`;
+    const apiUrl = `${httpRequest.externalUrl}/ExternalApi/Execute`;
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, dataJson);
     return data;
   } catch (error) {
@@ -585,7 +585,7 @@ export const executeAPI = async (dataJson: any) => {
 export const executeAPIBeforeSave = async (dataJson: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/ExternalApi/ExecuteBeforeSave`;
+    const apiUrl = `${httpRequest.externalUrl}/ExternalApi/ExecuteBeforeSave`;
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, dataJson);
     const response = await axios.post(apiUrl, dataJson);
     console.log("response", response);
@@ -599,7 +599,7 @@ export const executeAPIBeforeSave = async (dataJson: any) => {
 export const executeApiCollection = async (objectName: string, params: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/ExternalApi/ExecuteByObjectName`;
+    const apiUrl = `${httpRequest.externalUrl}/ExternalApi/ExecuteByObjectName`;
     const { data }: { data: string } = await axios.post(apiUrl, {
       objectName,
       params,
@@ -615,7 +615,7 @@ export const executeApiCollection = async (objectName: string, params: any) => {
 export const countObject = async (id: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Dashboard`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Dashboard`;
     const { data }: { data: number } = await axios.get(apiUrl, {
       params: { id },
     });
@@ -630,7 +630,7 @@ export const countObject = async (id: any) => {
 export const countAllObjects = async () => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Dashboard/All`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Dashboard/All`;
     const { data }: { data: any } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -645,7 +645,7 @@ export const executeDatabaseConnection = async (
 ) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/ExternalDatabase/execute`;
+    const apiUrl = `${httpRequest.externalUrl}/NeoForm/ExternalDatabase/execute`;
     // const { data }: { data: string } = await axios.post(apiUrl, { objectName, parameters });
     //  the objectName will be passed as a query parameter and the parameters will be passed as a request body
     const { data }: { data: string } = await axios.post(apiUrl, {
@@ -663,7 +663,7 @@ export const executeDatabaseConnection = async (
 export const generateXMLModel = async (formJson: any) => {
   const httpRequest = useHttpRequest();
   try {
-    const apiUrl = `${httpRequest.apiUrl}/DocumentModel/ConvertJsonToXml`;
+    const apiUrl = `${httpRequest.externalUrl}/DocumentModel/ConvertJsonToXml`;
     const { data }: { data: string } = await axios.post(apiUrl, formJson);
     httpRequest.setLoading(false);
 
@@ -679,8 +679,8 @@ export const generateXMLModel = async (formJson: any) => {
 export const generateModel = async (formJson: any) => {
   const httpRequest = useHttpRequest();
   try {
-    // const apiUrl = `${httpRequest.apiUrl}/DocumentModel/ConvertJsonToXml`;
-    const apiUrl = `${httpRequest.apiUrl}/DocumentModel/GenerateModelFile`;
+    // const apiUrl = `${httpRequest.externalUrl}/DocumentModel/ConvertJsonToXml`;
+    const apiUrl = `${httpRequest.externalUrl}/DocumentModel/GenerateModelFile`;
     const response = await axios.post(apiUrl, formJson, {
       responseType: "blob",
     });
@@ -710,7 +710,7 @@ export const uploadModelFile = (file: any) => {
     const formData = new FormData();
     formData.append("file", file);
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/DocumentModel/UploadModelFile`;
+    const apiUrl = `${httpRequest.externalUrl}/DocumentModel/UploadModelFile`;
     const response = axios.post(apiUrl, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -726,7 +726,7 @@ export const uploadModelFile = (file: any) => {
 
 export const searchFlowChart = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/api/Flowchart/search`;
+  const apiUrl = `${httpRequest.externalUrl}/api/Flowchart/search`;
   const { data }: { data: ObjectModel[] } = await axios.post(apiUrl, payload);
   return data;
 };
@@ -737,7 +737,7 @@ export const fetchFlowChart = async () => {
     return appStore.AllServices;
   } else {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/api/Flowchart/service`;
+    const apiUrl = `${httpRequest.externalUrl}/api/Flowchart/service`;
     const { data }: { data: ObjectModel[] } = await axios.get(apiUrl);
     // var localData = NodeService.getTreeNodesS() as any;
     appStore.setAllServices(data);
@@ -752,7 +752,7 @@ export const fetchFlowChartUsers = async ({
 }) => {
   const httpRequest = useHttpRequest();
 
-  const apiUrl = `${httpRequest.apiUrl}/api/Flowchart/user`;
+  const apiUrl = `${httpRequest.externalUrl}/api/Flowchart/user`;
   const { data }: { data: ObjectModel[] } = await axios.get(apiUrl, {
     params: { serviceId },
   });
@@ -772,7 +772,7 @@ export const fetchFlowChartWithUsers = async () => {
     return appStore.AllEntities;
   } else {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.apiUrl}/api/Flowchart/serviceAndUserList`; // Assuming you have this new endpoint
+    const apiUrl = `${httpRequest.externalUrl}/api/Flowchart/serviceAndUserList`; // Assuming you have this new endpoint
     const { data }: { data: ObjectModel[] } = await axios.get(apiUrl);
     appStore.setAllEntities(data);
     return data;
@@ -784,7 +784,7 @@ export const getServiceOrUserById = async (
   returnLabel: boolean
 ) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/api/Flowchart/serviceAndUserById/${id}`;
+  const apiUrl = `${httpRequest.externalUrl}/api/Flowchart/serviceAndUserById/${id}`;
 
   try {
     const { data } = await axios.get(apiUrl, {
@@ -806,7 +806,7 @@ export const getServiceOrUserById = async (
 
 export const getMetaData = async (formGuid: string) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects/metaData/${formGuid}`;
+  const apiUrl = `${httpRequest.externalUrl}/NeoForm/Objects/metaData/${formGuid}`;
   const response = await axios.get(apiUrl);
   return response.data;
 };
@@ -814,7 +814,7 @@ export const getMetaData = async (formGuid: string) => {
 
 export const getAllObjectTree = async () => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/NeoForm/Objects/AllObjectTree`;
+  const apiUrl = `${httpRequest.externalUrl}/NeoForm/Objects/AllObjectTree`;
   const { data }: { data: ObjectTreeNode[] } = await axios.get(apiUrl);
   return data;
 };
@@ -822,7 +822,7 @@ export const getAllObjectTree = async () => {
 // ELISE
 export const eliseGetContacts = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/GetContacts`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/GetContacts`;
   const { data }: { data: EliseContactSearch[] } = await axios.post(
     apiUrl,
     payload
@@ -831,28 +831,28 @@ export const eliseGetContacts = async (payload: any) => {
 };
 export const eliseAddContactPerson = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/AddContactPerson`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/AddContactPerson`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
 
 export const eliseUpdateContactPerson = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/UpdateContactPerson`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/UpdateContactPerson`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
 
 export const eliseAddContactOrganization = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/AddContactOrganization`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/AddContactOrganization`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
 
 export const eliseUpdateContactOrganization = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/UpdateContactOrganization`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/UpdateContactOrganization`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
@@ -863,13 +863,13 @@ export const eliseGetContactMails = async (
   payload: any
 ) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/GetContactMails?start=0&limit=20`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/GetContactMails?start=0&limit=20`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
 export const eliseXmlSearch = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/XmlSearch`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/XmlSearch`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
@@ -879,7 +879,7 @@ export const eliseGetFullThesaurus = async (
   termName?: string | null
 ) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/GetFullThesaurus`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/GetFullThesaurus`;
   const response = await axios.get(apiUrl, {
     params: { thesaurusName, termName },
   });
@@ -891,7 +891,7 @@ export const eliseSearchThesaurus = async (
   searchTerm: string
 ) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/SearchThesaurus`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/SearchThesaurus`;
   const response = await axios.get(apiUrl, {
     params: { thesaurusId, searchTerm },
   });
@@ -903,7 +903,7 @@ export const eliseLevelThesaurus = async (
   parentTermId?: string | null
 ) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/LevelThesaurus`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/LevelThesaurus`;
   const response = await axios.get(apiUrl, {
     params: { thesaurusId, parentTermId },
   });
@@ -912,50 +912,50 @@ export const eliseLevelThesaurus = async (
 
 export const eliseSendEmail = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/SendEmail`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/SendEmail`;
   await axios.post(apiUrl, payload);
 };
 
 export const eliseGetFlowchartItems = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/GetFlowchartItems`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/GetFlowchartItems`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
 
 export const eliseApplyTrackingPath = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/ApplyTrackingPath`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/ApplyTrackingPath`;
   await axios.post(apiUrl, payload);
 };
 
 export const eliseMailByTemplate = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/SendEmailByTemplate`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/SendEmailByTemplate`;
   await axios.post(apiUrl, payload);
 };
 
 export const businessGenerateDocuments = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/api/Project/CreateDocumentsFromThesaurus`;
+  const apiUrl = `${httpRequest.externalUrl}/api/Project/CreateDocumentsFromThesaurus`;
   await axios.post(apiUrl, payload);
 };
 export const eliseCustomFields = async () => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/api/AdminConfiguration/customFields`;
+  const apiUrl = `${httpRequest.externalUrl}/api/AdminConfiguration/customFields`;
   const response = await axios.get(apiUrl);
   return response.data;
 };
 export const eliseEnumeration = async (cp: string) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/api/AdminConfiguration/enumeration`;
+  const apiUrl = `${httpRequest.externalUrl}/api/AdminConfiguration/enumeration`;
   const response = await axios.get(apiUrl, { params: { cp } });
   return response.data;
 };
 
 export const askChatbot = async (userInput: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/api/Chat`;
+  const apiUrl = `${httpRequest.externalUrl}/api/Chat`;
   const response = await axios.get(apiUrl, {
     params: { userInput },
   });
@@ -963,13 +963,13 @@ export const askChatbot = async (userInput: any) => {
 };
 export const callEliseWebService = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/Elise/CallEliseWS`;
+  const apiUrl = `${httpRequest.externalUrl}/Elise/CallEliseWS`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
 export const postAiChatMessage = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.apiUrl}/api/Ecs/message`;
+  const apiUrl = `${httpRequest.externalUrl}/api/Ecs/message`;
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };

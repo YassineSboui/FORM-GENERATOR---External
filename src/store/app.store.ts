@@ -55,6 +55,8 @@ export const useAppStore = defineStore("AppStore", {
       functions: ref([] as StoreFunction[]),
       AllServices: ref([] as any[]),
       AllEntities: ref([] as any[]),
+      guid: ref(""),
+      code: ref(""),
     };
   },
   actions: {
@@ -852,6 +854,10 @@ export const useAppStore = defineStore("AppStore", {
         console.error("Execution error:", error);
         throw error;
       }
+    },
+    setExternalAuth(code: string, guid: string) {
+      this.code = code;
+      this.guid = guid;
     },
   },
 });

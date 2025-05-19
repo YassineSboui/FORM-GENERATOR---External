@@ -1,11 +1,6 @@
 <template>
   <div class="loader-container">
-    <div class="container">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+    <div class="loaderApp"></div>
   </div>
 </template>
 
@@ -17,63 +12,26 @@
   height: 100vh;
 }
 
-/* From Uiverse.io by terenceodonoghue */
-.container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+.loaderApp {
+  border-width: 2px;
+  margin: 4px;
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #0a6e89;
   border-radius: 50%;
-  height: 192px; /* Doubled from 96px */
-  width: 192px; /* Doubled from 96px */
-  animation: rotate_3922 1.2s linear infinite;
-  background-color: #9b59b6;
-  background-image: linear-gradient(#9b59b6, #84cdfa, #5ad1cd);
+  width: 40vh;
+  height: 40vh;
+  max-width: 200px;
+  max-height: 200px;
+  animation: spin 2s linear infinite;
+  /* Remove absolute positioning */
 }
 
-.container span {
-  position: absolute;
-  border-radius: 50%;
-  height: 100%;
-  width: 100%;
-  background-color: #9b59b6;
-  background-image: linear-gradient(#9b59b6, #84cdfa, #5ad1cd);
-}
-
-.container span:nth-of-type(1) {
-  filter: blur(5px);
-}
-
-.container span:nth-of-type(2) {
-  filter: blur(10px);
-}
-
-.container span:nth-of-type(3) {
-  filter: blur(25px);
-}
-
-.container span:nth-of-type(4) {
-  filter: blur(50px);
-}
-
-.container::after {
-  content: "";
-  position: absolute;
-  top: 20px; /* Adjusted for doubled size */
-  left: 20px; /* Adjusted for doubled size */
-  right: 20px; /* Adjusted for doubled size */
-  bottom: 20px; /* Adjusted for doubled size */
-  background-color: #fff;
-  border: solid 10px #ffffff; /* Doubled from 5px */
-  border-radius: 50%;
-}
-
-@keyframes rotate_3922 {
-  from {
-    transform: translate(-50%, -50%) rotate(0deg);
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
-
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>

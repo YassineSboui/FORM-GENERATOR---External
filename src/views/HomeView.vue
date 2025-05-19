@@ -69,15 +69,6 @@ import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import { fetchClients, addClient, deleteClientById } from "@/api/api"; // adjust the path if needed
 
-// PrimeVue components
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import Dialog from "primevue/dialog";
-import ConfirmDialog from "primevue/confirmdialog";
-import Toast from "primevue/toast";
-
 const clientsArray = ref([]);
 const newClientId = ref("");
 const newClientUrl = ref("");

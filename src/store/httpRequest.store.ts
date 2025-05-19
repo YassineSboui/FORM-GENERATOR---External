@@ -1,13 +1,27 @@
 import { defineStore } from "pinia";
 import axios from "axios";
-import router from "@/router";
 import { usePVToastService } from "@/composable/usePVToastService";
 import { logger } from "@/api/api";
-import { ext } from "@vee-validate/rules";
+import { useAppStore } from "@/store/app.store";
 
 axios.interceptors.request.use(
   (config) => {
-    // Do something before request is sent
+    const appStore = useAppStore();
+    const url = config.url || "";
+
+    // Only append guid and code if BOTH 'neoformexternal' AND 'local' are NOT present in the URL
+    if (!url.includes("neoformexternal/local")) {
+      if (!config.params) {
+        config.params = {};
+      }
+      if (appStore.guid) {
+        config.params.guid = appStore.guid;
+      }
+      if (appStore.code) {
+        config.params.code = appStore.code;
+      }
+    }
+
     if (import.meta.env.DEV) config.withCredentials = true;
     return config;
   },
@@ -15,6 +29,7 @@ axios.interceptors.request.use(
     console.error(error);
   }
 );
+// ...existing code...
 axios.interceptors.response.use(null, (error) => {
   const toast = usePVToastService();
   const message = error?.response?.data?.Message;
@@ -49,7 +64,7 @@ export const useHttpRequest = defineStore("httpRequest", {
       const { data } = await axios.get(
         import.meta.env.BASE_URL + "config.json"
       );
-      this.apiUrl = data.API_URL + data.CLIENT_ID;
+      this.apiUrl = "";
       this.externalUrl = data.API_URL;
       this.userIsAdmin = data.GLB_USER === "admin";
       this.debugMode = data.ENABLE_SERVER_LOG;
@@ -85,6 +100,9 @@ export const useHttpRequest = defineStore("httpRequest", {
 
     setLoading(_loading: boolean) {
       this.loading = _loading;
+    },
+    setApiUrl(url: string) {
+      this.apiUrl = url;
     },
   },
 });

@@ -1,6 +1,5 @@
 {
   "API_URL": "https://localhost:7172/neoformexternal/",
-  "CLIENT_ID": "client1",
   "GLB_USER": "admin",
   "ENABLE_SERVER_LOG": false
 }
