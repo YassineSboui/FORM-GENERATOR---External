@@ -1,5 +1,4 @@
 <template>
-  {}
   <Button
     v-if="version"
     text

@@ -1197,6 +1197,9 @@ onMounted(async () => {
   setFields(itemsFormCopy.value, 0);
   internalFormConfig.value = props.configForm;
   QueryParameters.value = { ...route.query };
+  // i want to simulate a delay of an await function
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
   internalFormConfig.value?.variables?.forEach((element: any) => {
     Variables.value[element.key] = element.value;
   });
@@ -1265,7 +1268,6 @@ const handleInputChange = async (item: any) => {
   await nextTick();
   const selectedEvent = item.find((event: any) => event.rule.code === "change");
   if (selectedEvent) {
-    console.log("selectedEvent.code", selectedEvent.code);
     try {
       const store = useAppStore();
       await eval(

@@ -175,11 +175,15 @@
       </div>
     </OverlayPanel>
   </div>
+  <!-- Error message display -->
+  <small class="p-error" id="text-error" v-if="errorState.errorMessage">
+    {{ errorState.errorMessage || "&nbsp;" }}
+  </small>
 </template>
 
 <script lang="ts">
 import { eliseLevelThesaurus, eliseSearchThesaurus } from "@/api/api";
-import { computed, ref, watch, Teleport, type Ref } from "vue";
+import { computed, ref, watch, Teleport, type Ref, reactive } from "vue";
 import _ from "lodash";
 
 export default {
@@ -625,9 +629,38 @@ const trySearchThesaurusTerm = (event: any) => {
         terms.value.splice(index, 1);
       }
     };
+
+    // Error state
+    const errorState = reactive({
+      errorMessage: "",
+    });
+
+    // Function to set error
+    const setFieldError = (errorMessage: string) => {
+      errorState.errorMessage = errorMessage;
+    };
+
+    // Function to remove error
+    const clearFieldError = () => {
+      errorState.errorMessage = "";
+    };
+
+    // Add this watcher for required validation
+    watch(
+      [terms, () => props.options.required],
+      ([newTerms, required]) => {
+        if (required && (!newTerms || newTerms.length === 0)) {
+          setFieldError("Ce champ est obligatoire");
+        } else {
+          clearFieldError();
+        }
+      },
+      { immediate: true, deep: true }
+    );
     return {
       itemsPath,
       home,
+      errorState,
       showCurrentPath,
       thesaurusStateIsLoading,
       isSelectedTermLimit,
@@ -659,6 +692,8 @@ const trySearchThesaurusTerm = (event: any) => {
       manageProperties,
       normalizeAndCompare,
       removeItem,
+      setFieldError,
+      clearFieldError,
     };
   },
 };

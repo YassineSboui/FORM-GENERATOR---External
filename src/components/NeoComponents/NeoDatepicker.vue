@@ -78,7 +78,7 @@
         @mouseenter="$emit('mouseenter', $event)"
         @mouseleave="$emit('mouseleave', $event)"
         monday-first="true"
-        language="fr"
+        :language="isRTL ? 'arTn' : 'fr'"
       />
 
       <small
@@ -686,5 +686,8 @@ $color-datepicker-calendar: #4bd;
   cursor: not-allowed;
   box-shadow: none !important;
   outline: none !important;
+}
+.vuejs3-datepicker__calendar .flex-rtl {
+  display: block !important;
 }
 </style>

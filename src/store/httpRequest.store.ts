@@ -9,7 +9,6 @@ axios.interceptors.request.use(
     const appStore = useAppStore();
     const url = config.url || "";
 
-    // Only append guid and code if BOTH 'neoformexternal' AND 'local' are NOT present in the URL
     if (!url.includes("neoformexternal/local")) {
       if (!config.params) {
         config.params = {};
@@ -29,7 +28,6 @@ axios.interceptors.request.use(
     console.error(error);
   }
 );
-// ...existing code...
 axios.interceptors.response.use(null, (error) => {
   const toast = usePVToastService();
   const message = error?.response?.data?.Message;

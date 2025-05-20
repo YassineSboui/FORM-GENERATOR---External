@@ -599,7 +599,7 @@ export const executeAPIBeforeSave = async (dataJson: any) => {
 export const executeApiCollection = async (objectName: string, params: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/ExternalApi/ExecuteByObjectName`;
+    const apiUrl = `${httpRequest.externalUrl}local/ExternalSource/ExecuteApiByObjectName`;
     const { data }: { data: string } = await axios.post(apiUrl, {
       objectName,
       params,
@@ -645,7 +645,7 @@ export const executeDatabaseConnection = async (
 ) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/ExternalDatabase/execute`;
+    const apiUrl = `${httpRequest.externalUrl}local/ExternalSource/ExecuteDbqByObjectName`;
     // const { data }: { data: string } = await axios.post(apiUrl, { objectName, parameters });
     //  the objectName will be passed as a query parameter and the parameters will be passed as a request body
     const { data }: { data: string } = await axios.post(apiUrl, {
