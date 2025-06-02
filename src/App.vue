@@ -8,7 +8,7 @@
             <Toolbar class="admin-bar">
               <template #start class="pl-1">
                 <img src="./assets/logoelise2.png" class="icon" />
-                <div class="title">Administration des formulaires</div>
+                <div class="title">NeoForm Externe</div>
               </template>
               <template #end>
                 <Button

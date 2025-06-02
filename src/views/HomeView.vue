@@ -1,16 +1,16 @@
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Manage Clients</h1>
+    <h1 class="text-2xl font-bold mb-4">Gestion des Clients</h1>
 
-    <!-- Add Client Button -->
+    <!-- Bouton Ajouter un Client -->
     <Button
-      label="Add Client"
+      label="Ajouter un client"
       icon="pi pi-plus"
       class="p-button-success p-button-sm mb-4"
       @click="showDialog = true"
     />
 
-    <!-- Client DataTable -->
+    <!-- Tableau des Clients -->
     <DataTable
       :value="clientsArray"
       dataKey="clientId"
@@ -19,12 +19,12 @@
       stripedRows
       responsiveLayout="scroll"
     >
-      <Column field="clientId" header="Client ID" sortable></Column>
-      <Column field="url" header="Client URL" sortable></Column>
+      <Column field="clientId" header="ID Client" sortable></Column>
+      <Column field="url" header="URL du Client" sortable></Column>
       <Column header="Actions">
         <template #body="slotProps">
           <Button
-            label="Delete"
+            label="Supprimer"
             icon="pi pi-trash"
             class="p-button-danger p-button-sm"
             @click="confirmDeleteClient(slotProps.data.clientId)"
@@ -33,27 +33,27 @@
       </Column>
     </DataTable>
 
-    <!-- Dialog to Add Client -->
+    <!-- Dialogue pour Ajouter un Client -->
     <Dialog
       v-model:visible="showDialog"
-      header="Add New Client"
+      header="Ajouter un nouveau client"
       modal
       class="w-96"
     >
       <div class="flex flex-col gap-3">
-        <InputText v-model="newClientId" placeholder="Client ID" />
-        <InputText v-model="newClientUrl" placeholder="Client URL" />
+        <InputText v-model="newClientId" placeholder="ID Client" />
+        <InputText v-model="newClientUrl" placeholder="URL du Client" />
       </div>
 
       <template #footer>
         <Button
-          label="Cancel"
+          label="Annuler"
           icon="pi pi-times"
           class="p-button-text"
           @click="showDialog = false"
         />
         <Button
-          label="Save"
+          label="Enregistrer"
           icon="pi pi-check"
           class="p-button-success"
           @click="confirmAddClient"

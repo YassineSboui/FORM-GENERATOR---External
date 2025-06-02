@@ -16,7 +16,11 @@
             v-model="form"
             @update:isSubmit="handleIsSubmit"
             :isSubmit="isSubmit"
-            :isFormDisplay="{ value: true, objectId: object?.id }"
+            :isFormDisplay="{
+              value: true,
+              objectId: object?.id,
+              objectGuid: object?.guid,
+            }"
             :configForm="configForm"
             :stepper="{
               isStepper: isStepper,

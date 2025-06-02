@@ -157,20 +157,23 @@ export const deleteObject = async (id: number) => {
 };
 export const saveNotice = async ({
   objectId,
+  objectGuid,
   noticeJson,
   newDoc,
   disableNotice = false,
 }: {
   objectId: number;
+  objectGuid: string;
   noticeJson: any;
   newDoc: boolean;
   disableNotice?: boolean;
 }) => {
   const httpRequest = useHttpRequest();
   try {
-    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Notice/Save`;
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Notice/ExtSave`;
     const { data }: { data: EliseDocument } = await axios.post(apiUrl, {
       objectId,
+      objectGuid,
       noticeJson,
       newDoc,
       disableNotice,
@@ -400,7 +403,7 @@ export const importData = async ({
     const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/import`; // Updated endpoint
     const { data }: { data: ObjectModel[] } = await axios.post(
       apiUrl,
-      dataJsonArray // Send the array in the request body
+      dataJsonArray, // Send the array in the request body
     );
     return data;
   } catch (error) {
@@ -641,7 +644,7 @@ export const countAllObjects = async () => {
 };
 export const executeDatabaseConnection = async (
   objectName: string,
-  parameters: any
+  parameters: any,
 ) => {
   try {
     const httpRequest = useHttpRequest();
@@ -781,7 +784,7 @@ export const fetchFlowChartWithUsers = async () => {
 
 export const getServiceOrUserById = async (
   id: string,
-  returnLabel: boolean
+  returnLabel: boolean,
 ) => {
   const httpRequest = useHttpRequest();
   const apiUrl = `${httpRequest.externalUrl}/api/Flowchart/serviceAndUserById/${id}`;
@@ -825,7 +828,7 @@ export const eliseGetContacts = async (payload: any) => {
   const apiUrl = `${httpRequest.externalUrl}/Elise/GetContacts`;
   const { data }: { data: EliseContactSearch[] } = await axios.post(
     apiUrl,
-    payload
+    payload,
   );
   return data;
 };
@@ -860,7 +863,7 @@ export const eliseUpdateContactOrganization = async (payload: any) => {
 export const eliseGetContactMails = async (
   starts: any,
   limit: any,
-  payload: any
+  payload: any,
 ) => {
   const httpRequest = useHttpRequest();
   const apiUrl = `${httpRequest.externalUrl}/Elise/GetContactMails?start=0&limit=20`;
@@ -876,7 +879,7 @@ export const eliseXmlSearch = async (payload: any) => {
 
 export const eliseGetFullThesaurus = async (
   thesaurusName: string,
-  termName?: string | null
+  termName?: string | null,
 ) => {
   const httpRequest = useHttpRequest();
   const apiUrl = `${httpRequest.externalUrl}/Elise/GetFullThesaurus`;
@@ -888,7 +891,7 @@ export const eliseGetFullThesaurus = async (
 
 export const eliseSearchThesaurus = async (
   thesaurusId: string,
-  searchTerm: string
+  searchTerm: string,
 ) => {
   const httpRequest = useHttpRequest();
   const apiUrl = `${httpRequest.externalUrl}/Elise/SearchThesaurus`;
@@ -900,7 +903,7 @@ export const eliseSearchThesaurus = async (
 
 export const eliseLevelThesaurus = async (
   thesaurusId: string,
-  parentTermId?: string | null
+  parentTermId?: string | null,
 ) => {
   const httpRequest = useHttpRequest();
   const apiUrl = `${httpRequest.externalUrl}/Elise/LevelThesaurus`;

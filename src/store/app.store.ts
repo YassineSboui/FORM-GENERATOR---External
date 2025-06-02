@@ -229,7 +229,7 @@ export const useAppStore = defineStore("AppStore", {
     },
     checkIfSplitterZoneCodeExistsInCenterItems(
       zoneCode: string,
-      zoneHeader: string
+      zoneHeader: string,
     ) {
       let exists = 0;
       let headerExists = 0;
@@ -265,7 +265,7 @@ export const useAppStore = defineStore("AppStore", {
         });
       };
       const processRows = (rows: any) => {
-        for (let row of rows) {
+        for (const row of rows) {
           checkRows(row.rows);
         }
       };
@@ -306,7 +306,7 @@ export const useAppStore = defineStore("AppStore", {
       return exists > 1;
     },
     nameList(): string[] {
-      let nameList: string[] = [];
+      const nameList: string[] = [];
       const columnNames = ["column1", "column2", "column3", "column4"];
       const columnSplitterNames = ["column1", "column2"];
 
@@ -394,14 +394,14 @@ export const useAppStore = defineStore("AppStore", {
       }
     },
     checkIfNeoTableComponentExists() {
-      var exists = false;
+      let exists = false;
       const isStepper = this.centerItems[0]?.pages ? true : false;
       if (isStepper) {
-        for (let page in this.centerItems[0].pages) {
-          for (let item of this.centerItems[0].pages[page]) {
+        for (const page in this.centerItems[0].pages) {
+          for (const item of this.centerItems[0].pages[page]) {
             if (item.zone != "Z1000") {
-              for (let i in item.rows) {
-                for (let j in item.rows[i]) {
+              for (const i in item.rows) {
+                for (const j in item.rows[i]) {
                   if (item.rows[i][j].component === "NeoTableComponent") {
                     exists = true;
                   }
@@ -429,8 +429,8 @@ export const useAppStore = defineStore("AppStore", {
     removeNeoTableComponent() {
       this.centerItems.forEach((item: any) => {
         if (item.zone != "Z1000") {
-          for (let i in item.rows) {
-            for (let j in item.rows[i]) {
+          for (const i in item.rows) {
+            for (const j in item.rows[i]) {
               if (item.rows[i][j].component === "NeoTableComponent") {
                 item.rows[i].splice(j, 1);
               }
@@ -452,7 +452,7 @@ export const useAppStore = defineStore("AppStore", {
       databaseConfigGuid: string,
       query: string,
       params: any,
-      requestReturn: any
+      requestReturn: any,
     ) {
       const res = await fetchDataTest({
         databaseConfigGuid,
@@ -467,7 +467,7 @@ export const useAppStore = defineStore("AppStore", {
       connectionString: string,
       request: string,
       params: any,
-      requestReturn: any
+      requestReturn: any,
     ) {
       const res = await fetchData({
         connectionString,
@@ -491,10 +491,10 @@ export const useAppStore = defineStore("AppStore", {
     updateDatabaseCollections(
       oldName: string,
       newName: string,
-      parameters: any
+      parameters: any,
     ) {
       const index = this.databasesCollections.findIndex(
-        (item) => item.name == oldName
+        (item) => item.name == oldName,
       );
       if (index != -1) {
         this.databasesCollections[index].name = newName;
@@ -516,7 +516,7 @@ export const useAppStore = defineStore("AppStore", {
     },
     updateApiCollections(oldName: string, newName: string, parameters: any) {
       const index = this.apiCollections.findIndex(
-        (item) => item.name == oldName
+        (item) => item.name == oldName,
       );
       if (index != -1) {
         this.apiCollections[index].name = newName;
@@ -526,7 +526,7 @@ export const useAppStore = defineStore("AppStore", {
 
     async initLoader() {
       try {
-        var objects = await fetchObjects({ objectType: "CDQ" });
+        const objects = await fetchObjects({ objectType: "CDQ" });
         this.databasesCollections = [];
         objects.forEach((obj: any) => {
           // this.setDatabaseCollections(obj.objectName);
@@ -541,7 +541,7 @@ export const useAppStore = defineStore("AppStore", {
         logger.error(error);
       }
       try {
-        var value = await fetchObjects({ objectType: "API" });
+        const value = await fetchObjects({ objectType: "API" });
         this.apiCollections = [];
         value.forEach((obj: any) => {
           // this.setApiCollections(obj.objectName);
@@ -556,7 +556,7 @@ export const useAppStore = defineStore("AppStore", {
         logger.error(error);
       }
       try {
-        var forms = await fetchObjects({ objectType: "FORM" });
+        const forms = await fetchObjects({ objectType: "FORM" });
         this.forms = [];
         forms.forEach((obj: any) => {
           this.setForms({
@@ -572,7 +572,7 @@ export const useAppStore = defineStore("AppStore", {
         logger.error(error);
       }
       try {
-        var functionsResp = await fetchObjects({ objectType: "FNC" });
+        const functionsResp = await fetchObjects({ objectType: "FNC" });
         this.functions = [];
         functionsResp.forEach((obj: any) => {
           this.functions.push({
@@ -685,7 +685,7 @@ export const useAppStore = defineStore("AppStore", {
 
     async eliseGetFullThesaurus(
       thesaurusName: string,
-      termName: string | null
+      termName: string | null,
     ) {
       return await eliseGetFullThesaurus(thesaurusName, termName);
     },
@@ -694,7 +694,7 @@ export const useAppStore = defineStore("AppStore", {
     },
     async eliseLevelThesaurus(
       thesaurusId: string,
-      parentTermId: string | null
+      parentTermId: string | null,
     ) {
       return await eliseLevelThesaurus(thesaurusId, parentTermId);
     },
@@ -718,7 +718,7 @@ export const useAppStore = defineStore("AppStore", {
 
       tableVariables.forEach((item) => {
         const exists = this.tableVariables.some(
-          (table) => table.key == item.key
+          (table) => table.key == item.key,
         );
 
         if (!exists) {
@@ -778,7 +778,7 @@ export const useAppStore = defineStore("AppStore", {
       const paramNames = parameters.map((param: any) => param.key);
       const functionToExecute = new Function(...paramNames, functionCode);
       const paramValuesToPass = paramNames.map(
-        (name: any) => paramValues[name]
+        (name: any) => paramValues[name],
       );
       const result = await functionToExecute(...paramValuesToPass);
       return result;
@@ -819,22 +819,22 @@ export const useAppStore = defineStore("AppStore", {
     },
     async executeFunctionByName(
       functionName: string,
-      childFields: { key: string; value: any }[]
+      childFields: { key: string; value: any }[],
     ) {
       try {
         const functionToExecute = this.functions.find(
-          (item: any) => item.name === functionName
+          (item: any) => item.name === functionName,
         );
         if (functionToExecute) {
           const params = functionToExecute.parameters;
           if (params.length !== childFields.length) {
             throw new Error(
-              `Function expects ${params.length} parameters but ${childFields.length} were provided`
+              `Function expects ${params.length} parameters but ${childFields.length} were provided`,
             );
           } else {
             const paramsValues = params.map((param: any) => {
               const matchingField = childFields.find(
-                (child) => child.key === param.key
+                (child) => child.key === param.key,
               );
               if (!matchingField) {
                 throw new Error(`Missing value for parameter: ${param.key}`);
@@ -843,7 +843,7 @@ export const useAppStore = defineStore("AppStore", {
             });
             const resp = await this.executeFunction(
               paramsValues,
-              functionToExecute.code
+              functionToExecute.code,
             );
             return resp;
           }

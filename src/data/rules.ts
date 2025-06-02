@@ -7,9 +7,9 @@ export interface MyRules {
   dateBefore: (value: any, params: []) => string;
   dateAfter: (value: any, params: []) => string;
   dateIsNot: (value: any, params: []) => string;
-  disabledDateRange : (value: any, params: []) => string;
-  disabledMonthDays : (value: any, params: []) => string;
-  disabledWeekDays : (value: any, params: []) => string;
+  disabledDateRange: (value: any, params: []) => string;
+  disabledMonthDays: (value: any, params: []) => string;
+  disabledWeekDays: (value: any, params: []) => string;
 }
 
 export const useMyRules: MyRules = {
@@ -73,22 +73,21 @@ export const useMyRules: MyRules = {
     return "true";
   },
   dateIsNot: (value: any, params: []) => {
-    params.forEach((val : any) => {
-      if(value == val )
-        return 'Date not valid'
-    })
-    return 'true'
+    params.forEach((val: any) => {
+      if (value == val) return "Date not valid";
+    });
+    return "true";
   },
-  disabledDateRange:(value: any, params: any) => {
+  disabledDateRange: (value: any, params: any) => {
     if (value >= params[0] && value <= params[1]) {
-        return 'true'; // Value is within the range
+      return "true"; // Value is within the range
     }
-    return 'Date not valid';
+    return "Date not valid";
   },
   disabledWeekDays: (value: any, params: []) => {
-    return  'true';
+    return "true";
   },
-  disabledMonthDays : (value: any, params: []) => {
-    return  'true';
+  disabledMonthDays: (value: any, params: []) => {
+    return "true";
   },
 };

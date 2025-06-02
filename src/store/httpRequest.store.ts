@@ -26,7 +26,7 @@ axios.interceptors.request.use(
   },
   (error) => {
     console.error(error);
-  }
+  },
 );
 axios.interceptors.response.use(null, (error) => {
   const toast = usePVToastService();
@@ -60,7 +60,7 @@ export const useHttpRequest = defineStore("httpRequest", {
   actions: {
     async fetchApiUrl() {
       const { data } = await axios.get(
-        import.meta.env.BASE_URL + "config.json"
+        import.meta.env.BASE_URL + "config.json",
       );
       this.apiUrl = "";
       this.externalUrl = data.API_URL;

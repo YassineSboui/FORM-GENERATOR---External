@@ -477,6 +477,7 @@ const props = defineProps({
     default: {
       value: false,
       objectId: "",
+      objectGuid: "",
     },
   },
   isSubmit: {
@@ -900,82 +901,54 @@ const submitNotice = async () => {
         emit("done", false);
         let obj;
         // new document to be created
-        if (!store.currentNotice) {
-          obj = await saveNotice({
-            objectId: props.isFormDisplay.objectId,
-            noticeJson: newNotice,
-            newDoc: !!route.query.newDoc,
-            disableNotice: Boolean(route.query.disableNotice),
-          });
-          if (obj) {
-            const afterSaveCode = internalFormConfig.value.events.find(
-              (evnt: any) => evnt.rule.code == "afterSave"
-            )?.code;
-            if (afterSaveCode) {
-              store.setNotice(obj);
-              try {
-                await eval(
-                  "(async () => { const store = useAppStore(); " +
-                    afterSaveCode +
-                    "})()"
-                );
-              } catch (error) {
-                console.error("error", error);
-                logger.error(error);
-              }
-            }
-
-            emit("done", true);
-            // appStore.setLoading(false);
-            if (window.self === window.top) {
-              location.replace(obj.url);
-            } else {
-              if (!!route.query.newDoc) {
-                parent.location.replace(obj.url);
-                return;
-              }
-              window.parent.postMessage("EliseCustomActionDone", "*");
-              parent.location.reload();
+        obj = await saveNotice({
+          objectId: props.isFormDisplay.objectId,
+          objectGuid: props.isFormDisplay.objectGuid,
+          noticeJson: newNotice,
+          newDoc: !!route.query.newDoc,
+          disableNotice: Boolean(route.query.disableNotice),
+        });
+        if (obj) {
+          const afterSaveCode = internalFormConfig.value.events.find(
+            (evnt: any) => evnt.rule.code == "afterSave"
+          )?.code;
+          if (afterSaveCode) {
+            store.setNotice(obj);
+            try {
+              await eval(
+                "(async () => { const store = useAppStore(); " +
+                  afterSaveCode +
+                  "})()"
+              );
+            } catch (error) {
+              console.error("error", error);
+              logger.error(error);
             }
           }
-        } else {
-          obj = await updateNotice({
-            objectId: props.isFormDisplay.objectId,
-            noticeId: store.currentNotice.id,
-            noticeJson: newNotice,
-            newDoc: !!route.query.newDoc,
-            disableNotice: Boolean(route.query.disableNotice),
+          emit("done", true);
+          // appStore.setLoading(false);
+          toast.add({
+            severity: "success",
+            summary: props.isRTL
+              ? "تم حفظ النموذج بنجاح"
+              : "Formulaire enregistré avec succès",
+            life: 3000,
           });
-          if (obj) {
-            const afterSaveCode = internalFormConfig.value.events.find(
-              (evnt: any) => evnt.rule.code == "afterSave"
-            )?.code;
-            if (afterSaveCode) {
-              store.setNotice(obj);
-              try {
-                await eval(
-                  "(async () => { const store = useAppStore(); " +
-                    afterSaveCode +
-                    "})()"
-                );
-              } catch (error) {
-                console.error("error", error);
-                logger.error(error);
-              }
-            }
-            emit("done", true);
-            //appStore.setLoading(false);
-            // httpRequest.setLoading(false);
-            if (window.self === window.top) {
-              location.replace(obj.url);
-              parent.location.reload();
-            } else {
-              window.parent.postMessage("EliseCustomActionDone", "*");
-              parent.location.reload();
-            }
-          }
+          httpRequest.setLoading(false);
         }
-        // }
+
+        emit("done", true);
+        // appStore.setLoading(false);
+        toast.add({
+          severity: "success",
+          summary: props.isRTL
+            ? "تم حفظ النموذج بنجاح"
+            : "Formulaire enregistré avec succès",
+          life: 3000,
+        });
+        clearFieldsFunc(itemsFormCopy.value, 0);
+
+        httpRequest.setLoading(false);
       }
     },
     reject: () => {

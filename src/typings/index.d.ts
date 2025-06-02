@@ -36,7 +36,7 @@ interface Action {
           frameId: string;
           size: { height: number; width: number; unitMeasure: string };
         };
-      }
+      },
     ];
     documentFilter: {
       types: string[]; //"COURRIERS_TYPE_XXX"

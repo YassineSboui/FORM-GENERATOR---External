@@ -1,4 +1,3 @@
-
 const frensh = {
   buttons: {
     cancel: "Annuler",
