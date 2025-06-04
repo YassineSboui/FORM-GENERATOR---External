@@ -3,13 +3,13 @@ import { useAppStore } from "@/store/app.store";
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { createRouter, createWebHistory } from "vue-router";
 import { logger } from "@/api/api";
-
+import keycloak from "@/keycloak";
 const routes = [
   {
     path: "/",
     name: "home",
     component: () => import("../views/HomeView.vue"),
-    meta: { fullMode: false },
+    meta: { fullMode: false, requiresAdmin: true }, // 🔐 ici
   },
   {
     path: "/form/:client/:guid",
@@ -37,18 +37,19 @@ const router = createRouter({
 router.beforeEach(async (to, from) => {
   const httpRequest = useHttpRequest();
   const { initLoader } = useAppStore();
+
   if (to.name == "form") {
     httpRequest.setLoading(true);
   }
+
   if (!httpRequest.apiUrl) {
     await httpRequest.fetchApiUrl();
   }
+
   if (!httpRequest.jwt && to.name !== "unauthorized") {
     try {
       if (to.name == "form") {
-        // Extract the client parameter from the route
         const client = to.params.client as string;
-        // Use the setApiUrl method to set the API URL
         if (client) {
           httpRequest.setApiUrl(httpRequest.externalUrl + client);
         }
@@ -57,10 +58,21 @@ router.beforeEach(async (to, from) => {
     } catch (error) {
       console.error("error jwt", error);
       logger.error(error);
-      // return { name: "unauthorized" };
     }
   }
-  // Check if the current route is not '/form/:guid' and '/ref/:guid' and set loading to false
+
+  // 🔐 Si la route nécessite un rôle Admin
+  if (to.meta.requiresAdmin) {
+    console.log(keycloak.tokenParsed);
+    const roles =
+      keycloak.tokenParsed?.resource_access?.NeoFormExt?.roles || [];
+    const isAdmin = roles.includes("Admin");
+
+    if (!isAdmin) {
+      return { name: "unauthorized" };
+    }
+  }
+
   if (to.name !== "form") {
     httpRequest.setLoading(false);
   }

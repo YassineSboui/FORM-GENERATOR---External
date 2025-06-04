@@ -3,12 +3,17 @@ import axios from "axios";
 import { usePVToastService } from "@/composable/usePVToastService";
 import { logger } from "@/api/api";
 import { useAppStore } from "@/store/app.store";
-
+import keycloak from "@/keycloak"; // ✅ Utilise le token Keycloak globalement
 axios.interceptors.request.use(
   (config) => {
     const appStore = useAppStore();
     const url = config.url || "";
 
+    // ✅ Toujours ajouter le token Keycloak si disponible
+    if (keycloak?.token) {
+      config.headers = config.headers || {};
+      config.headers["Authorization"] = `Bearer ${keycloak.token}`;
+    }
     if (!url.includes("neoformexternal/local")) {
       if (!config.params) {
         config.params = {};
@@ -26,7 +31,7 @@ axios.interceptors.request.use(
   },
   (error) => {
     console.error(error);
-  },
+  }
 );
 axios.interceptors.response.use(null, (error) => {
   const toast = usePVToastService();
@@ -60,7 +65,7 @@ export const useHttpRequest = defineStore("httpRequest", {
   actions: {
     async fetchApiUrl() {
       const { data } = await axios.get(
-        import.meta.env.BASE_URL + "config.json",
+        import.meta.env.BASE_URL + "config.json"
       );
       this.apiUrl = "";
       this.externalUrl = data.API_URL;
@@ -92,8 +97,12 @@ export const useHttpRequest = defineStore("httpRequest", {
       });
     },
     async logout() {
-      await axios.get(this.apiUrl + "/hook/logout");
-      this.jwt = "";
+      try {
+        await keycloak.logout();
+      } catch (error) {
+        console.error("Error during logout:", error);
+        logger.error(error);
+      }
     },
 
     setLoading(_loading: boolean) {

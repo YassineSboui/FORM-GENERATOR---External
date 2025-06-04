@@ -24,6 +24,12 @@
       <Column header="Actions">
         <template #body="slotProps">
           <Button
+            label="Modifier"
+            icon="pi pi-pencil"
+            class="p-button-info p-button-sm mr-2"
+            @click="() => confirmEditClient(slotProps.data.clientId)"
+          />
+          <Button
             label="Supprimer"
             icon="pi pi-trash"
             class="p-button-danger p-button-sm"
@@ -38,7 +44,7 @@
       v-model:visible="showDialog"
       header="Ajouter un nouveau client"
       modal
-      class="w-96"
+      class="w-100"
     >
       <div class="flex flex-col gap-3">
         <InputText v-model="newClientId" placeholder="ID Client" />
@@ -60,6 +66,34 @@
         />
       </template>
     </Dialog>
+
+    <!-- Dialogue pour Modifier un Client -->
+    <Dialog
+      v-model:visible="showEditDialog"
+      header="Modifier le client"
+      modal
+      class="w-100"
+    >
+      <div class="flex flex-col gap-3">
+        <InputText v-model="editingClientId" placeholder="ID Client" disabled />
+        <InputText v-model="editingClientUrl" placeholder="URL du Client" />
+      </div>
+
+      <template #footer>
+        <Button
+          label="Annuler"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showEditDialog = false"
+        />
+        <Button
+          label="Enregistrer"
+          icon="pi pi-check"
+          class="p-button-success"
+          @click="saveEditClient"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -67,12 +101,20 @@
 import { ref, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
-import { fetchClients, addClient, deleteClientById } from "@/api/api"; // adjust the path if needed
+import {
+  fetchClients,
+  addClient,
+  deleteClientById,
+  updateClient,
+} from "@/api/api"; // adjust the path if needed
 
 const clientsArray = ref([]);
 const newClientId = ref("");
 const newClientUrl = ref("");
 const showDialog = ref(false);
+const editingClientId = ref("");
+const editingClientUrl = ref("");
+const showEditDialog = ref(false);
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -123,6 +165,46 @@ const confirmAddClient = async () => {
       severity: "error",
       summary: "Error",
       detail: "Failed to add client",
+      life: 3000,
+    });
+  }
+};
+
+const confirmEditClient = (clientId) => {
+  const client = clientsArray.value.find((c) => c.clientId === clientId);
+  if (client) {
+    editingClientId.value = client.clientId;
+    editingClientUrl.value = client.url;
+    showEditDialog.value = true;
+  }
+};
+
+const saveEditClient = async () => {
+  if (!editingClientId.value || !editingClientUrl.value) {
+    toast.add({
+      severity: "warn",
+      summary: "Warning",
+      detail: "Please fill in both fields",
+      life: 3000,
+    });
+    return;
+  }
+  try {
+    await updateClient(editingClientId.value, editingClientUrl.value);
+    toast.add({
+      severity: "success",
+      summary: "Success",
+      detail: "Client updated successfully",
+      life: 3000,
+    });
+    showEditDialog.value = false;
+    await loadClients();
+  } catch (error) {
+    console.error("Failed to update client", error);
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "Failed to update client",
       life: 3000,
     });
   }

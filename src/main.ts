@@ -27,14 +27,13 @@ import PrimeVueDatePicker from "primevue/datepicker";
 import Datepicker from "vuejs3-datepicker";
 import Select from "primevue/select";
 import Drawer from "primevue/drawer";
-
+import ProgressSpinner from "primevue/progressspinner";
 import Stepper from "primevue/stepper";
 import StepList from "primevue/steplist";
 import StepPanels from "primevue/steppanels";
 import StepItem from "primevue/stepitem";
 import Step from "primevue/step";
 import StepPanel from "primevue/steppanel";
-
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
 import AccordionHeader from "primevue/accordionheader";
@@ -42,23 +41,19 @@ import AccordionContent from "primevue/accordioncontent";
 import "material-icons/iconfont/material-icons.css";
 import "./assets/css/style.css";
 import "@/scss/layout.scss";
-// import "primevue/resources/themes/aura-light-green/theme.css";
 import { createPinia } from "pinia";
-
 import QrcodeVue, { QrcodeCanvas, QrcodeSvg } from "qrcode.vue";
 import Camera from "simple-vue-camera";
 import Vue3Signature from "vue3-signature";
-
 import { Field, ErrorMessage, defineRule, configure } from "vee-validate";
 import { localize } from "@vee-validate/i18n";
 import * as rules from "@vee-validate/rules";
 import ar from "@vee-validate/i18n/dist/locale/ar.json";
 import en from "@vee-validate/i18n/dist/locale/en.json";
 import fr from "@vee-validate/i18n/dist/locale/fr.json";
-
 import * as NeoComponents from "@/components/NeoComponents";
 import * as ChildComponents from "@/components/ChildComponents";
-
+import keycloak from "./keycloak";
 // Iterate through the rules and define them if they are functions
 for (const rule in rules) {
   if (typeof (rules as { [key: string]: any })[rule] === "function") {
@@ -84,7 +79,7 @@ const i18n = createI18n({
     french,
   },
 });
-app.use(i18n);
+
 export { i18n };
 
 configure({
@@ -99,7 +94,7 @@ configure({
 // Fix needed for Quill v2: https://github.com/primefaces/primevue/issues/5606#issuecomment-2203975395
 (Editor as any).methods.renderValue = function renderValue(
   this: { quill?: Quill },
-  value: string,
+  value: string
 ) {
   if (this.quill) {
     if (value) {
@@ -114,19 +109,6 @@ configure({
 // Set the initial locale (optional)
 
 localize("fr");
-app.use(pinia);
-app.use(router);
-app.use(PrimeVue, {
-  theme: {
-    preset: Aura,
-    options: {
-      darkModeSelector: false,
-    },
-  },
-});
-app.use(i18n);
-app.use(ToastService);
-app.use(ConfirmationService);
 
 app.component("Field", Field);
 app.component("ErrorMessage", ErrorMessage);
@@ -137,7 +119,6 @@ app.component("ComponentForm", ChildComponents.ComponentForm);
 app.component("ComponentFormTable", ChildComponents.ComponentFormTable);
 app.component("ZoneComponent", ChildComponents.ZoneComponent);
 app.component("ZoneComponentTable", ChildComponents.ZoneComponentTable);
-
 app.component("NeoTextField", NeoComponents.NeoTextField);
 app.component("NeoTextArea", NeoComponents.NeoTextArea);
 app.component("NeoSelect", NeoComponents.NeoSelect);
@@ -161,7 +142,6 @@ app.component("NeoChips", NeoComponents.NeoChips);
 app.component("NeoMultiSelect", NeoComponents.NeoMultiSelect);
 app.component("NeoFlowchart", NeoComponents.NeoFlowchart);
 app.component("NeoFlowchart_V2", NeoComponents.NeoFlowchart_V2);
-
 app.component("NeoListDocument", NeoComponents.NeoListDocument);
 app.component("NeoRecap", NeoComponents.NeoRecap);
 app.component("NeoThesaurus", NeoComponents.NeoThesaurus);
@@ -170,17 +150,14 @@ app.component("NeoTreeView", NeoComponents.NeoTreeView);
 app.component("NeoQrCode", NeoComponents.NeoQrCode);
 app.component("NeoPhoto", NeoComponents.NeoPhoto);
 app.component("NeoSign", NeoComponents.NeoSign);
-
 app.component("DataView", DataView);
 app.component("Image", Image);
 app.component("Toast", Toast);
-
 app.component("QrcodeVue", QrcodeVue);
 app.component("Camera", Camera);
 app.component("Vue3Signature", Vue3Signature);
 app.component("QrcodeCanvas", QrcodeCanvas);
 app.component("QrcodeSvg", QrcodeSvg);
-
 app.component("Tabs", Tabs);
 app.component("TabList", TabList);
 app.component("Tab", Tab);
@@ -190,23 +167,56 @@ app.component("ToggleSwitch", ToggleSwitch);
 app.component("DatePicker", PrimeVueDatePicker);
 app.component("Select", Select);
 app.component("Drawer", Drawer);
-
+app.component("Editor", Editor);
+app.component("ProgressSpinner", ProgressSpinner);
 app.component("Stepper", Stepper);
 app.component("StepList", StepList);
 app.component("StepPanels", StepPanels);
 app.component("StepItem", StepItem);
 app.component("Step", Step);
 app.component("StepPanel", StepPanel);
-
 app.component("Accordion", Accordion);
 app.component("AccordionPanel", AccordionPanel);
 app.component("AccordionHeader", AccordionHeader);
 app.component("AccordionContent", AccordionContent);
-
 app.component("NeoTable", NeoComponents.NeoTable);
 app.directive("tooltip", Tooltip);
 app.directive("badge", BadgeDirective);
 
-app.mount("#app");
+keycloak
+  .init({ onLoad: "login-required", checkLoginIframe: false })
+  .then((authenticated) => {
+    if (!authenticated) {
+      window.location.reload();
+    } else {
+      console.log("✅ Authenticated");
+
+      app.use(pinia);
+      app.use(router);
+      app.use(PrimeVue, {
+        theme: {
+          preset: Aura,
+          options: {
+            darkModeSelector: false,
+          },
+        },
+      });
+      app.use(i18n);
+      app.use(ToastService);
+      app.use(ConfirmationService);
+
+      app.provide("keycloak", keycloak); // 👈 Accessible dans tes composants
+
+      app.mount("#app");
+
+      // 🔁 Rafraîchissement automatique du token
+      setInterval(() => {
+        keycloak.updateToken(60).catch(() => keycloak.login());
+      }, 30000);
+    }
+  })
+  .catch((error) => {
+    console.error("❌ Keycloak init failed", error);
+  });
 
 export default app;
