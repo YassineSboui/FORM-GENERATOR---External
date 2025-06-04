@@ -927,14 +927,6 @@ const submitNotice = async () => {
           }
           emit("done", true);
           // appStore.setLoading(false);
-          toast.add({
-            severity: "success",
-            summary: props.isRTL
-              ? "تم حفظ النموذج بنجاح"
-              : "Formulaire enregistré avec succès",
-            life: 3000,
-          });
-          httpRequest.setLoading(false);
         }
 
         emit("done", true);
@@ -943,7 +935,7 @@ const submitNotice = async () => {
           severity: "success",
           summary: props.isRTL
             ? "تم حفظ النموذج بنجاح"
-            : "Formulaire enregistré avec succès",
+            : "Formulaire enregistré avec succès | Chrono : " + obj.chrono,
           life: 3000,
         });
         clearFieldsFunc(itemsFormCopy.value, 0);
