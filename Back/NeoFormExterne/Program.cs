@@ -108,14 +108,16 @@ var app = builder.Build();
 app.UseHttpLogging();
 app.UseRouting();
 app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseCors("all");
+
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseCors("all");
+
 }
-app.UseAuthentication(); 
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
