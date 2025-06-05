@@ -53,27 +53,27 @@
     >
       <Button
         v-if="showType == 'Gallery' && !readOnly"
-        label="Gallery"
+        label="Galerie"
         icon="pi pi-images"
         class="single-button"
         @click="openFileDialog"
       />
       <Button
         v-if="showType == 'Camera' && !readOnly"
-        label="Camera"
+        label="Caméra"
         icon="pi pi-camera"
         class="single-button"
         @click="visible = true"
       />
       <ButtonGroup v-if="showType == 'Les deux' && !readOnly">
         <Button
-          label="Gallery"
+          label="Galerie"
           icon="pi pi-images"
           class="gallery-button"
           @click="openFileDialog"
         />
         <Button
-          label="Camera"
+          label="Caméra"
           icon="pi pi-camera"
           @click="visible = true"
           class="camera-button2"
@@ -140,7 +140,7 @@
         <div class="camera-container">
           <camera
             :resolution="{ width: options.width, height: options.height }"
-            ref="camera"
+            ref="Caméra"
             v-if="showCamera"
             autoplay
           >

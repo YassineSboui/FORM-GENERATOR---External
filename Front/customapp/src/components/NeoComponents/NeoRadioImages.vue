@@ -12,7 +12,7 @@
         style="width: 100%"
       >
         <template #item="slotProps">
-          <Card class="outlined-card" style="max-width: 10rem;">
+          <Card class="outlined-card" style="max-width: 10rem">
             <template #content>
               <div>
                 <input
@@ -28,8 +28,8 @@
                       :src="slotProps.data.image"
                       :alt="slotProps.data.name"
                       class="w-12 mt-2"
-                      />
-                      <!-- width="280"
+                    />
+                    <!-- width="280"
                       height="80" -->
                   </div>
                   <div>
@@ -53,7 +53,7 @@
         >
           <template #content>
             <div class="text-center">
-              <h4>Aucun</h4>
+              <h4>Aucun élément trouvé</h4>
             </div>
           </template>
         </Card>
@@ -96,7 +96,9 @@ const props = defineProps({
   },
 });
 
-const option = computed(() => {return props.modelValue});
+const option = computed(() => {
+  return props.modelValue;
+});
 
 const emit = defineEmits();
 
@@ -155,12 +157,12 @@ function emitValue(value: any) {
   }
 }
 .outlined-card {
-  display: flex!important;
-  justify-content: center!important;
-  border: 2px solid #007ba7!important;
-  border-radius: 15px!important;
-  margin: 8px!important;
-  height: 225px!important;
+  display: flex !important;
+  justify-content: center !important;
+  border: 2px solid #007ba7 !important;
+  border-radius: 15px !important;
+  margin: 8px !important;
+  height: 225px !important;
 }
 .custom-title {
   display: flex;
@@ -169,10 +171,10 @@ function emitValue(value: any) {
   font-size: 14px;
   color: #165c77;
 }
-.p-card .p-card-content{
+.p-card .p-card-content {
   padding: 0px;
 }
-.p-card .p-card-body{
+.p-card .p-card-body {
   height: 100%;
 }
 .p-carousel-item {

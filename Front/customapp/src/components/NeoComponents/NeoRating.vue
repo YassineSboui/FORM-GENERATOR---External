@@ -44,6 +44,7 @@
         :cancel="false"
         :stars="options.size"
         :disabled="isDisabled"
+        class="pt-2"
       >
         <template #onicon>
           <i :class="'pi pi-' + options.onIcon" style="color: #0a6e89"></i>

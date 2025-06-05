@@ -35,8 +35,8 @@
         </div>
       </template>
 
-      <template #empty>Aucune objet trouvée.</template>
-      <template #loading>Chargement des objets</template>
+      <template #empty>Aucun objet trouvé.</template>
+      <template #loading>Chargement des objets...</template>
 
       <template #expansion="{ data }">
         <div class="p-grid p-fluid">
@@ -274,8 +274,8 @@
         </div>
       </template>
 
-      <template #empty>Aucune objet trouvée.</template>
-      <template #loading>Chargement des objets</template>
+      <template #empty>Aucun objet trouvé.</template>
+      <template #loading>Chargement des objets...</template>
 
       <!-- :header="column.columnConfig.options.label" -->
       <!-- <Column
@@ -524,8 +524,8 @@
       :ref="isTableCreation ? 'dt' : ''"
       v-model:expandedRows="expandedRows"
     >
-      <template #empty>Aucune objet trouvée.</template>
-      <template #loading>Chargement des objets</template>
+      <template #empty>Aucun objet trouvé.</template>
+      <template #loading>Chargement des objets...</template>
 
       <Column
         v-for="column in filterColumnsByShow"
@@ -1275,7 +1275,7 @@ const onRowEditSave = async (event: any) => {
       toast.add({
         severity: "error",
         summary: "Erreur",
-        detail: "La colonne 'column_name' doit être unique.",
+        detail: "Le nom de la colonne doit être unique.",
         life: 3000,
       });
       return;
@@ -1323,14 +1323,14 @@ const onRowEditSave = async (event: any) => {
         toast.add({
           severity: "error",
           summary: "Erreur",
-          detail: "Veuillez remplir les champs de configuration obligatoire",
+          detail: "Veuillez remplir les champs obligatoires.",
           life: 3000,
         });
       } else {
         toast.add({
           severity: "error",
           summary: "Erreur",
-          detail: "Veillez vérifier les champs de configuration unique",
+          detail: "Veuillez vérifier les champs uniques.",
           life: 3000,
         });
       }
@@ -1372,14 +1372,14 @@ const onRowEditSave = async (event: any) => {
         toast.add({
           severity: "error",
           summary: "Erreur",
-          detail: "Veuillez remplir les champs de configuration obligatoire",
+          detail: "Veuillez remplir les champs obligatoires.",
           life: 3000,
         });
       } else {
         toast.add({
           severity: "error",
           summary: "Erreur",
-          detail: "Veillez vérifier les champs de configuration unique",
+          detail: "Veuillez vérifier les champs uniques.",
           life: 3000,
         });
       }
@@ -1464,14 +1464,14 @@ const handleFieldsValue = async (value: any) => {
       toast.add({
         severity: "error",
         summary: "Erreur",
-        detail: "Veuillez remplir les champs de configuration obligatoire",
+        detail: "Veuillez remplir les champs obligatoires.",
         life: 3000,
       });
     } else {
       toast.add({
         severity: "error",
         summary: "Erreur",
-        detail: "Veillez vérifier les champs de configuration unique",
+        detail: "Veuillez vérifier les champs uniques.",
         life: 3000,
       });
     }
