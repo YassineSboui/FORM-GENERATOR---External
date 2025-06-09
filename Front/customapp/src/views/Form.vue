@@ -1,5 +1,5 @@
 <template>
-  <div class="form-viewer-container" :dir="isRTL ? 'rtl' : 'ltr'">
+  <div class="form-viewer-container" :dir="isRTL ? 'rtl' : 'ltr'" v-if="object">
     <div class="form-viewer-container-header" v-if="showFormHeader">
       <div class="flex justify-content-start">
         <div v-if="formName">{{ formName }}</div>
@@ -94,12 +94,25 @@
       </div>
     </div>
   </div>
+  <div v-else class="form-viewer-container-content">
+    <div
+      class="flex justify-content-center align-items-center"
+      style="height: 100%"
+    >
+      <img
+        src="@/assets/images/not-found.png"
+        alt="Not Found"
+        style="max-width: 75vw; max-height: 75vh"
+      />
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
 import {
   computed,
   defineComponent,
+  h,
   onBeforeMount,
   onMounted,
   ref,
@@ -135,14 +148,9 @@ export default defineComponent({
     const showFormHeader = ref(paramValue.value.showFormHeader === "true");
     const newDoc = ref(paramValue.value.newDoc === "true");
     const showPageNumF = ref(1);
-
-    const arabicChoice = computed(() => (isRTL.value ? "عربي" : "Arabe"));
-    const frenchChoice = computed(() => (isRTL.value ? "فرنسي" : "Français"));
-    const englishChoice = computed(() => (isRTL.value ? "إنجليزي" : "Anglais"));
-
     const languages: Ref<any[]> = ref([]);
     const languagesList: Ref<any[]> = ref([]);
-
+    const formfound = ref(true);
     onBeforeMount(async () => {
       appStore.setExternalAuth(
         route.query.code as string,
@@ -150,6 +158,7 @@ export default defineComponent({
       );
       console.log("Auth Updated");
       object.value = await fetchOneObject(formID.value);
+
       const localFormConfig = ref(
         JSON.parse(object.value?.objectJson).objectConfig.formConfig
       );
@@ -307,6 +316,7 @@ export default defineComponent({
       navigateNext,
       submitStepper,
       navigateToPage,
+      formfound,
       cancelButtonText,
       previousButtonText,
       nextButtonText,

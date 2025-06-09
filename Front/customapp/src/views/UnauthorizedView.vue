@@ -6,18 +6,14 @@
 
     <div class="text-center">
       Vous n'êtes pas autorisé à accéder à cette page. Veuillez recommencer
-      l'action depuis
-      <span class="p-link" style="color: cornflowerblue" @click="goHome">
-        Elise Dashboard.
-      </span>
+      l'action depuis avec un compte administrateur.
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { defineAsyncComponent } from "vue";
-const app = useHttpRequest();
-const goHome = () => {};
+
 const Unauthorized = defineAsyncComponent(
   () => import(`@/assets/svg/unauthorized.svg`)
 );

@@ -7,7 +7,6 @@ namespace NeoForm_Externe.Controllers
 {
     [ApiController]
     [Route("neoformexternal/local/ExternalSource")]
-    [Authorize]
     public class ExecuteExternalSourceController : ControllerBase
 
     {

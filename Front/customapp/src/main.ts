@@ -183,40 +183,53 @@ app.component("NeoTable", NeoComponents.NeoTable);
 app.directive("tooltip", Tooltip);
 app.directive("badge", BadgeDirective);
 
-keycloak
-  .init({ onLoad: "login-required", checkLoginIframe: false })
-  .then((authenticated) => {
-    if (!authenticated) {
-      window.location.reload();
-    } else {
-      console.log("✅ Authenticated");
-
-      app.use(pinia);
-      app.use(router);
-      app.use(PrimeVue, {
-        theme: {
-          preset: Aura,
-          options: {
-            darkModeSelector: false,
-          },
-        },
-      });
-      app.use(i18n);
-      app.use(ToastService);
-      app.use(ConfirmationService);
-
-      app.provide("keycloak", keycloak); // 👈 Accessible dans tes composants
-
-      app.mount("#app");
-
-      // 🔁 Rafraîchissement automatique du token
-      setInterval(() => {
-        keycloak.updateToken(60).catch(() => keycloak.login());
-      }, 30000);
-    }
-  })
-  .catch((error) => {
-    console.error("❌ Keycloak init failed", error);
+const currentPath = window.location.pathname;
+function mountApp() {
+  app.use(pinia);
+  app.use(router);
+  app.use(PrimeVue, {
+    theme: {
+      preset: Aura,
+      options: {
+        darkModeSelector: false,
+      },
+    },
   });
+  app.use(i18n);
+  app.use(ToastService);
+  app.use(ConfirmationService);
+
+  app.provide("keycloak", keycloak); // 👈 Accessible dans les composants
+
+  app.mount("#app");
+}
+
+// ✅ Auth only for /neoformext/front/ page
+if (
+  currentPath === "/neoformext/front/" ||
+  currentPath === "/neoformext/front"
+) {
+  keycloak
+    .init({ onLoad: "login-required", checkLoginIframe: false })
+    .then((authenticated) => {
+      if (!authenticated) {
+        window.location.reload();
+      } else {
+        console.log("✅ Authenticated");
+        mountApp();
+
+        // 🔁 Rafraîchissement automatique du token
+        setInterval(() => {
+          keycloak.updateToken(60).catch(() => keycloak.login());
+        }, 30000);
+      }
+    })
+    .catch((error) => {
+      console.error("❌ Keycloak init failed", error);
+    });
+} else {
+  // 🟢 Skip Keycloak for /form/ or any other routes
+  mountApp();
+}
 
 export default app;

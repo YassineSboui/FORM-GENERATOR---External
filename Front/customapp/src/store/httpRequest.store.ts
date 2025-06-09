@@ -98,7 +98,9 @@ export const useHttpRequest = defineStore("httpRequest", {
     },
     async logout() {
       try {
-        await keycloak.logout();
+        if (keycloak.authenticated) {
+          await keycloak.logout();
+        }
       } catch (error) {
         console.error("Error during logout:", error);
         logger.error(error);

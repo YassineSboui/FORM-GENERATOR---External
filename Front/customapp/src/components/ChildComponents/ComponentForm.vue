@@ -803,13 +803,14 @@ const submitNotice = async () => {
     const isVHTML = options?.type == "HTML";
     if (isFile) {
       if (!options.useAILise) {
-        for (const elem of Fields.value[element]) {
-          // const result = await fileUpload(elem);
-          NoticeAttachements.value.push({
-            guid: elem.guid,
-            // isLinked: elem.isLinked,
-            fileName: elem.fileName,
-          });
+        const files = Fields.value[element];
+        if (Array.isArray(files)) {
+          for (const elem of files) {
+            NoticeAttachements.value.push({
+              guid: elem.guid,
+              fileName: elem.fileName,
+            });
+          }
         }
       }
     } else if (isEditor) {
@@ -1162,9 +1163,85 @@ onMounted(async () => {
   setFields(itemsFormCopy.value, 0);
   internalFormConfig.value = props.configForm;
   QueryParameters.value = { ...route.query };
-  // i want to simulate a delay of an await function
-  await new Promise((resolve) => setTimeout(resolve, 100));
-
+  if (!props.isEdit) {
+    isLoadingComponent.value = true;
+    try {
+      // i want to simulate a delay of an await function
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error("error", error);
+      logger.error(error);
+    }
+    console.log("QueryParameters.value", QueryParameters.value);
+    if (QueryParameters.value.fromDoc) {
+      try {
+        const n = await fetchNotice(QueryParameters.value.noticeType);
+        const {
+          id,
+          noticeJson: { data, mapping, Html, files },
+        } = n;
+        store.setNotice(n);
+        Object.keys(data)?.forEach((v) => {
+          Fields.value[v] = data[v];
+          if (Fields.value[v].length > 0) {
+            repeatableZoneChildrens.value[v] = Fields.value[v].length;
+          }
+        });
+        Object.keys(mapping)?.forEach((v) => {
+          Fields.value[v] = mapping[v];
+        });
+        Object.keys(Html)?.forEach((v) => {
+          Fields.value[v] = Html[v];
+        });
+        // Object.keys(files)?.forEach((v) => {
+        //   Fields.value[v] = files[v];
+        // });
+        // get the fiels with type file from app.refs
+        for (let element in app.refs) {
+          const options = app.refs[element][0]?.options;
+          if (options?.type == "PHOTO") {
+            Fields.value[element] = files;
+          }
+        }
+        try {
+          const { eliseDocument, metadatas } = await fetchMetadata(
+            route.params.guid + ""
+          );
+          store.setEliseDocument(eliseDocument);
+          if (metadatas && metadatas !== undefined) {
+            metadatas?.forEach((v: any) => {
+              Fields.value[v.key] = v.value;
+            });
+            isLoadingComponent.value = false;
+          }
+        } catch (error) {
+          console.error("error", error);
+          logger.error(error);
+        }
+        isLoadingComponent.value = false;
+      } catch (e) {
+        try {
+          const { eliseDocument, metadatas } = await fetchMetadata(
+            route.params.guid + ""
+          );
+          store.setEliseDocument(eliseDocument);
+          if (metadatas && metadatas !== undefined) {
+            metadatas?.forEach((v: any) => {
+              Fields.value[v.key] = v.value;
+            });
+            isLoadingComponent.value = false;
+          }
+        } catch (error) {
+          console.error("error", error);
+          logger.error(error);
+          isLoadingComponent.value = false;
+        }
+        isLoadingComponent.value = false;
+      } finally {
+        isLoadingComponent.value = false;
+      }
+    }
+  }
   internalFormConfig.value?.variables?.forEach((element: any) => {
     Variables.value[element.key] = element.value;
   });

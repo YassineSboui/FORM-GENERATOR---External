@@ -10,7 +10,6 @@ namespace NeoForm_Externe.Controllers
 {
     [ApiController]
     [Route("neoformexternal/local/objects")]
-    [Authorize]
     public class ObjectsController : ControllerBase
     {
         private readonly IObjectService _objectService;
@@ -40,7 +39,6 @@ namespace NeoForm_Externe.Controllers
         }
 
         [HttpPost("Publish")]
-        [AllowAnonymous]
         [ApiKeyAuth]
         [ProducesResponseType(typeof(ObjectModels), 200)]
         public async Task<IActionResult> PublishObject([FromBody] JObject obj)

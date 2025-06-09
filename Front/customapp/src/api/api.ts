@@ -249,12 +249,13 @@ export const fetchMetadata = async (formGuid: string) => {
 };
 
 export const fetchOneObject = async (id: string) => {
+  const httpRequest = useHttpRequest();
   try {
-    const httpRequest = useHttpRequest();
     const apiUrl = `${httpRequest.externalUrl}local/objects/guid/${id}`;
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
+    httpRequest.setLoading(false);
     console.error("Error fetching form:", error);
     logger.error(error);
     throw error;
