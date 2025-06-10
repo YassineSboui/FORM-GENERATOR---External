@@ -1,5 +1,5 @@
 <template>
-  <div class="neoeditor" v-show="!isHidden">
+  <div class="neoeditor" v-show="!isHidden" :style="neoEditorStyle">
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         <span>{{
@@ -238,6 +238,13 @@ export default defineComponent({
       const height = props.options.height || props.height;
       return `height: ${height}; font-size: 14.7px; line-height: 18.2px; font-weight: 400; font-family: Trebuchet MS`;
     });
+    const neoEditorStyle = computed(() => {
+      const height = props.options.height || props.height;
+      // If height is set, use calc to add 50px, otherwise fallback to 200px
+      return {
+        height: height ? `calc(${height} + 75px)` : "200px",
+      };
+    });
     // Function to update field
     const setValue = (value: string) => {
       internalValue.value = value;
@@ -328,6 +335,7 @@ export default defineComponent({
       errorState,
       editorStyle,
       computedRules,
+      neoEditorStyle,
       setValue,
       getValue,
       disableField,
@@ -341,3 +349,4 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped></style>

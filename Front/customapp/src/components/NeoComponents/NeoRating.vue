@@ -240,3 +240,8 @@ export default {
   },
 };
 </script>
+<style>
+:root {
+  --p-rating-gap: 1rem !important;
+}
+</style>

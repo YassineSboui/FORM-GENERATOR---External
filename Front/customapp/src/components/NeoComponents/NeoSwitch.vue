@@ -1,6 +1,6 @@
 <template>
   <div class="neoSwitch" v-show="!isHidden" :dir="isRTL ? 'rtl' : 'ltr'">
-    <div class="input-container flex pb-4">
+    <div class="input-container flex pt-5">
       <div class="flex align-items-center">
         <!-- :inputId="label" -->
         <ToggleSwitch
