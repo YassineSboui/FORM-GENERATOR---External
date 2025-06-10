@@ -193,4 +193,7 @@ watch(
   padding: 5px !important;
   height: 102vh !important;
 }
+.p-toast {
+  width: 50vw !important;
+}
 </style>
