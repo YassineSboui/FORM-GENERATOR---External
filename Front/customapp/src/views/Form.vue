@@ -109,23 +109,19 @@
 </template>
 
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-  h,
-  onBeforeMount,
-  onMounted,
-  ref,
-  watch,
-  type Ref,
-} from "vue";
+import { computed, defineComponent, onBeforeMount, ref, type Ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchOneObject } from "@/api/api";
 import { useI18n } from "vue-i18n";
 import { i18n } from "@/main"; // Import i18n from main.ts
 import { useAppStore } from "@/store/app.store";
+import { usePrimeVue } from "primevue/config";
 import { useHttpRequest } from "@/store/httpRequest.store";
-
+import { definePreset, palette } from "@primeuix/themes";
+import Aura from "@primeuix/themes/aura";
+import Lara from "@primeuix/themes/lara";
+import Nora from "@primeuix/themes/nora";
+import Material from "@primeuix/themes/material";
 export default defineComponent({
   setup() {
     const { t } = useI18n();
@@ -151,6 +147,56 @@ export default defineComponent({
     const languages: Ref<any[]> = ref([]);
     const languagesList: Ref<any[]> = ref([]);
     const formfound = ref(true);
+    const PrimeVue = usePrimeVue();
+    const localFormConfig = ref({} as any);
+
+    const themePresets = {
+      lara: Lara,
+      nora: Nora,
+      material: Material,
+      aura: Aura,
+    } as any;
+
+    function hexToPalette(hex: string) {
+      return palette(hex) as any;
+    }
+
+    const applyDynamicTheme = () => {
+      const themeConfig = localFormConfig.value.externalFormTheme;
+      if (!themeConfig) {
+        console.warn("No externalFormTheme found.");
+        return;
+      }
+
+      console.log("Loading dynamic theme:", themeConfig);
+
+      const selectedTheme = themeConfig.theme?.toLowerCase() || "aura";
+      const primaryColor = themeConfig.primary || "#1976D2";
+      const surfaceColor = themeConfig.surface || "#ffffff";
+
+      const preset = themePresets[selectedTheme] || Aura;
+      const MyPreset = definePreset(preset, {
+        semantic: {
+          primary: hexToPalette(primaryColor),
+          colorScheme: {
+            light: {
+              surface: hexToPalette(surfaceColor),
+            },
+            dark: {
+              surface: hexToPalette(surfaceColor),
+            },
+          },
+        },
+      });
+
+      PrimeVue.config.theme = {
+        preset: MyPreset,
+        options: {
+          darkModeSelector: false,
+        },
+      };
+    };
+
     onBeforeMount(async () => {
       appStore.setExternalAuth(
         route.query.code as string,
@@ -159,9 +205,12 @@ export default defineComponent({
       console.log("Auth Updated");
       object.value = await fetchOneObject(formID.value);
 
-      const localFormConfig = ref(
-        JSON.parse(object.value?.objectJson).objectConfig.formConfig
-      );
+      localFormConfig.value = JSON.parse(
+        object.value?.objectJson
+      ).objectConfig.formConfig;
+      applyDynamicTheme();
+      console.log("localFormConfig", localFormConfig.value);
+      // applyDynamicTheme();
       formName.value = localFormConfig.value.formName;
       isStepper.value = localFormConfig.value.isStepper;
       isRTL.value = localFormConfig.value.isRTL;
@@ -179,25 +228,6 @@ export default defineComponent({
       i18n.global.locale.value = isRTL.value ? "arabic" : "french";
     });
 
-    onMounted(() => {
-      // removeCodeFromUrl();
-    });
-
-    const removeCodeFromUrl = () => {
-      // Get the current URL
-      const url = window.location.href;
-
-      // Find the position of the query parameter
-      const queryStartIndex = url.indexOf("?");
-
-      if (queryStartIndex !== -1) {
-        // Remove the query parameter part
-        const cleanUrl = url.substring(0, queryStartIndex);
-
-        // Update the URL without reloading the page
-        window.history.replaceState({}, document.title, cleanUrl);
-      }
-    };
     const form: Ref<any[]> = computed(() => {
       return object.value
         ? JSON.parse(object.value.objectJson).objectConfig.formTemplate
@@ -263,26 +293,6 @@ export default defineComponent({
     const previousButtonText = computed(() => t("buttons.previous"));
     const nextButtonText = computed(() => t("buttons.next"));
     const submitButtonText = computed(() => t("buttons.validate"));
-
-    // Function to convert language codes to objects with code and name
-    // const convertLanguages = (codes: string[]) => {
-    //   const result = codes
-    //     .map((code) => {
-    //       if (code === "AR") {
-    //         return { code: "AR", name: arabicChoice.value };
-    //       } else if (code === "ENG") {
-    //         return { code: "ENG", name: englishChoice.value };
-    //       }
-    //       return null;
-    //     })
-    //     .filter(Boolean);
-
-    //   // Always add French language
-    //   result.push({ code: "FR", name: frenchChoice.value });
-
-    //   return result;
-    // };
-    // Example usage
 
     return {
       form,

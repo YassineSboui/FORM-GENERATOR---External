@@ -1,5 +1,9 @@
 <template>
-  <div class="neodatepickerExternal" v-show="!isHidden">
+  <div
+    class="neodatepickerExternal"
+    :class="{ 'mb-2': isParentNeoTable }"
+    v-show="!isHidden"
+  >
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         <span>{{
@@ -36,49 +40,36 @@
       :style="{
         position: 'unset',
         height: isParentNeoTable ? '30px' : '60px',
-        'min-width': isAbsolute && isParentNeoTable ? '130px' : 'unset',
         'max-height': isParentNeoTable ? '30px' : '60px',
-        'max-width': isParentNeoTable ? maxWidth : 'unset',
-        'margin-top': isAbsolute && isParentNeoTable ? '-15px' : 'unset',
       }"
     >
       <!-- :readonly="options.readonly" -->
-      <vue3-datepicker
-        ref="datepicker"
-        input-class="customClass datepicker-class p-component"
-        :format="formatValue"
+
+      <DatePicker
         v-model="formatedDate"
+        :date-format="formatValue"
         :disabled="isDisabled"
+        :readonly="options.readonly"
         :required="options.required"
-        :hidden="isHidden"
-        :typeable="isTypeable"
-        class="customClass datepicker-class"
-        @selected="onChange"
-        :class="{ 'p-invalid': errorMessage != 'true' }"
-        :disabled-dates="{
-          from: maxDate,
-          to: minDate,
-          dates: disabledDates,
-          ranges: rangeDate,
-          days: days,
-          daysOfMonth: daysOfMonth,
-        }"
-        @click="
-          () => {
-            isAbsolute = true;
-          }
-        "
-        @closed="
-          () => {
-            isAbsolute = false;
-          }
-        "
+        :minDate="minDate"
+        :maxDate="maxDate"
+        :disabledDates="disabledDates"
+        :manualInput="isTypeable"
+        :inputClass="[
+          'customClass',
+          'datepicker-class',
+          { 'p-invalid': errorMessage != 'true' },
+        ]"
+        @change="onChange"
         @focus="$emit('focus', $event)"
         @blur="$emit('blur', $event)"
         @mouseenter="$emit('mouseenter', $event)"
         @mouseleave="$emit('mouseleave', $event)"
-        monday-first="true"
-        :language="isRTL ? 'arTn' : 'fr'"
+        :locale="isRTL ? 'ar' : 'fr'"
+        style="margin-bottom: 8px"
+        showIcon
+        fluid
+        iconDisplay="input"
       />
 
       <small
@@ -217,27 +208,44 @@ export default {
         // store.removeFormHasError(props.options.name);
       }
     );
+
+    const toPrimeVueFormat = (format: string): string => {
+      console.log("format", format);
+      return (
+        format
+          // Year
+          .replace(/yyyy/g, "yy")
+          .replace(/yy/g, "y")
+          // Month
+          .replace(/MMM/g, "M")
+          .replace(/MM/g, "mm")
+          // Day
+          .replace(/dd/g, "dd")
+      );
+    };
+
     const formatValue = computed(() => {
-      return props.options.format;
+      return toPrimeVueFormat(props.options.format);
     });
 
     const formatedDate = computed({
       get() {
         if (
           !internalValue.value ||
-          internalValue.value == "" ||
-          internalValue.value == null ||
-          internalValue.value == undefined
-        )
-          return ""; // Return empty string if value is null or undefined
+          internalValue.value === "" ||
+          internalValue.value === null ||
+          internalValue.value === undefined
+        ) {
+          return null; // Return null for empty value (prevents NaN)
+        }
         const date = new Date(internalValue.value);
-
-        return format(date, props.options.format); // Format date using date-fns
+        if (isNaN(date.getTime())) {
+          return null; // Return null for invalid date (prevents NaN)
+        }
+        return date; // Return Date object for valid value
       },
       set(value: any) {
         let dateString = value;
-
-        // If the value is a Date object, convert it to a string first
         if (value instanceof Date) {
           dateString = format(value, props.options.format);
         } else if (typeof value !== "string") {
@@ -247,27 +255,21 @@ export default {
           );
           return;
         }
-
         try {
           const parsedDate = parse(
             dateString,
             props.options.format,
             new Date()
-          ); // Parse the string or formatted date
-
-          // Check if parsedDate is valid
+          );
           if (isNaN(parsedDate.getTime())) {
             throw new Error("Invalid date value");
           }
-
-          // Format the parsed date correctly or convert it to ISO string if needed
           const date = props.isRules
             ? parsedDate
             : new Date(parsedDate.setDate(parsedDate.getDate() + 1))
                 .toISOString()
                 .split("T")[0];
-          console.log("date", date);
-          emit("update:modelValue", date); // Emit the formatted date
+          emit("update:modelValue", date);
         } catch (error) {
           console.error("Error parsing the date:", error);
           logger.error(error);
@@ -576,118 +578,4 @@ export default {
 
 <style lang="scss">
 @import "@/scss/variables";
-
-$label-container-min-width: 150px;
-$text-input-height: 30px;
-$write-mode-input-height: 28px;
-$color-invalid-input: #faa19b;
-$color-datepicker-calendar: #4bd;
-
-.neodatepickerExternal {
-  width: 100%;
-  .label {
-    display: flex;
-    flex: 1;
-    flex-direction: row;
-    .label-container {
-      color: #165c77;
-      min-width: 150px;
-      align-items: center;
-      display: flex;
-      padding-bottom: 5px;
-      font-family: Trebuchet MS, sans-serif;
-      font-size: 12px;
-      .label .label-container-modified {
-        text-align: right;
-      }
-    }
-  }
-  .input-container {
-    height: 60px;
-    max-height: 60px;
-    position: relative !important;
-    // position: absolute;
-    .datepicker-class {
-      width: 100%;
-      background-color: #ffffff;
-      border-radius: 4px;
-      border: 1px solid #eaecee;
-      height: 36px;
-      .vuejs3-datepicker__calendar {
-        top: 110%;
-        position: absolute !important;
-        background-color: #ffffff;
-        border-radius: 5px;
-        border: 1px solid $color-blue-dark;
-        z-index: 9999 !important;
-      }
-      .vuejs3-datepicker__calendar-topbar {
-        display: none;
-      }
-      .vuejs3-datepicker__inputvalue {
-        width: 100%;
-        border-radius: 4px;
-        border: 1px solid #cbd5e1;
-        border-style: solid !important;
-        background-color: #ffffff;
-        color: $color-grey-tundora;
-        height: 36px;
-        min-height: 36px;
-        outline: none;
-        min-width: 130px !important;
-      }
-      .vuejs3-datepicker__typeablecalendar {
-        position: absolute;
-        top: 8px;
-        left: 10px;
-      }
-      .vuejs3-datepicker__inputvalue:focus {
-        border: 1px solid $color-blue-dark !important;
-      }
-      input:focus {
-        border: 1px solid $color-blue-dark !important;
-      }
-      input:hover {
-        border: 1px solid $color-blue-jungle-mist;
-      }
-      .vuejs3-datepicker__calendar .cell {
-        &.selected {
-          background: $color-datepicker-calendar !important;
-          color: unset !important;
-        }
-
-        &:not(.blank):not(.disabled):hover {
-          border: 1px solid $color-datepicker-calendar !important;
-        }
-      }
-    }
-  }
-  .vuejs3-datepicker__value {
-    width: 100%;
-    border-radius: 4px;
-    border: 1px solid #cbd5e1;
-    border-style: solid !important;
-    background-color: #ffffff;
-    color: $color-grey-tundora;
-    height: 36px;
-    min-height: 36px;
-    outline: none;
-    display: flex;
-    align-items: center;
-  }
-  .error-container {
-    width: 100%;
-  }
-}
-.neodatepicker .input-container .datepicker-class:disabled {
-  border: 1px solid #d9dde0 !important;
-  background-color: white !important;
-  color: #959fa7 !important;
-  cursor: not-allowed;
-  box-shadow: none !important;
-  outline: none !important;
-}
-.vuejs3-datepicker__calendar .flex-rtl {
-  display: block !important;
-}
 </style>

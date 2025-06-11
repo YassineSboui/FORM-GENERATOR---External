@@ -1,5 +1,9 @@
 <template>
-  <div class="neoselect" v-show="!isHidden">
+  <div
+    class="neoselect"
+    :class="{ 'mb-2': isParentNeoTable }"
+    v-show="!isHidden"
+  >
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         <span>{{

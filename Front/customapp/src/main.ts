@@ -9,6 +9,9 @@ import "@mdi/font/css/materialdesignicons.css";
 import PrimeVue from "primevue/config";
 import "primeicons/primeicons.css";
 import Aura from "@primeuix/themes/aura";
+import Lara from "@primeuix/themes/lara";
+import Nora from "@primeuix/themes/nora";
+import Material from "@primeuix/themes/material";
 import ToastService from "primevue/toastservice";
 import ConfirmationService from "primevue/confirmationservice";
 import DialogService from "primevue/dialogservice";
@@ -189,6 +192,7 @@ function mountApp() {
   app.use(router);
   app.use(PrimeVue, {
     theme: {
+      engine: true,
       preset: Aura,
       options: {
         darkModeSelector: false,
