@@ -41,112 +41,8 @@
         class="editor"
         v-model="internalValue"
         :readonly="isDisabled || options.readonly"
-        :style="editorStyle"
+        :editorStyle="editorStyle"
       >
-        <template #toolbar>
-          <span class="ql-formats">
-            <select class="ql-size">
-              <option value="small"></option>
-              <option selected></option>
-              <option value="large"></option>
-            </select>
-            <select class="ql-header">
-              <option value="1"></option>
-              <option value="2"></option>
-              <option value="3"></option>
-              <option selected></option>
-            </select>
-            <select class="ql-font">
-              <option value="serif"></option>
-              <option value="monospace"></option>
-            </select>
-            <button class="ql-bold"></button>
-            <button class="ql-italic"></button>
-            <button class="ql-underline"></button>
-            <button class="ql-strike"></button>
-            <button class="ql-blockquote"></button>
-            <button class="ql-code-block"></button>
-            <button class="ql-list" value="ordered"></button>
-            <button class="ql-list" value="bullet"></button>
-            <button class="ql-script" value="sub"></button>
-            <button class="ql-script" value="super"></button>
-            <button class="ql-indent" value="-1"></button>
-            <button class="ql-indent" value="+1"></button>
-            <button class="ql-direction"></button>
-            <select class="ql-color">
-              <!-- Grey -->
-              <option value="#101316"></option>
-              <option value="#414E59"></option>
-              <option value="#73808B"></option>
-              <option value="#959FA7"></option>
-              <!-- Brand -->
-              <option value="#064252"></option>
-              <option value="#0A6E89"></option>
-              <option value="#398AA0"></option>
-              <option value="#68A7B8"></option>
-              <!-- Purple -->
-              <option value="#6A1840"></option>
-              <option value="#8E2055"></option>
-              <option value="#C05086"></option>
-              <option value="#CF78A2"></option>
-              <!-- Red -->
-              <option value="#941222"></option>
-              <option value="#E71D36"></option>
-              <option value="#EC475C"></option>
-              <option value="#F07282"></option>
-              <!-- Yellow -->
-              <option value="#947900"></option>
-              <option value="#F6C900"></option>
-              <option value="#F8D32F"></option>
-              <option value="#FADD5E"></option>
-              <!-- Green -->
-              <option value="#4F6F11"></option>
-              <option value="#84B91C"></option>
-              <option value="#9BC646"></option>
-              <option value="#B2D46F"></option>
-            </select>
-            <select class="ql-background">
-              <!-- Grey -->
-              <option value="#101316"></option>
-              <option value="#414E59"></option>
-              <option value="#73808B"></option>
-              <option value="#959FA7"></option>
-              <!-- Brand -->
-              <option value="#064252"></option>
-              <option value="#0A6E89"></option>
-              <option value="#398AA0"></option>
-              <option value="#68A7B8"></option>
-              <!-- Purple -->
-              <option value="#6A1840"></option>
-              <option value="#8E2055"></option>
-              <option value="#C05086"></option>
-              <option value="#CF78A2"></option>
-              <!-- Red -->
-              <option value="#941222"></option>
-              <option value="#E71D36"></option>
-              <option value="#EC475C"></option>
-              <option value="#F07282"></option>
-              <!-- Yellow -->
-              <option value="#947900"></option>
-              <option value="#F6C900"></option>
-              <option value="#F8D32F"></option>
-              <option value="#FADD5E"></option>
-              <!-- Green -->
-              <option value="#4F6F11"></option>
-              <option value="#84B91C"></option>
-              <option value="#9BC646"></option>
-              <option value="#B2D46F"></option>
-            </select>
-            <select class="ql-align">
-              <option value="justify"></option>
-              <option value="center"></option>
-              <option value="right"></option>
-            </select>
-            <button class="ql-clean"></button>
-            <button class="ql-link"></button>
-            <button class="ql-image"></button>
-          </span>
-        </template>
       </Editor>
       <small class="p-error" id="text-error" v-if="errorState.errorMessage">
         {{ errorState.errorMessage || "&nbsp;" }}
@@ -236,15 +132,22 @@ export default defineComponent({
 
     const editorStyle = computed(() => {
       const height = props.options.height || props.height;
-      return `height: ${height}; font-size: 14.7px; line-height: 18.2px; font-weight: 400; font-family: Trebuchet MS`;
+      return `
+    min-height: ${height};
+    max-height: 300px;
+    width: 100%;
+    font-size: 14.7px;
+    line-height: 18.2px;
+    font-weight: 400;
+    font-family: Trebuchet MS;
+    overflow-y: auto;
+  `;
     });
-    const neoEditorStyle = computed(() => {
-      const height = props.options.height || props.height;
-      // If height is set, use calc to add 50px, otherwise fallback to 200px
-      return {
-        height: height ? `calc(${height} + 75px)` : "200px",
-      };
-    });
+    const neoEditorStyle = computed(() => ({
+      minHeight: props.options.height || props.height || "150px",
+      width: "100%",
+      // Remove the height property so it grows with content
+    }));
     // Function to update field
     const setValue = (value: string) => {
       internalValue.value = value;
@@ -349,4 +252,26 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped></style>
+
+<style scoped>
+.neoeditor {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.neoeditor .input-container,
+.neoeditor .editor {
+  width: 100%;
+  min-height: 0;
+  height: auto !important;
+  box-sizing: border-box;
+}
+
+.neoeditor .editor .ql-editor {
+  max-height: 250px; /* slightly less than 300px to account for toolbar */
+  overflow-y: auto;
+}
+</style>

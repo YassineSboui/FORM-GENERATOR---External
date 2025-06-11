@@ -178,17 +178,6 @@ watch(
   animation-duration: 3s;
   animation-iteration-count: infinite;
 }
-.chatbot-drawer .p-drawer-header {
-  justify-content: space-between !important;
-}
-.chatbot-drawer {
-  width: 400px !important;
-  bottom: 0 !important;
-  top: 0 !important;
-}
-.chatbot-drawer .p-drawer-footer {
-  border-top: 1px solid #e0e0e0;
-}
 .full-height {
   padding: 5px !important;
   height: 102vh !important;

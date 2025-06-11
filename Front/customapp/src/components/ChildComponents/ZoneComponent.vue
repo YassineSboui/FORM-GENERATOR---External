@@ -17,11 +17,7 @@
             <component
               v-if="propsValue.rows.column1[j - 1]"
               :style="{
-                maxWidth:
-                  propsValue?.rows.column1[j - 1]?.component ==
-                  'NeoTableComponent'
-                    ? `${win.innerWidth * 0.948}px`
-                    : 'none',
+                maxWidth: 'none',
               }"
               :ref="propsValue.rows.column1[j - 1].options.name"
               :is="propsValue.rows.column1[j - 1]?.component"
@@ -1125,11 +1121,7 @@
           <div
             :class="{ col: true, 'pr-2': isRTL }"
             :style="{
-              maxWidth:
-                propsValue?.rows.column1[j - 1]?.component ==
-                'NeoTableComponent'
-                  ? `${win.innerWidth * 0.948}px`
-                  : 'none',
+              maxWidth: 'none',
             }"
           >
             <component
