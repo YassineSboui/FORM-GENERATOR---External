@@ -83,8 +83,8 @@
   left: 10px;
   right: 10px;
   bottom: 10px;
-  background-color: #eeeeee;
-  border: solid 5px #eeeeee;
+  background-color: #e0e0e0;
+  border: solid 5px #e0e0e0;
   border-radius: 50%;
 }
 

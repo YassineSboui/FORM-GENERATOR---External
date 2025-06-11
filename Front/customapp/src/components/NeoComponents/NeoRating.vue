@@ -47,10 +47,16 @@
         class="pt-2"
       >
         <template #onicon>
-          <i :class="'pi pi-' + options.onIcon" style="color: #0a6e89"></i>
+          <i
+            :class="'pi pi-' + options.onIcon"
+            :style="{ color: store.primaryColor }"
+          ></i>
         </template>
         <template #officon>
-          <i :class="'pi pi-' + options.icon" style="color: #0a6e89"></i>
+          <i
+            :class="'pi pi-' + options.icon"
+            :style="{ color: store.primaryColor }"
+          ></i>
         </template>
       </Rating>
       <small class="p-error" id="text-error" v-if="errorState.errorMessage">
@@ -61,6 +67,7 @@
 </template>
 
 <script lang="ts">
+import { useAppStore } from "@/store/app.store";
 import { computed, reactive, watch } from "vue";
 
 interface OptionConfig {
@@ -120,6 +127,7 @@ export default {
   },
   emits: ["update:options", "update:modelValue"],
   setup(props, { emit }) {
+    const store = useAppStore();
     const internalValue = computed({
       get(): number {
         return parseInt(props.modelValue);
@@ -236,6 +244,7 @@ export default {
       clearFieldError,
       errorState,
       updateOptions,
+      store,
     };
   },
 };
