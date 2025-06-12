@@ -1,5 +1,5 @@
 <template>
-  <div class="neoPhoto" v-show="!isHidden">
+  <div class="neoPhoto pt-5" v-show="!isHidden">
     <!-- Label Section -->
     <div class="label" v-if="label && showLabel">
       <label class="label-container">
@@ -69,14 +69,14 @@
         <Button
           label="Galerie"
           icon="pi pi-images"
-          class="gallery-button"
+          :class="isRTL ? 'camera-button2' : 'gallery-button'"
           @click="openFileDialog"
         />
         <Button
           label="Caméra"
           icon="pi pi-camera"
           @click="visible = true"
-          class="camera-button2"
+          :class="isRTL ? 'gallery-button' : 'camera-button2'"
         />
       </ButtonGroup>
 
@@ -87,7 +87,6 @@
         style="display: none"
         accept="image/*"
       />
-
       <!-- Photo Previews -->
       <div
         class="grid photo-preview-container pl-2 pr-2"
@@ -140,7 +139,7 @@
         <div class="camera-container">
           <camera
             :resolution="{ width: options.width, height: options.height }"
-            ref="Caméra"
+            ref="camera"
             v-if="showCamera"
             autoplay
           >
@@ -416,6 +415,7 @@ export default defineComponent({
     const takeSnapshot = async () => {
       try {
         if (camera.value) {
+          console.log("Taking snapshot...");
           const blob = await camera.value.snapshot({
             width: props.options.width,
             height: props.options.height,
@@ -672,9 +672,6 @@ export default defineComponent({
   opacity: 0.5;
 }
 .camera-container {
-  border: 2px solid #165c77; /* Change to your desired color */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Shadow effect */
   overflow: hidden; /* Prevent overflow of the camera component */
   width: 100%; /* Ensure the container takes the full width */
   max-width: 100%; /* Avoid exceeding the dialog width */
@@ -702,7 +699,6 @@ export default defineComponent({
   top: 5px;
   right: 5px;
 }
-
 .camera {
   position: relative;
 }
@@ -713,14 +709,12 @@ export default defineComponent({
   transform: translateX(-50%);
   zoom: 80%;
 }
-
 .button-container {
   position: absolute;
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
 }
-
 .button-container-swap {
   position: absolute;
   bottom: 10px;
@@ -728,8 +722,8 @@ export default defineComponent({
   transform: translateX(-50%);
   zoom: 80%;
 }
-
 .camera-button {
+  margin-bottom: 10px !important;
   width: 50px !important ;
   height: 50px !important ;
   display: flex !important ;
@@ -742,12 +736,10 @@ export default defineComponent({
   cursor: pointer !important ;
   transition: background 0.3s !important ;
 }
-
 .camera-button i {
   color: #fff;
   font-size: 1.5em;
 }
-
 .camera-button:hover {
   background: rgba(255, 255, 255, 0.3); /* Slightly brighter on hover */
 }
@@ -755,7 +747,7 @@ export default defineComponent({
   display: flex; /* Align images in a row */
   overflow-x: auto; /* Enable horizontal scrolling */
   background-color: #f8f8f8; /* Light background color */
-  border: 2px solid #165c77; /* Border color */
+  border: 2px solid var(--p-primary-color); /* Border color */
   border-radius: 10px; /* Rounded corners */
   padding: 10px; /* Padding inside the box */
   margin-top: 10px; /* Space above the preview box */
@@ -763,7 +755,6 @@ export default defineComponent({
   max-height: 150px; /* Set a max height for the preview box */
   max-width: 80vw;
 }
-
 /* Media query for screens wider than 450px */
 @media (min-width: 500px) {
   .photo-preview-box {
@@ -800,5 +791,11 @@ export default defineComponent({
 .camera-button2 {
   border-radius: 0px 8px 8px 0px !important;
   height: 40px;
+}
+#video[data-v-74104ed5] {
+  width: 100%;
+  height: unset !important;
+  border: 5px solid var(--p-primary-color);
+  border-radius: 20px;
 }
 </style>

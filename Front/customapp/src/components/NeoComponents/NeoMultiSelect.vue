@@ -211,13 +211,13 @@ export default {
       height: 38.5px;
       margin-top: -4px;
       margin-bottom: 2px;
-      border: #0a6e89;
+      border: var(--p-primary-color);
     }
 
     .token {
       height: 28px !important;
       color: white !important;
-      background-color: #0a6e89 !important;
+      background-color: var(--p-primary-color) !important;
     }
   }
 }

@@ -15,7 +15,7 @@
       !isHidden
         ? `neoButton flex flex-column justify-content-${
             options.position === 'center' ? 'center' : options.position
-          } mt-3`
+          } mt-5`
         : `neoButton`
     "
     v-show="!isHidden"

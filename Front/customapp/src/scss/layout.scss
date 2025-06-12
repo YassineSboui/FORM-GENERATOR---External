@@ -250,7 +250,8 @@ body {
 
 .p-dialog {
   .p-dialog-header {
-    color: #0a6e89;
+    // i want the color to be th deault primary color of primevue
+    color: var(--p-primary-color) !important;
     span {
       // text-transform: uppercase;
       font-size: 20px !important;

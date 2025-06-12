@@ -32,7 +32,7 @@ const logToServer = async (level: any, message: any) => {
 export const uploadFile = async (base64: string, fileName?: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/File`;
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/File`;
     const payload = {
       bs64: base64 || "",
       fileName: fileName || "",
@@ -51,7 +51,7 @@ export const uploadFile = async (base64: string, fileName?: string) => {
 export const getFileByGuid = async (guid: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/File/${guid}`;
+    const apiUrl = `${httpRequest.apiUrl}F/NeoForm/File/${guid}`;
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
@@ -483,7 +483,7 @@ export const fileUpload = async (file: any) => {
     const formData = new FormData();
     formData.append("file", file);
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/Document/UploadFile`;
+    const apiUrl = `${httpRequest.apiUrl}/Document/UploadFile`;
     const response = await axios.post(apiUrl, formData, {
       headers: {
         "Content-Type": "multipart/form-data",

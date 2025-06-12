@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="neodatepickerExternal"
-    :class="{ 'mb-2': isParentNeoTable }"
-    v-show="!isHidden"
-  >
+  <div class="neodatepickerExternal" v-show="!isHidden">
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         <span>{{

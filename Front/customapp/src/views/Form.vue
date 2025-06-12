@@ -171,8 +171,12 @@ export default defineComponent({
       console.log("Loading dynamic theme:", themeConfig);
 
       const selectedTheme = themeConfig.theme?.toLowerCase() || "aura";
-      const primaryColor = themeConfig.primary || "#1976D2";
-      appStore.setPrimaryColor("#" + primaryColor);
+      var primaryColor = themeConfig.primary || "#1976D2";
+      // if its start with # the set it as is, else add #
+      if (!primaryColor.startsWith("#")) {
+        primaryColor = "#" + primaryColor;
+      }
+      appStore.setPrimaryColor(primaryColor);
       const surfaceColor = themeConfig.surface || "#ffffff";
 
       const preset = themePresets[selectedTheme] || Aura;

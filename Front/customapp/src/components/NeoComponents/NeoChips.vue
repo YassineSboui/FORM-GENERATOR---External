@@ -148,7 +148,7 @@ export default {
           font-size: 0.9rem !important;
           padding: 0.2rem 0.5rem !important;
           color: white !important;
-          background-color: #0a6e89 !important;
+          background-color: var(--p-primary-color) !important;
           margin: 0.1rem 0 !important;
         }
         .p-inputchips-input-token {

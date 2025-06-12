@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="neoUploadFile"
-    :class="{ 'mb-3': !isParentNeoTable }"
-    v-show="!isHidden"
-  >
+  <div class="neoUploadFile" v-show="!isHidden">
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         <span>{{
@@ -42,73 +38,9 @@
       }"
     >
       <!-- rest of the template -->
-      <div class="con" v-if="options.isLinear">
-        <div class="basic flex flex-row flex-wrap justify-content-between">
-          <label
-            style="width: 100%"
-            class="custom-file-input flex flex-row flex-wrap justify-content-between"
-          >
-            <input
-              type="file"
-              @change="onFileChange"
-              :multiple="options.multiple ? true : false"
-              ref="fileInput"
-              :accept="options.accept"
-              style="display: none"
-              :disabled="isDisabled || loading"
-            />
-            <div class="names flex flex-row" v-if="files.length > 0">
-              <div
-                class="file-name mr-2 flex flex-row flex-wrap"
-                v-for="file in files"
-                :key="file.fileName"
-              >
-                <span style="display: flex; align-items: center">{{
-                  file.fileName || file.name
-                }}</span>
-                <Button
-                  class="ml-1"
-                  severity="danger"
-                  text
-                  style="height: 20px; width: 20px"
-                  icon="pi pi-times-circle"
-                  @click.stop.prevent="files.splice(files.indexOf(file), 1)"
-                ></Button>
-              </div>
-            </div>
-
-            <div
-              v-else
-              style="
-                max-width: 50%;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                max-height: 1.2rem;
-              "
-            >
-              {{ options.placeholder || "Sélectionnez un fichier" }}
-            </div>
-            <div
-              v-if="loading"
-              class="loader-overlay flex align-items-center justify-content-between"
-            >
-              <i
-                class="pi pi-spin pi-spinner text-xl"
-                style="color: #0a6e89"
-              ></i>
-            </div>
-            <span
-              v-else
-              class="flex justify-content-between align-items-center"
-            >
-              <i class="pi pi-upload mr-3"></i>
-            </span>
-          </label>
-        </div>
-      </div>
       <FileUpload
-        v-else
+        v-if="!isParentNeoTable"
+        mode="basic"
         name="demo[]"
         @uploader="onAdvancedUpload($event)"
         customUpload
@@ -116,6 +48,98 @@
         :maxFileSize="options.size"
         :accept="options.accept"
         :disabled="isDisabled"
+      >
+        <template #empty>
+          <div
+            class="flex align-items-center justify-content-center flex-column"
+          >
+            <i
+              class="pi pi-cloud-upload border-2 border-circle p-5 text-8xl text-400 border-400"
+            />
+            <p class="mt-4 mb-0">Drag and drop files to here to upload.</p>
+          </div>
+        </template>
+        <template
+          #header="{ chooseCallback, uploadCallback, clearCallback, files }"
+        >
+          <div
+            class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2"
+          >
+            <div class="flex gap-2">
+              <Button
+                @click="chooseCallback()"
+                icon="pi pi-images"
+                rounded
+                outlined
+              ></Button>
+              <Button
+                @click="uploadEvent(files)"
+                icon="pi pi-cloud-upload"
+                rounded
+                outlined
+                severity="success"
+                :disabled="!files || files.length === 0"
+              ></Button>
+              <Button
+                @click="clear(clearCallback)"
+                icon="pi pi-times"
+                rounded
+                outlined
+                severity="danger"
+                :disabled="!files || files.length === 0"
+              ></Button>
+            </div>
+          </div>
+        </template>
+        <template #content="{ removeUploadedFileCallback, removeFileCallback }">
+          <div v-if="uploadedFiles.length > 0">
+            <div class="">
+              <div
+                v-for="(file, index) of uploadedFiles"
+                :key="file.fileName + file.type + file.size"
+                class="card m-1 p-3 flex border-1 surface-border align-items-center justify-content-between flex-wrap"
+              >
+                <div class="flex align-items-center">
+                  <Avatar
+                    class="p-overlay-badge mr-3"
+                    :image="file.objectURL"
+                    size="xlarge"
+                  />
+                  <div class="flex flex-column">
+                    <span>{{ file.fileName }}</span>
+                    <Badge
+                      value="Completed"
+                      class="mt-1"
+                      severity="success"
+                      style="max-width: 6rem"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  icon="pi pi-times"
+                  @click="remove(index)"
+                  rounded
+                  text
+                  severity="danger"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
+      </FileUpload>
+      <FileUpload
+        v-else
+        mode="basic"
+        name="demo[]"
+        @uploader="onAdvancedUpload($event)"
+        customUpload
+        :multiple="options.multiple ? true : false"
+        :maxFileSize="options.size"
+        :accept="options.accept"
+        :disabled="isDisabled"
+        class="table-outlined-button"
+        auto
       >
         <template #empty>
           <div
@@ -473,64 +497,9 @@ export default {
 </script>
 
 <style lang="scss">
-.neoUploadFile {
-  .label {
-    display: flex;
-    flex: 1;
-    flex-direction: row;
-    height: 20px;
-    max-height: 20px;
-    .label-container {
-      color: #165c77;
-      min-width: 150px;
-      align-items: center;
-      display: flex;
-      padding-bottom: 5px;
-      padding-top: 5px;
-      font-family: Trebuchet MS, sans-serif;
-      font-size: 12px;
-      .label .label-container-modified {
-        text-align: right;
-      }
-    }
-  }
-  .input-container {
-    height: unset !important;
-    max-height: unset !important;
-    .con {
-      width: 100%;
-      padding-top: 5px !important;
-      .basic {
-        border: 1px solid #ccc;
-        padding: 0.5rem !important;
-        border-radius: 4px;
-        height: 36px;
-        .p-fileupload-basic {
-          .p-fileupload-choose {
-            background: none;
-          }
-          .p-button {
-            background: none;
-            color: #0a6e89;
-            height: 10px;
-          }
-        }
-      }
-    }
-  }
-}
-.file-name {
-  display: flex;
-  align-items: center;
-  background-color: #f4f8f9;
-  padding: 0.2rem 0.5rem;
-  border-radius: 10px;
-}
-// .custom-file-input {
-//   // display: inline-block;
-//   cursor: pointer;
-// }
-.p-button.p-button-icon-only.p-button-rounded {
-  height: 3rem;
+.table-outlined-button {
+  background: transparent;
+  border-color: var(--p-surface-color);
+  color: var(--p-surface-color);
 }
 </style>

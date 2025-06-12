@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="neoTimePicker"
-    :class="{ 'mb-2': isParentNeoTable }"
-    v-show="!isHidden"
-  >
+  <div class="neoTimePicker" v-show="!isHidden">
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         <span>{{
