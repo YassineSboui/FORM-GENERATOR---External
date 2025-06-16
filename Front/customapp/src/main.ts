@@ -1,22 +1,31 @@
-import { createApp } from "vue";
-import Quill from "quill";
-import { createI18n } from "vue-i18n";
+import { createApp, reactive, watch } from "vue";
 import App from "./App.vue";
 import router from "./router";
+import { createI18n } from "vue-i18n";
 import arabic from "./i18n/ar";
 import french from "./i18n/fr";
-import "@mdi/font/css/materialdesignicons.css";
 import PrimeVue from "primevue/config";
-import "primeicons/primeicons.css";
 import Aura from "@primeuix/themes/aura";
-import Lara from "@primeuix/themes/lara";
-import Nora from "@primeuix/themes/nora";
-import Material from "@primeuix/themes/material";
 import ToastService from "primevue/toastservice";
 import ConfirmationService from "primevue/confirmationservice";
-import DialogService from "primevue/dialogservice";
 import BadgeDirective from "primevue/badgedirective";
 import Tooltip from "primevue/tooltip";
+import { createPinia } from "pinia";
+import * as NeoComponents from "@/components/NeoComponents";
+import * as ChildComponents from "@/components/ChildComponents";
+import keycloak from "./keycloak";
+import { Field, ErrorMessage, defineRule, configure } from "vee-validate";
+import { localize } from "@vee-validate/i18n";
+import * as rules from "@vee-validate/rules";
+import ar from "@vee-validate/i18n/dist/locale/ar.json";
+import en from "@vee-validate/i18n/dist/locale/en.json";
+import fr from "@vee-validate/i18n/dist/locale/fr.json";
+import QrcodeVue, { QrcodeCanvas, QrcodeSvg } from "qrcode.vue";
+import Camera from "simple-vue-camera";
+import Vue3Signature from "vue3-signature";
+import Quill from "quill";
+
+// PrimeVue Components
 import Editor from "primevue/editor";
 import ConfirmDialog from "primevue/confirmdialog";
 import Toast from "primevue/toast";
@@ -41,23 +50,15 @@ import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
 import AccordionHeader from "primevue/accordionheader";
 import AccordionContent from "primevue/accordioncontent";
+
+// Styles
+import "@mdi/font/css/materialdesignicons.css";
+import "primeicons/primeicons.css";
 import "material-icons/iconfont/material-icons.css";
 import "./assets/css/style.css";
 import "@/scss/layout.scss";
-import { createPinia } from "pinia";
-import QrcodeVue, { QrcodeCanvas, QrcodeSvg } from "qrcode.vue";
-import Camera from "simple-vue-camera";
-import Vue3Signature from "vue3-signature";
-import { Field, ErrorMessage, defineRule, configure } from "vee-validate";
-import { localize } from "@vee-validate/i18n";
-import * as rules from "@vee-validate/rules";
-import ar from "@vee-validate/i18n/dist/locale/ar.json";
-import en from "@vee-validate/i18n/dist/locale/en.json";
-import fr from "@vee-validate/i18n/dist/locale/fr.json";
-import * as NeoComponents from "@/components/NeoComponents";
-import * as ChildComponents from "@/components/ChildComponents";
-import keycloak from "./keycloak";
-// Iterate through the rules and define them if they are functions
+
+// VeeValidate rules registration
 for (const rule in rules) {
   if (typeof (rules as { [key: string]: any })[rule] === "function") {
     defineRule(rule, (rules as { [key: string]: any })[rule]);
@@ -65,36 +66,37 @@ for (const rule in rules) {
     console.warn(`Skipping rule "${rule}" as it's not a function.`);
   }
 }
-defineRule("alpha_underscore", (value: any) => {
-  const regex = /^[a-zA-Z0-9_]+$/;
-  return regex.test(value);
-});
+defineRule("alpha_underscore", (value: any) => /^[a-zA-Z0-9_]+$/.test(value));
 
-const app = createApp(App);
-const pinia = createPinia();
-
-// const store = useAppStore();
+// i18n setup
 const i18n = createI18n({
   legacy: false,
-  locale: "french",
-  messages: {
-    arabic,
-    french,
-  },
+  locale: "fr",
+  messages: { ar: arabic, fr: french },
 });
 
-export { i18n };
-
+// Vee-Validate config
 configure({
-  generateMessage: localize({
-    en: en,
-    ar: ar,
-    fr: fr,
-  }),
-  validateOnInput: true, // Optional, validates on input events
+  generateMessage: localize({ en, ar, fr }),
+  validateOnInput: true,
 });
 
-// Fix needed for Quill v2: https://github.com/primefaces/primevue/issues/5606#issuecomment-2203975395
+// PrimeVue locale setup
+const getPrimeVueLocale = () => {
+  const currentLocale = i18n.global.locale.value;
+  if (currentLocale === "fr") return { ...french.LocaleOptions };
+  if (currentLocale === "ar") return { ...arabic.LocaleOptions };
+  return {};
+};
+const primevueLocale = reactive(getPrimeVueLocale());
+
+// Watch for language changes to update PrimeVue locale
+watch(
+  () => i18n.global.locale.value,
+  () => Object.assign(primevueLocale, getPrimeVueLocale())
+);
+
+// Fix for Quill v2 with PrimeVue Editor
 (Editor as any).methods.renderValue = function renderValue(
   this: { quill?: Quill },
   value: string
@@ -109,106 +111,112 @@ configure({
   }
 };
 
-// Set the initial locale (optional)
+// App initialization
+const app = createApp(App);
+const pinia = createPinia();
 
-localize("fr");
+// Register global components
+const globalComponents = {
+  Field,
+  ErrorMessage,
+  ConfirmDialog,
+  vue3Datepicker: Datepicker,
+  ComponentForm: ChildComponents.ComponentForm,
+  ComponentFormTable: ChildComponents.ComponentFormTable,
+  ZoneComponent: ChildComponents.ZoneComponent,
+  ZoneComponentTable: ChildComponents.ZoneComponentTable,
+  QrcodeVue,
+  Camera,
+  Vue3Signature,
+  QrcodeCanvas,
+  QrcodeSvg,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  ToggleSwitch,
+  DatePicker: PrimeVueDatePicker,
+  Select,
+  Drawer,
+  Editor,
+  ProgressSpinner,
+  Stepper,
+  StepList,
+  StepPanels,
+  StepItem,
+  Step,
+  StepPanel,
+  Accordion,
+  AccordionPanel,
+  AccordionHeader,
+  AccordionContent,
+  Toast,
+  NeoTable: NeoComponents.NeoTable,
+  NeoTextField: NeoComponents.NeoTextField,
+  NeoTextArea: NeoComponents.NeoTextArea,
+  NeoSelect: NeoComponents.NeoSelect,
+  NeoAutoComplete: NeoComponents.NeoAutoComplete,
+  NeoDatepicker: NeoComponents.NeoDatepicker,
+  NeoCheckbox: NeoComponents.NeoCheckbox,
+  NeoTimePicker: NeoComponents.NeoTimePicker,
+  NeoRadioImages: NeoComponents.NeoRadioImages,
+  NeoEditor: NeoComponents.NeoEditor,
+  NeoNumberField: NeoComponents.NeoNumberField,
+  NeoCheckboxGroup: NeoComponents.NeoCheckboxGroup,
+  NeoSwitch: NeoComponents.NeoSwitch,
+  NeoOption: NeoComponents.NeoOption,
+  NeoOptionsGroup: NeoComponents.NeoOptionsGroup,
+  NeoUploadFile: NeoComponents.NeoUploadFile,
+  NeoRating: NeoComponents.NeoRating,
+  NeoButton: NeoComponents.NeoButton,
+  NeoTableComponent: NeoComponents.NeoTableComponent,
+  NeoVHtml: NeoComponents.NeoVHtml,
+  NeoChips: NeoComponents.NeoChips,
+  NeoMultiSelect: NeoComponents.NeoMultiSelect,
+  NeoFlowchart: NeoComponents.NeoFlowchart,
+  NeoFlowchart_V2: NeoComponents.NeoFlowchart_V2,
+  NeoListDocument: NeoComponents.NeoListDocument,
+  NeoRecap: NeoComponents.NeoRecap,
+  NeoThesaurus: NeoComponents.NeoThesaurus,
+  NeoContact: NeoComponents.NeoContact,
+  NeoTreeView: NeoComponents.NeoTreeView,
+  NeoQrCode: NeoComponents.NeoQrCode,
+  NeoPhoto: NeoComponents.NeoPhoto,
+  NeoSign: NeoComponents.NeoSign,
+};
 
-app.component("Field", Field);
-app.component("ErrorMessage", ErrorMessage);
-app.component("ConfirmDialog", ConfirmDialog);
-//app.component("defineRule", defineRule);
-app.component("vue3Datepicker", Datepicker);
-app.component("ComponentForm", ChildComponents.ComponentForm);
-app.component("ComponentFormTable", ChildComponents.ComponentFormTable);
-app.component("ZoneComponent", ChildComponents.ZoneComponent);
-app.component("ZoneComponentTable", ChildComponents.ZoneComponentTable);
-app.component("NeoTextField", NeoComponents.NeoTextField);
-app.component("NeoTextArea", NeoComponents.NeoTextArea);
-app.component("NeoSelect", NeoComponents.NeoSelect);
-app.component("NeoAutoComplete", NeoComponents.NeoAutoComplete);
-app.component("NeoDatepicker", NeoComponents.NeoDatepicker);
-app.component("NeoCheckbox", NeoComponents.NeoCheckbox);
-app.component("NeoTimePicker", NeoComponents.NeoTimePicker);
-app.component("NeoRadioImages", NeoComponents.NeoRadioImages);
-app.component("NeoEditor", NeoComponents.NeoEditor);
-app.component("NeoNumberField", NeoComponents.NeoNumberField);
-app.component("NeoCheckboxGroup", NeoComponents.NeoCheckboxGroup);
-app.component("NeoSwitch", NeoComponents.NeoSwitch);
-app.component("NeoOption", NeoComponents.NeoOption);
-app.component("NeoOptionsGroup", NeoComponents.NeoOptionsGroup);
-app.component("NeoUploadFile", NeoComponents.NeoUploadFile);
-app.component("NeoRating", NeoComponents.NeoRating);
-app.component("NeoButton", NeoComponents.NeoButton);
-app.component("NeoTableComponent", NeoComponents.NeoTableComponent);
-app.component("NeoVHtml", NeoComponents.NeoVHtml);
-app.component("NeoChips", NeoComponents.NeoChips);
-app.component("NeoMultiSelect", NeoComponents.NeoMultiSelect);
-app.component("NeoFlowchart", NeoComponents.NeoFlowchart);
-app.component("NeoFlowchart_V2", NeoComponents.NeoFlowchart_V2);
-app.component("NeoListDocument", NeoComponents.NeoListDocument);
-app.component("NeoRecap", NeoComponents.NeoRecap);
-app.component("NeoThesaurus", NeoComponents.NeoThesaurus);
-app.component("NeoContact", NeoComponents.NeoContact);
-app.component("NeoTreeView", NeoComponents.NeoTreeView);
-app.component("NeoQrCode", NeoComponents.NeoQrCode);
-app.component("NeoPhoto", NeoComponents.NeoPhoto);
-app.component("NeoSign", NeoComponents.NeoSign);
-app.component("DataView", DataView);
-app.component("Image", Image);
-app.component("Toast", Toast);
-app.component("QrcodeVue", QrcodeVue);
-app.component("Camera", Camera);
-app.component("Vue3Signature", Vue3Signature);
-app.component("QrcodeCanvas", QrcodeCanvas);
-app.component("QrcodeSvg", QrcodeSvg);
-app.component("Tabs", Tabs);
-app.component("TabList", TabList);
-app.component("Tab", Tab);
-app.component("TabPanels", TabPanels);
-app.component("TabPanel", TabPanel);
-app.component("ToggleSwitch", ToggleSwitch);
-app.component("DatePicker", PrimeVueDatePicker);
-app.component("Select", Select);
-app.component("Drawer", Drawer);
-app.component("Editor", Editor);
-app.component("ProgressSpinner", ProgressSpinner);
-app.component("Stepper", Stepper);
-app.component("StepList", StepList);
-app.component("StepPanels", StepPanels);
-app.component("StepItem", StepItem);
-app.component("Step", Step);
-app.component("StepPanel", StepPanel);
-app.component("Accordion", Accordion);
-app.component("AccordionPanel", AccordionPanel);
-app.component("AccordionHeader", AccordionHeader);
-app.component("AccordionContent", AccordionContent);
-app.component("NeoTable", NeoComponents.NeoTable);
+Object.entries(globalComponents).forEach(([name, comp]) => {
+  app.component(name, comp);
+});
+
+// Register directives
 app.directive("tooltip", Tooltip);
 app.directive("badge", BadgeDirective);
 
-const currentPath = window.location.pathname;
+// Provide keycloak globally
+app.provide("keycloak", keycloak);
+
+// Mount function
 function mountApp() {
   app.use(pinia);
   app.use(router);
   app.use(PrimeVue, {
+    locale: primevueLocale,
     theme: {
       engine: true,
       preset: Aura,
-      options: {
-        darkModeSelector: false,
-      },
+      options: { darkModeSelector: false },
     },
   });
   app.use(i18n);
   app.use(ToastService);
   app.use(ConfirmationService);
-
-  app.provide("keycloak", keycloak); // 👈 Accessible dans les composants
-
   app.mount("#app");
 }
 
-// ✅ Auth only for /neoformext/front/ page
+// Auth logic for /neoformext/front/
+const currentPath = window.location.pathname;
 if (
   currentPath === "/neoformext/front/" ||
   currentPath === "/neoformext/front"
@@ -221,8 +229,7 @@ if (
       } else {
         console.log("✅ Authenticated");
         mountApp();
-
-        // 🔁 Rafraîchissement automatique du token
+        // Token refresh
         setInterval(() => {
           keycloak.updateToken(60).catch(() => keycloak.login());
         }, 30000);
@@ -232,8 +239,8 @@ if (
       console.error("❌ Keycloak init failed", error);
     });
 } else {
-  // 🟢 Skip Keycloak for /form/ or any other routes
+  // No auth for other routes
   mountApp();
 }
-
+export { i18n };
 export default app;

@@ -214,8 +214,6 @@ export default defineComponent({
         object.value?.objectJson
       ).objectConfig.formConfig;
       applyDynamicTheme();
-      console.log("localFormConfig", localFormConfig.value);
-      // applyDynamicTheme();
       formName.value = localFormConfig.value.formName;
       isStepper.value = localFormConfig.value.isStepper;
       isRTL.value = localFormConfig.value.isRTL;
@@ -230,7 +228,8 @@ export default defineComponent({
           object.value?.objectJson
         ).objectConfig.formTemplate[0].config.names;
       }
-      i18n.global.locale.value = isRTL.value ? "arabic" : "french";
+      i18n.global.locale.value = isRTL.value ? "ar" : "fr";
+      console.log("i18n locale set to:", i18n.global.locale.value);
     });
 
     const form: Ref<any[]> = computed(() => {

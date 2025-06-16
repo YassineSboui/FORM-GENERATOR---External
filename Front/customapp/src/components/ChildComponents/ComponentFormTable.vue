@@ -456,7 +456,7 @@ import { AifileUpload } from "@/api/api";
 // import storeMap from "@/main";
 import { storeToRefs } from "pinia";
 import { localize } from "@vee-validate/i18n";
-
+import { useI18n } from "vue-i18n";
 // export default {
 const props = defineProps({
   modelValue: {
@@ -538,7 +538,7 @@ const emit = defineEmits([
 ]);
 // setup(props, { emit }) {
 const store = useAppStore();
-
+const { t } = useI18n();
 const { Fields } = storeToRefs(store);
 const confirm = useConfirm();
 const win = window;
@@ -818,11 +818,11 @@ const submitNotice = async () => {
   newNotice.files = NoticeFiles.value;
 
   confirm.require({
-    message: "Êtes-vous sûr de vouloir valider ce formulaire ?",
-    header: "Confirmation",
-    rejectLabel: "Non",
+    message: t("ComponentForm.confirmMessage"),
+    header: t("ComponentForm.confirmHeader"),
+    rejectLabel: t("ComponentForm.confirmNo"),
     rejectClass: "p-button-danger",
-    acceptLabel: "Oui",
+    acceptLabel: t("ComponentForm.confirmYes"),
     accept: async () => {
       httpRequest.setLoading(true);
       const beforeSaveCode = internalFormConfig.value.events.find(
@@ -949,8 +949,8 @@ const submit = async () => {
   if (valid === false) {
     toast.add({
       severity: "error",
-      summary: "Informations manquantes",
-      detail: "Veuillez remplir tous les champs obligatoires",
+      summary: t("ComponentForm.missingInformationsHeader"),
+      detail: t("ComponentForm.missingInformationsMessage"),
       life: 3000,
     });
     emit("done", 3);
@@ -958,8 +958,8 @@ const submit = async () => {
   } else if (notValidFieldsExists()) {
     toast.add({
       severity: "error",
-      summary: "Informations invalides",
-      detail: "Veuillez corriger les champs invalides",
+      summary: t("ComponentForm.invalidInformationsHeader"),
+      detail: t("ComponentForm.invalidInformationsMessage"),
       life: 3000,
     });
     emit("done", 3);
@@ -1420,8 +1420,8 @@ function validatePageFields(page: any) {
   if (!valid) {
     toast.add({
       severity: "error",
-      summary: "Informations manquantes ou invalides",
-      detail: "Veuillez remplir tous les champs obligatoires",
+      summary: t("ComponentForm.missingOrInvalidInformationsHeader"),
+      detail: t("ComponentForm.missingOrInvalidInformationsMessage"),
       life: 3000,
     });
   }
