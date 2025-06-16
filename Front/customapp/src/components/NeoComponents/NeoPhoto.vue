@@ -53,27 +53,27 @@
     >
       <Button
         v-if="showType == 'Gallery' && !readOnly"
-        label="Galerie"
+        :label="$t('NeoPhotoProperties.gallery')"
         icon="pi pi-images"
         class="single-button"
         @click="openFileDialog"
       />
       <Button
         v-if="showType == 'Camera' && !readOnly"
-        label="Caméra"
+        :label="$t('NeoPhotoProperties.camera')"
         icon="pi pi-camera"
         class="single-button"
         @click="visible = true"
       />
       <ButtonGroup v-if="showType == 'Les deux' && !readOnly">
         <Button
-          label="Galerie"
+          :label="$t('NeoPhotoProperties.gallery')"
           icon="pi pi-images"
           :class="isRTL ? 'camera-button2' : 'gallery-button'"
           @click="openFileDialog"
         />
         <Button
-          label="Caméra"
+          :label="$t('NeoPhotoProperties.camera')"
           icon="pi pi-camera"
           @click="visible = true"
           :class="isRTL ? 'gallery-button' : 'camera-button2'"
@@ -255,6 +255,7 @@ import {
 } from "vue";
 import { logger } from "@/api/api";
 import { uploadFile, getFileByGuid } from "@/api/api";
+import { useI18n } from "vue-i18n";
 interface OptionConfig {
   label_AR: string;
   label_ENG: string;
@@ -320,6 +321,7 @@ export default defineComponent({
 
   // Constant Variables
   setup(props, { emit }) {
+    const { t } = useI18n();
     const camera = ref<any>();
     const galleryImages = ref<string[]>([]);
     const responsiveOptions = [
@@ -615,6 +617,7 @@ export default defineComponent({
       fileInput,
       showType,
       readOnly,
+      t,
       setFieldError,
       clearFieldError,
       takeSnapshot,

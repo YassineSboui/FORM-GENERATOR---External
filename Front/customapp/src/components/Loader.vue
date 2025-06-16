@@ -88,6 +88,12 @@
   border-radius: 50%;
 }
 
+// Add this for dark mode support
+body.dark .container::after {
+  background-color: #222 !important;
+  border: solid 5px #222 !important;
+}
+
 @keyframes rotate_3922 {
   from {
     transform: translate(-50%, -50%) rotate(0deg);

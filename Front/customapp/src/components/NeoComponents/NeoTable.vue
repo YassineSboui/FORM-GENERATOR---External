@@ -57,15 +57,9 @@
         v-for="column in filterColumnsByShow"
         :key="column.column_name"
         :field="column.column_name"
-        :filterFielfvzd="column.column_name"
+        :filterField="column.column_name"
         :sortable="column.sortable"
         :headerStyle="{
-          'font-weight': '400',
-          color: '#51616f',
-          background: '#fbfcfc',
-          padding: '8px',
-          'white-space': 'nowrap',
-          'border-bottom': '1px solid #eaecee',
           'min-width': column.taille ? `${column.taille}rem` : '150px',
         }"
         :dir="isRTL ? 'rtl' : 'ltr'"
@@ -171,7 +165,6 @@
         header-class="headerClass"
         :bodyStyle="{
           'text-align': 'center',
-          'background-color': '#f9f9f9',
         }"
         alignFrozen="right"
         :frozen="EditFrozen"
@@ -184,7 +177,6 @@
         header-class="headerClass"
         :bodyStyle="{
           'text-align': 'center',
-          'background-color': '#f9f9f9',
         }"
         alignFrozen="right"
         :frozen="EditFrozen"
@@ -296,12 +288,6 @@
         :filterField="column.column_name"
         :sortable="column.sortable"
         :headerStyle="{
-          'font-weight': '400',
-          color: '#51616f',
-          background: '#fbfcfc',
-          padding: '8px',
-          'white-space': 'nowrap',
-          'border-bottom': '1px solid #eaecee',
           'min-width': column.taille ? `${column.taille}rem` : '150px',
         }"
         :dir="isRTL ? 'rtl' : 'ltr'"
@@ -423,13 +409,12 @@
         header-class="headerClass"
         :bodyStyle="{
           'text-align': 'center',
-          'background-color': '#f9f9f9',
         }"
         alignFrozen="right"
-        :frozen="EditFrozen"
         :dir="isRTL ? 'rtl' : 'ltr'"
         class="p-cell-editing"
       />
+      <!-- :frozen="EditFrozen" -->
 
       <!-- v-if="
       (type === 'INLINE' && lockedRows.length > 0) ||
@@ -441,11 +426,10 @@
         header-class="headerClass"
         :bodyStyle="{
           'text-align': 'center',
-          'background-color': '#f9f9f9',
         }"
         alignFrozen="right"
-        :frozen="EditFrozen"
         :dir="isRTL ? 'rtl' : 'ltr'"
+        :frozen="EditFrozen"
       >
         <template #body="slotProps">
           <div class="flex justify-content-end">
@@ -534,12 +518,6 @@
         :filterField="column.column_name"
         :sortable="column.sortable"
         :headerStyle="{
-          'font-weight': '400',
-          color: '#51616f',
-          background: '#fbfcfc',
-          padding: '8px',
-          'white-space': 'nowrap',
-          'border-bottom': '1px solid #eaecee',
           'min-width': column.taille ? `${column.taille}rem` : '150px',
         }"
         :dir="isRTL ? 'rtl' : 'ltr'"
@@ -1854,15 +1832,6 @@ defineExpose({
   box-shadow: none !important; /* Optional: Remove the shadow */
   opacity: 1 !important; /* Remove the greyed-out effect */
   /* Optional: Show a "not allowed" cursor */
-}
-.headerClass {
-  font-weight: 400;
-  color: #51616f;
-  background: #fbfcfc;
-  padding: 8px;
-  white-space: nowrap;
-  min-width: 10px;
-  border-bottom: 1px solid #eaecee;
 }
 .p-cell-editing {
   // background-color: #fdfcfc; /* Slightly different background color */

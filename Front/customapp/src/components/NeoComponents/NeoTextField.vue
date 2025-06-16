@@ -38,10 +38,18 @@
       >
         <div class="flex">
           <!-- Prefix, if provided -->
-          <span class="prefix mr-1" v-if="options.prefix">{{
-            options.prefix
-          }}</span>
-          <span class="prefix mr-1" v-else-if="prefix">{{ prefix }}</span>
+          <span
+            :class="[' mr-1', isRTL ? 'inverted-prefix' : 'prefix']"
+            v-if="options.prefix"
+          >
+            {{ options.prefix }}
+          </span>
+          <span
+            :class="[' mr-1', isRTL ? 'inverted-prefix' : 'prefix']"
+            v-else-if="prefix"
+          >
+            {{ prefix }}
+          </span>
           <!-- Input field -->
 
           <InputText

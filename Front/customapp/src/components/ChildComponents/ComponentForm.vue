@@ -1850,8 +1850,8 @@ defineExpose({
     position: sticky;
     width: 100%;
     top: 0;
-    background-color: #ffffff;
     z-index: 1000;
+    background-color: #fff !important; // Light mode: solid white
   }
 }
 .zone-page-sticky-header {
@@ -1879,5 +1879,8 @@ defineExpose({
 }
 ::-webkit-scrollbar-track {
   margin-top: var(--scrollbar-margin-top);
+}
+body.dark .pages-headers {
+  background-color: #181818 !important; // Dark mode: solid dark
 }
 </style>

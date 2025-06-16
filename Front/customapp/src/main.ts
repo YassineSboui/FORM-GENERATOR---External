@@ -201,6 +201,7 @@ app.provide("keycloak", keycloak);
 function mountApp() {
   app.use(pinia);
   app.use(router);
+  console.log("primevueLocale", primevueLocale);
   app.use(PrimeVue, {
     locale: primevueLocale,
     theme: {

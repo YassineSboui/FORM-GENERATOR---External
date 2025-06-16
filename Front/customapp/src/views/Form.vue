@@ -39,19 +39,33 @@
       </div>
     </div>
     <div
-      class="form-viewer-container-footer flex justify-content-end"
+      class="form-viewer-container-footer flex justify-content-between align-items-center"
       :class="{ 'custom-padding-rtl': isRTL }"
       v-if="isFormDisplay.value && form.length !== 0"
     >
+      <!-- Left: ToggleSwitch -->
+      <div>
+        <ToggleSwitch
+          v-model="isDarkMode"
+          class="mt-1 ml-4"
+          :style="{
+            color: isDarkMode ? '#fff' : '#FFEA00',
+          }"
+        >
+          <template #handle="{ checked }">
+            <i
+              :class="['pi', checked ? 'pi-moon' : 'pi-sun']"
+              :style="{
+                padding: '0 8px',
+                color: checked ? '#fff' : '#FFEA00',
+              }"
+            />
+          </template>
+        </ToggleSwitch>
+      </div>
+      <!-- Right: Navigation Buttons -->
       <div class="flex justify-content-end gap-1">
         <div class="col flex justify-content-start gap-1">
-          <!-- <neo-select
-            v-if="isMultilingual"
-            class="ml-2 pr-4"
-            v-model="language"
-            :items="languagesList"
-            :isParentNeoTable="true"
-          ></neo-select> -->
           <div>
             <Button
               v-if="!newDoc"
@@ -109,7 +123,15 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, onBeforeMount, ref, type Ref } from "vue";
+import {
+  computed,
+  defineComponent,
+  onBeforeMount,
+  onMounted,
+  ref,
+  type Ref,
+  watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchOneObject } from "@/api/api";
 import { useI18n } from "vue-i18n";
@@ -122,6 +144,9 @@ import Aura from "@primeuix/themes/aura";
 import Lara from "@primeuix/themes/lara";
 import Nora from "@primeuix/themes/nora";
 import Material from "@primeuix/themes/material";
+import { localize } from "@vee-validate/i18n";
+import arabic from "@/i18n/ar";
+import french from "@/i18n/fr";
 export default defineComponent({
   setup() {
     const { t } = useI18n();
@@ -197,7 +222,7 @@ export default defineComponent({
       PrimeVue.config.theme = {
         preset: MyPreset,
         options: {
-          darkModeSelector: false,
+          darkModeSelector: isDarkMode.value,
         },
       };
     };
@@ -229,6 +254,9 @@ export default defineComponent({
         ).objectConfig.formTemplate[0].config.names;
       }
       i18n.global.locale.value = isRTL.value ? "ar" : "fr";
+      isRTL.value
+        ? (PrimeVue.config.locale = { ...arabic.LocaleOptions })
+        : (PrimeVue.config.locale = { ...french.LocaleOptions });
       console.log("i18n locale set to:", i18n.global.locale.value);
     });
 
@@ -298,6 +326,33 @@ export default defineComponent({
     const nextButtonText = computed(() => t("buttons.next"));
     const submitButtonText = computed(() => t("buttons.validate"));
 
+    const isDarkMode = ref(false);
+
+    // Watch for dark mode toggle and update PrimeVue theme
+    watch(isDarkMode, (val) => {
+      PrimeVue.config.theme.options = {
+        ...PrimeVue.config.theme.options,
+        darkModeSelector: val,
+      };
+    });
+    watch(isDarkMode, () => {
+      applyDynamicTheme();
+    });
+    watch(isDarkMode, (val) => {
+      if (val) {
+        document.body.classList.add("dark");
+      } else {
+        document.body.classList.remove("dark");
+      }
+    });
+
+    // Optionally, initialize from system preference
+    // onMounted(() => {
+    //   isDarkMode.value = window.matchMedia(
+    //     "(prefers-color-scheme: dark)"
+    //   ).matches;
+    // });
+
     return {
       form,
       formID,
@@ -335,6 +390,7 @@ export default defineComponent({
       previousButtonText,
       nextButtonText,
       submitButtonText,
+      isDarkMode,
     };
   },
 });
@@ -415,7 +471,6 @@ export default defineComponent({
     position: fixed;
     width: 100%;
     top: 0;
-    background-color: #ffffff;
     z-index: 1000;
   }
 }
@@ -444,5 +499,17 @@ export default defineComponent({
     overflow-y: hidden;
     height: 100%;
   }
+}
+body.dark {
+  background-color: #181818 !important; // or any dark color you prefer
+}
+
+body.dark .form-viewer-container,
+body.dark .main-container,
+body.dark .form-viewer-container-content,
+body.dark .form-viewer-container-footer,
+body.dark .form-viewer-container-header {
+  background-color: #181818 !important;
+  color: #fff !important;
 }
 </style>
