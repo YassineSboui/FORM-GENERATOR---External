@@ -753,10 +753,13 @@ export default defineComponent({
   border: 2px solid var(--p-primary-color); /* Border color */
   border-radius: 10px; /* Rounded corners */
   padding: 10px; /* Padding inside the box */
-  margin-top: 10px; /* Space above the preview box */
+  margin-top: 20px; /* Space above the preview box */
   width: 100%; /* Full width of the dialog */
   max-height: 150px; /* Set a max height for the preview box */
   max-width: 80vw;
+}
+body.dark .photo-preview-box {
+  background-color: #222 !important;
 }
 /* Media query for screens wider than 450px */
 @media (min-width: 500px) {
