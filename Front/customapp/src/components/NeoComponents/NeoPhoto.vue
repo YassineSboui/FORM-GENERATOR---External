@@ -69,14 +69,14 @@
         <Button
           :label="$t('NeoPhotoProperties.gallery')"
           icon="pi pi-images"
-          :class="isRTL ? 'camera-button2' : 'gallery-button'"
+          class="gallery-button"
           @click="openFileDialog"
         />
         <Button
           :label="$t('NeoPhotoProperties.camera')"
           icon="pi pi-camera"
           @click="visible = true"
-          :class="isRTL ? 'gallery-button' : 'camera-button2'"
+          class="gallery-button"
         />
       </ButtonGroup>
 
@@ -788,8 +788,8 @@ body.dark .photo-preview-box {
   }
 }
 .gallery-button {
-  border-radius: 8px 0px 0px 8px !important;
-  height: 40px;
+  border-radius: 15px !important;
+  margin: 2px;
 }
 .single-button {
   height: 40px;

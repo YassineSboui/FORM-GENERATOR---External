@@ -801,6 +801,8 @@ const submitNotice = async () => {
     const isTreewiew = options?.type == "TREEVIEW";
     const isUploadTable = isTable && options?.isUploadTable;
     const isVHTML = options?.type == "HTML";
+    const isDate = options?.type == "DATE";
+    const isTime = options?.type == "Time";
     if (isFile) {
       if (!options.useAILise) {
         const files = Fields.value[element];
@@ -835,6 +837,18 @@ const submitNotice = async () => {
       NoticeData.value[element] = Fields.value[element] ?? "";
     } else if (isPhoto) {
       NoticeFiles.value = mapFileField(Fields.value[element]);
+    } else if (isDate) {
+      if (Fields.value[element]?.includes("T")) {
+        NoticeData.value[element] = Fields.value[element].split("T")[0];
+        NoticeMapping.value[element] = Fields.value[element].split("T")[0];
+      }
+    } else if (isTime) {
+      const fullDate = new Date(Fields.value[element]);
+      const hours = fullDate.getHours().toString().padStart(2, "0");
+      const minutes = fullDate.getMinutes().toString().padStart(2, "0");
+      const timeOnly = `${hours}:${minutes}`;
+      NoticeData.value[element] = timeOnly;
+      NoticeMapping.value[element] = timeOnly;
     } else if (!isVHTML && options !== undefined) {
       NoticeData.value[element] = Fields.value[element] ?? "";
     }

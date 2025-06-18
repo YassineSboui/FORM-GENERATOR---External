@@ -44,7 +44,7 @@
         id="calendar-timeonly"
         timeOnly
         @change="onChange($event)"
-        :class="{ 'p-invalid': errorMessage != 'true' }"
+        :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
         aria-describedby="text-error"
         :minDate="minDate"
         :maxDate="maxDate"
@@ -71,9 +71,10 @@
 </template>
 
 <script lang="ts">
-import { computed, reactive, watch } from "vue";
+import { computed, reactive, watch, ref, onMounted } from "vue";
 import { useMyRules, type MyRules } from "@/data/rules";
 import { format } from "date-fns";
+import { useI18n } from "vue-i18n";
 interface OptionConfig {
   label_AR: string;
   label_ENG: string;
@@ -132,38 +133,48 @@ export default {
     "update:options",
   ],
   setup(props, { emit }) {
+    const { t } = useI18n(); // <-- Add this line
     const errorMessage = computed(() => {
       return validateField(internalValue.value);
     });
     const manipulateRequired = () => {
+      // Initialisation défensive
+      if (!props.options.rules) {
+        props.options.rules = [];
+      }
+
+      // Recherche de la règle 'required'
+      const requiredRuleIndex = props.options.rules.findIndex(
+        (r: any) => r.code === "required"
+      );
+      const hasRequiredRule = requiredRuleIndex !== -1;
+
       if (props.options.required) {
-        const existingRequiredRule = props.options.rules.find(
-          (r: any) => r.code === "required"
-        );
-        if (existingRequiredRule) {
-          existingRequiredRule.name = "Champ requis";
-          existingRequiredRule.description =
-            "Le champ en cours de validation doit avoir une valeur non vide (requis)";
-          existingRequiredRule.expression = "required";
-        } else {
+        // Si la règle existe, on la met à jour
+        if (hasRequiredRule) {
+          const existingRule = props.options.rules[requiredRuleIndex];
+          existingRule.name = t("rules.requiredName");
+          existingRule.description = t("rules.requiredDescription");
+          existingRule.expression = "required";
+        }
+        // Sinon, on l'ajoute
+        else {
           props.options.rules.push({
             code: "required",
-            name: "Champ requis",
-            description:
-              "Le champ en cours de validation doit avoir une valeur non vide (requis)",
+            name: t("rules.requiredName"),
+            description: t("rules.requiredDescription"),
             params: [],
             expression: "required",
           });
         }
       } else {
-        const requiredRuleIndex = props.options.rules.findIndex(
-          (r: any) => r.code === "required"
-        );
-        if (requiredRuleIndex !== -1) {
+        // Si le champ n'est plus requis, on retire la règle
+        if (hasRequiredRule) {
           props.options.rules.splice(requiredRuleIndex, 1);
         }
       }
     };
+
     const minDate = computed(() => {
       const existingMinDateRule = props.options.rules.find(
         (r: any) => r.code === "timeAfter"
@@ -186,7 +197,8 @@ export default {
       props.options.rules.forEach((rule: any) => {
         const rl = rule.code as keyof MyRules;
         const params = rule.params;
-        const ruleFunction = useMyRules[rl];
+        const rules = useMyRules;
+        const ruleFunction = rules[rl];
         if (ruleFunction) {
           returnMessage = ruleFunction(value, params);
         }
@@ -196,63 +208,31 @@ export default {
     const onChange = async (event: any) => {
       internalValue.value = event.target.value;
     };
-    const internalValue = computed({
-      get: () => {
-        if (
-          !internalValue.value ||
-          internalValue.value == "" ||
-          internalValue.value == null ||
-          internalValue.value == undefined
-        )
-          return ""; // Return empty string if value is null or undefined
-        return props.modelValue as any;
-      },
-      set: (value) => {
-        emit("update:modelValue", value);
-      },
+    // Replace computed with ref
+    const internalValue = ref(props.modelValue) as any; // Use 'as any' to avoid type issues with Date or string
+
+    // Sync internalValue with modelValue prop
+    watch(
+      () => props.modelValue,
+      (newValue) => {
+        internalValue.value = newValue;
+      }
+    );
+
+    // When internalValue changes, emit update
+    watch(internalValue, (newValue) => {
+      emit("update:modelValue", newValue);
     });
 
-    // Create a local copy of options to manage mutability
-    const localOptions = reactive({ ...props.options });
-
-    // Computed properties for disabled and hidden states
-    const isDisabled = computed(() => localOptions.disabled);
-    const isHidden = computed(() => localOptions.hidden);
-
-    // Function to update field
-    function setValue(value: any) {
-      let date: Date;
-
-      // Check if the value is a string in HH:mm format
-      if (typeof value === "string" && value.includes(":")) {
+    // Update setValue to only set internalValue
+    const setValue = (value: any) => {
+      // Check if value matches hh:mm format
+      if (typeof value === "string" && /^\d{2}:\d{2}$/.test(value)) {
         const [hours, minutes] = value.split(":").map(Number);
-
-        // Check if hours and minutes are valid numbers
-        if (!isNaN(hours) && !isNaN(minutes)) {
-          date = new Date(); // Create a new Date object for the current date
-          date.setHours(hours); // Set hours
-          date.setMinutes(minutes); // Set minutes
-        } else {
-          console.error("Invalid time format provided:", value); // Handle invalid time
-          return; // Exit if invalid
-        }
-      } else {
-        const dateStr = typeof value === "string" ? value : value.toISOString(); // Handle potential type mismatch
-        date = new Date(dateStr);
-
-        // Check for valid date
-        if (isNaN(date.getTime())) {
-          console.error("Invalid date provided:", value); // Handle invalid date
-          return; // Exit if invalid
-        }
+        const now = new Date();
+        now.setHours(hours, minutes, 0, 0); // set hours, minutes, seconds, ms
+        value = new Date(now);
       }
-
-      // Emit the updated Date object and set the internal value
-      internalValue.value = date; // Set internal value to Date object
-      emit("update:modelValue", date); // Emit the updated Date object
-    }
-
-    function updateField(value: any) {
       const dateStr = typeof value === "string" ? value : value.toISOString(); // Handle potential type mismatch
       const date = new Date(dateStr);
 
@@ -260,12 +240,40 @@ export default {
         // Check for valid date
         date.setHours(date.getHours()); // Access hours correctly (remove accidental extra parentheses)
         date.setMinutes(date.getMinutes());
-        internalValue.value = date.toLocaleTimeString(); // Consider using a more robust format
-        emit("update:modelValue", date.toLocaleTimeString());
+        internalValue.value = date; // Consider using a more robust format
+        emit("update:modelValue", date);
       } else {
         console.error("Invalid date provided:", value); // Handle invalid date
       }
-    }
+    };
+    // Create a local copy of options to manage mutability
+    const localOptions = reactive({ ...props.options });
+    // Computed properties for disabled and hidden states
+    const isDisabled = computed(() => localOptions.disabled);
+    const isHidden = computed(() => localOptions.hidden);
+
+    // Function to update field
+    const updateField = (value: any) => {
+      // Check if value matches hh:mm format
+      if (typeof value === "string" && /^\d{2}:\d{2}$/.test(value)) {
+        const [hours, minutes] = value.split(":").map(Number);
+        const now = new Date();
+        now.setHours(hours, minutes, 0, 0); // set hours, minutes, seconds, ms
+        value = new Date(now);
+      }
+      const dateStr = typeof value === "string" ? value : value.toISOString(); // Handle potential type mismatch
+      const date = new Date(dateStr);
+
+      if (!isNaN(date.getTime())) {
+        // Check for valid date
+        date.setHours(date.getHours()); // Access hours correctly (remove accidental extra parentheses)
+        date.setMinutes(date.getMinutes());
+        internalValue.value = date; // Consider using a more robust format
+        emit("update:modelValue", date);
+      } else {
+        console.error("Invalid date provided:", value); // Handle invalid date
+      }
+    };
 
     // Function to get current value
     const getValue = () => {
@@ -300,14 +308,6 @@ export default {
 
     // Function to show field
     const showField = () => updateOptions({ hidden: false });
-
-    // Watcher for modelValue changes
-    watch(
-      () => props.modelValue,
-      (newValue) => {
-        internalValue.value = newValue;
-      }
-    );
 
     // Watcher for options changes
     watch(
@@ -352,7 +352,20 @@ export default {
     const clearFieldError = () => {
       errorState.errorMessage = "";
     };
-
+    // Handle initial modelValue if it's in hh:mm format
+    onMounted(() => {
+      if (
+        typeof props.modelValue === "string" &&
+        /^\d{2}:\d{2}$/.test(props.modelValue)
+      ) {
+        const [hours, minutes] = props.modelValue.split(":").map(Number);
+        const now = new Date();
+        now.setHours(hours, minutes, 0, 0);
+        internalValue.value = new Date(now);
+        // Emit the updated value
+        emit("update:modelValue", new Date(now));
+      }
+    });
     return {
       isDisabled,
       isHidden,
@@ -374,6 +387,8 @@ export default {
       clearFieldError,
       errorState,
       updateOptions,
+      manipulateRequired,
+      t, // Expose the translation function
     };
   },
 };

@@ -38,28 +38,42 @@
         'max-height': isParentNeoTable ? '30px' : '60px',
       }"
     >
-      <!-- rest of the template -->
-      <AutoComplete
+      <Field
         v-model="internalValue"
-        :disabled="isDisabled"
-        :suggestions="items"
-        :minLength="options.minLength"
-        class="w-full neoAutoCompleteC"
-        :class="{ 'rtl-loader': isRTL }"
-        @complete="search"
-        @item-select="select"
-        :optionLabel="options.optionLabel"
-        :optionValue="options.optionValue"
-        :invalid="isInvalid"
-        :readonly="options.readonly"
-        @focus="$emit('focus', $event)"
-        @blur="$emit('blur', $event)"
-        @mouseenter="$emit('mouseenter', $event)"
-        @mouseleave="$emit('mouseleave', $event)"
-      ></AutoComplete>
-      <small class="p-error" id="text-error" v-if="errorState.errorMessage">
-        {{ errorState.errorMessage || "&nbsp;" }}
-      </small>
+        :name="options.label"
+        :rules="computedRules"
+        v-slot="{ field, errorMessage }"
+      >
+        <!-- rest of the template -->
+        <AutoComplete
+          v-model="internalValue"
+          :disabled="isDisabled"
+          :suggestions="items"
+          :minLength="options.minLength"
+          class="w-full neoAutoCompleteC"
+          :class="{
+            'rtl-loader': isRTL,
+            'p-invalid': errorMessage || errorState.errorMessage,
+          }"
+          @complete="search"
+          @item-select="select"
+          :optionLabel="options.optionLabel"
+          :optionValue="options.optionValue"
+          :invalid="isInvalid"
+          :readonly="options.readonly"
+          @focus="$emit('focus', $event)"
+          @blur="$emit('blur', $event)"
+          @mouseenter="$emit('mouseenter', $event)"
+          @mouseleave="$emit('mouseleave', $event)"
+        ></AutoComplete>
+        <small
+          class="p-error"
+          id="text-error"
+          v-if="errorMessage || errorState.errorMessage"
+        >
+          {{ errorMessage || errorState.errorMessage || "&nbsp;" }}
+        </small>
+      </Field>
     </div>
   </div>
 </template>

@@ -174,5 +174,9 @@ const frensh = {
       "Veuillez remplir tous les champs obligatoires et vérifier les informations saisies. Certaines données ne sont pas valides.",
     successMessage: "Formulaire soumis avec succès ! | Chrono : ",
   },
+  NeoPhotoProperties: {
+    gallery: "Galerie",
+    camera: "Caméra",
+  },
 };
 export default frensh;

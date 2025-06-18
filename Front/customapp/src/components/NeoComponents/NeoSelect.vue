@@ -39,42 +39,55 @@
       }"
     >
       <!-- rest of the template -->
-      <Select
-        v-if="returnObject || options.returnObject"
+      <Field
         v-model="itemValue"
-        :disabled="isDisabled"
-        :readonly="options.readonly"
-        :options="internalItems"
-        :optionLabel="options.key ?? 'name'"
-        class="w-full"
-        :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
-        @click.stop
-        @focus="$emit('focus', $event)"
-        @blur="$emit('blur', $event)"
-        @mouseenter="$emit('mouseenter', $event)"
-        @mouseleave="$emit('mouseleave', $event)"
-        :loading="isLoading"
-      />
-      <Select
-        v-else
-        v-model="itemValue"
-        :disabled="isDisabled"
-        :readonly="options.readonly"
-        :options="internalItems"
-        :optionLabel="options.key ?? 'name'"
-        :optionValue="options.value ?? 'code'"
-        class="w-full"
-        :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
-        @click.stop
-        @focus="$emit('focus', $event)"
-        @blur="$emit('blur', $event)"
-        @mouseenter="$emit('mouseenter', $event)"
-        @mouseleave="$emit('mouseleave', $event)"
-        :loading="isLoading"
-      ></Select>
-      <small class="p-error" id="text-error" v-if="errorState.errorMessage">
-        {{ errorState.errorMessage || "&nbsp;" }}
-      </small>
+        :name="options.label"
+        :rules="computedRules"
+        v-slot="{ field, errorMessage }"
+      >
+        <Select
+          v-if="returnObject || options.returnObject"
+          v-model="itemValue"
+          :disabled="isDisabled"
+          :readonly="options.readonly"
+          :options="internalItems"
+          :optionLabel="options.key ?? 'name'"
+          class="w-full"
+          :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
+          :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
+          @click.stop
+          @focus="$emit('focus', $event)"
+          @blur="$emit('blur', $event)"
+          @mouseenter="$emit('mouseenter', $event)"
+          @mouseleave="$emit('mouseleave', $event)"
+          :loading="isLoading"
+        />
+        <Select
+          v-else
+          v-model="itemValue"
+          :disabled="isDisabled"
+          :readonly="options.readonly"
+          :options="internalItems"
+          :optionLabel="options.key ?? 'name'"
+          :optionValue="options.value ?? 'code'"
+          class="w-full"
+          :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
+          :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
+          @click.stop
+          @focus="$emit('focus', $event)"
+          @blur="$emit('blur', $event)"
+          @mouseenter="$emit('mouseenter', $event)"
+          @mouseleave="$emit('mouseleave', $event)"
+          :loading="isLoading"
+        ></Select>
+        <small
+          class="p-error"
+          id="text-error"
+          v-if="errorMessage || errorState.errorMessage"
+        >
+          {{ errorMessage || errorState.errorMessage || "&nbsp;" }}
+        </small>
+      </Field>
     </div>
   </div>
 </template>

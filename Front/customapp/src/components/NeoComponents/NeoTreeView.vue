@@ -50,93 +50,120 @@
           optionsType == undefined
         "
       >
-        <TreeSelect
-          v-if="!forService"
+        <Field
           v-model="internalValue"
-          :disabled="isDisabled"
-          :options="filterText == '' ? TreeItems : filteredItems"
-          :loading="loading"
-          class="w-full h-35"
-          :empty-message="loading ? ' ' : 'Aucune donnée trouvée'"
-          selectionMode="single"
-          :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
-          @click="attachDropdownToParent()"
-          @click.stop
-          @focus="$emit('focus', $event)"
-          @blur="$emit('blur', $event)"
-          @mouseenter="$emit('mouseenter', $event)"
-          @mouseleave="$emit('mouseleave', $event)"
+          :name="options.label"
+          :rules="computedRules"
+          v-slot="{ field, errorMessage }"
         >
-          <template #header v-if="!loading">
-            <div class="p-2">
-              <input
-                type="text"
-                v-model="filterText"
-                placeholder="Recherche ..."
-                class="p-inputtext p-component"
-              />
-            </div>
-          </template>
-        </TreeSelect>
+          <TreeSelect
+            v-if="!forService"
+            v-model="internalValue"
+            :disabled="isDisabled"
+            :options="filterText == '' ? TreeItems : filteredItems"
+            :loading="loading"
+            class="w-full h-35"
+            :empty-message="loading ? ' ' : 'Aucune donnée trouvée'"
+            selectionMode="single"
+            :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
+            @click="attachDropdownToParent()"
+            @click.stop
+            @focus="$emit('focus', $event)"
+            @blur="$emit('blur', $event)"
+            @mouseenter="$emit('mouseenter', $event)"
+            @mouseleave="$emit('mouseleave', $event)"
+          >
+            <template #header v-if="!loading">
+              <div class="p-2">
+                <input
+                  type="text"
+                  v-model="filterText"
+                  placeholder="Recherche ..."
+                  class="p-inputtext p-component"
+                  :class="{
+                    'p-invalid': errorMessage || errorState.errorMessage,
+                  }"
+                />
+              </div>
+            </template>
+          </TreeSelect>
 
-        <TreeSelect
-          v-else
-          v-model="internalValue"
-          :filter="loading ? false : true"
-          filterMode="strict"
-          filterPlaceholder="Recherche ..."
-          :disabled="isDisabled"
-          :options="serviceItems"
-          :loading="loading"
-          class="w-full h-35"
-          :empty-message="loading ? ' ' : 'Aucune donnée trouvée'"
-          selectionMode="single"
-          :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
-          @click.stop
-          @focus="$emit('focus', $event)"
-          @blur="$emit('blur', $event)"
-          @mouseenter="$emit('mouseenter', $event)"
-          @mouseleave="$emit('mouseleave', $event)"
-        >
-        </TreeSelect>
+          <TreeSelect
+            v-else
+            v-model="internalValue"
+            :filter="loading ? false : true"
+            filterMode="strict"
+            filterPlaceholder="Recherche ..."
+            :disabled="isDisabled"
+            :options="serviceItems"
+            :loading="loading"
+            class="w-full h-35"
+            :empty-message="loading ? ' ' : 'Aucune donnée trouvée'"
+            selectionMode="single"
+            :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
+            @click.stop
+            @focus="$emit('focus', $event)"
+            @blur="$emit('blur', $event)"
+            @mouseenter="$emit('mouseenter', $event)"
+            @mouseleave="$emit('mouseleave', $event)"
+            :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
+          >
+          </TreeSelect>
 
-        <small class="p-error" id="text-error" v-if="errorState.errorMessage">
-          {{ errorState.errorMessage || "&nbsp;" }}
-        </small>
+          <small
+            class="p-error"
+            id="text-error"
+            v-if="errorMessage || errorState.errorMessage"
+          >
+            {{ errorMessage || errorState.errorMessage || "&nbsp;" }}
+          </small>
+        </Field>
       </div>
       <div v-else>
-        <TreeSelect
+        <Field
           v-model="internalValue"
-          filterMode="strict"
-          :disabled="isDisabled"
-          :options="filterText == '' ? TreeItems : filteredItems"
-          :loading="loading"
-          class="w-full h-35"
-          display="comma"
-          :empty-message="loading ? ' ' : 'Aucune donnée trouvée'"
-          selectionMode="multiple"
-          :maxSelectedLabels="termLimit"
-          selectedItemsLabel="Vous avez sélectionné le nombre maximum d'éléments"
-          :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
-          @click="attachDropdownToParent()"
-          @focus="$emit('focus', $event)"
-          @blur="$emit('blur', $event)"
-          @mouseenter="$emit('mouseenter', $event)"
-          @mouseleave="$emit('mouseleave', $event)"
-          ><template #header v-if="!loading">
-            <div class="p-2">
-              <input
-                type="text"
-                v-model="filterText"
-                placeholder="Recherche ..."
-                class="p-inputtext p-component"
-              />
-            </div>
-          </template>
-        </TreeSelect>
-        <small class="p-error" id="text-error" v-if="errorState.errorMessage">
-          {{ errorState.errorMessage || "&nbsp;" }}
-        </small>
+          :name="options.label"
+          :rules="computedRules"
+          v-slot="{ field, errorMessage }"
+        >
+          <TreeSelect
+            v-model="internalValue"
+            filterMode="strict"
+            :disabled="isDisabled"
+            :options="filterText == '' ? TreeItems : filteredItems"
+            :loading="loading"
+            class="w-full h-35"
+            display="comma"
+            :empty-message="loading ? ' ' : 'Aucune donnée trouvée'"
+            selectionMode="multiple"
+            :maxSelectedLabels="termLimit"
+            selectedItemsLabel="Vous avez sélectionné le nombre maximum d'éléments"
+            :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
+            @click="attachDropdownToParent()"
+            @focus="$emit('focus', $event)"
+            @blur="$emit('blur', $event)"
+            @mouseenter="$emit('mouseenter', $event)"
+            @mouseleave="$emit('mouseleave', $event)"
+            :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
+            ><template #header v-if="!loading">
+              <div class="p-2">
+                <input
+                  type="text"
+                  v-model="filterText"
+                  placeholder="Recherche ..."
+                  class="p-inputtext p-component"
+                />
+              </div>
+            </template>
+          </TreeSelect>
+          <small
+            class="p-error"
+            id="text-error"
+            v-if="errorMessage || errorState.errorMessage"
+          >
+            {{ errorMessage || errorState.errorMessage || "&nbsp;" }}
+          </small>
+        </Field>
       </div>
     </div>
   </div>

@@ -40,47 +40,49 @@
       }"
     >
       <!-- :readonly="options.readonly" -->
-
-      <DatePicker
-        v-model="formatedDate"
-        :date-format="formatValue"
-        :disabled="isDisabled"
-        :readonly="options.readonly"
-        :required="options.required"
-        :minDate="minDate"
-        :maxDate="maxDate"
-        :disabledDates="disabledDates"
-        :manualInput="isTypeable"
-        :inputClass="[
-          'customClass',
-          'datepicker-class',
-          { 'p-invalid': errorMessage != 'true' },
-        ]"
-        @change="onChange"
-        @focus="$emit('focus', $event)"
-        @blur="$emit('blur', $event)"
-        @mouseenter="$emit('mouseenter', $event)"
-        @mouseleave="$emit('mouseleave', $event)"
-        :locale="isRTL ? 'ar' : 'fr'"
-        style="margin-bottom: 8px"
-        showIcon
-        fluid
-        iconDisplay="input"
-      />
-
-      <small
-        class="p-error"
-        id="text-error"
-        v-if="
-          (errorMessage !== 'true' && errorMessage) || errorState.errorMessage
-        "
+      <Field
+        v-model="internalValue"
+        :name="options.label"
+        :rules="computedRules"
+        v-slot="{ field, errorMessage }"
       >
-        {{
-          errorMessage !== "true"
-            ? errorMessage
-            : errorState.errorMessage || "&nbsp;"
-        }}
-      </small>
+        <DatePicker
+          v-model="formatedDate"
+          :date-format="formatValue"
+          :disabled="isDisabled"
+          :readonly="options.readonly"
+          :required="options.required"
+          :minDate="minDate"
+          :maxDate="maxDate"
+          :disabledDates="disabledDates"
+          :manualInput="isTypeable"
+          :inputClass="['customClass', 'datepicker-class']"
+          @change="onChange"
+          @focus="$emit('focus', $event)"
+          @blur="$emit('blur', $event)"
+          @mouseenter="$emit('mouseenter', $event)"
+          @mouseleave="$emit('mouseleave', $event)"
+          :locale="isRTL ? 'ar' : 'fr'"
+          style="margin-bottom: 8px"
+          showIcon
+          fluid
+          iconDisplay="input"
+        />
+
+        <small
+          class="p-error"
+          id="text-error"
+          v-if="
+            (errorMessage !== 'true' && errorMessage) || errorState.errorMessage
+          "
+        >
+          {{
+            errorMessage !== "true"
+              ? errorMessage
+              : errorState.errorMessage || "&nbsp;"
+          }}
+        </small>
+      </Field>
     </div>
   </div>
 </template>
@@ -350,16 +352,28 @@ export default {
       return validateField(internalValue.value);
     });
     const manipulateRequired = () => {
+      // Initialisation défensive
+      if (!props.options.rules) {
+        props.options.rules = [];
+      }
+
+      // Recherche de la règle 'required'
+      const requiredRuleIndex = props.options.rules.findIndex(
+        (r: any) => r.code === "required"
+      );
+      const hasRequiredRule = requiredRuleIndex !== -1;
+
       if (props.options.required) {
-        const existingRequiredRule = props.options.rules?.find(
-          (r: any) => r.code === "required"
-        );
-        if (existingRequiredRule) {
-          existingRequiredRule.name = "Champ requis";
-          existingRequiredRule.description =
+        // Si la règle existe, on la met à jour
+        if (hasRequiredRule) {
+          const existingRule = props.options.rules[requiredRuleIndex];
+          existingRule.name = "Champ requis";
+          existingRule.description =
             "Le champ en cours de validation doit avoir une valeur non vide (requis)";
-          existingRequiredRule.expression = "required";
-        } else {
+          existingRule.expression = "required";
+        }
+        // Sinon, on l'ajoute
+        else {
           props.options.rules.push({
             code: "required",
             name: "Champ requis",
@@ -370,14 +384,13 @@ export default {
           });
         }
       } else {
-        const requiredRuleIndex = props.options.rules?.findIndex(
-          (r: any) => r.code === "required"
-        );
-        if (requiredRuleIndex !== -1) {
-          props.options.rules?.splice(requiredRuleIndex, 1);
+        // Si le champ n'est plus requis, on retire la règle
+        if (hasRequiredRule) {
+          props.options.rules.splice(requiredRuleIndex, 1);
         }
       }
     };
+
     const minDate = computed(() => {
       const existingMinDateRule = props.options.rules?.find(
         (r: any) => r.code === "dateAfter" || r.code === "dateAfterToday"

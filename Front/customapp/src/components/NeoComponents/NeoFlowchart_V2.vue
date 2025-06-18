@@ -38,34 +38,48 @@
         'max-height': isParentNeoTable ? '30px' : '60px',
       }"
     >
-      <!-- append-to="self" -->
-      <AutoComplete
+      <Field
         v-model="internalValue"
-        :disabled="isDisabled"
-        :suggestions="items"
-        :minLength="options.minLength"
-        class="w-full neoAutoCompleteC"
-        :class="{ 'rtl-loader': isRTL }"
-        @complete="search(false)"
-        @item-select="select"
-        optionLabel="name"
-        data-key="id"
-        forceSelection
-        :invalid="isInvalid"
-        @focus="$emit('focus', $event)"
-        @blur="$emit('blur', $event)"
-        @mouseenter="$emit('mouseenter', $event)"
-        @mouseleave="$emit('mouseleave', $event)"
+        :name="options.label"
+        :rules="computedRules"
+        v-slot="{ field, errorMessage }"
       >
-        <template #option="slotProps">
-          <div class="flex items-center">
-            <div>{{ slotProps.option.name }}</div>
-          </div>
-        </template>
-      </AutoComplete>
-      <small class="p-error" id="text-error" v-if="errorState.errorMessage">
-        {{ errorState.errorMessage || "&nbsp;" }}
-      </small>
+        <!-- append-to="self" -->
+        <AutoComplete
+          v-model="internalValue"
+          :disabled="isDisabled"
+          :suggestions="items"
+          :minLength="options.minLength"
+          class="w-full neoAutoCompleteC"
+          :class="{
+            'rtl-loader': isRTL,
+            'p-invalid': errorMessage || errorState.errorMessage,
+          }"
+          @complete="search(false)"
+          @item-select="select"
+          optionLabel="name"
+          data-key="id"
+          forceSelection
+          :invalid="isInvalid"
+          @focus="$emit('focus', $event)"
+          @blur="$emit('blur', $event)"
+          @mouseenter="$emit('mouseenter', $event)"
+          @mouseleave="$emit('mouseleave', $event)"
+        >
+          <template #option="slotProps">
+            <div class="flex items-center">
+              <div>{{ slotProps.option.name }}</div>
+            </div>
+          </template>
+        </AutoComplete>
+        <small
+          class="p-error"
+          id="text-error"
+          v-if="errorMessage || errorState.errorMessage"
+        >
+          {{ errorMessage || errorState.errorMessage || "&nbsp;" }}
+        </small>
+      </Field>
     </div>
   </div>
 </template>

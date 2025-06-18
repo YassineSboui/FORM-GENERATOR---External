@@ -38,25 +38,39 @@
       }"
     >
       <!-- rest of the template -->
-      <AutoComplete
+      <Field
         v-model="contact"
-        :disabled="isDisabled"
-        :suggestions="items"
-        :minLength="options.minLength"
-        class="w-full neoAutoCompleteC"
-        :class="{ 'rtl-loader': isRTL }"
-        @complete="search"
-        @item-select="select"
-        :optionLabel="options.optionLabel"
-        :invalid="isInvalid"
-        @focus="$emit('focus', $event)"
-        @blur="$emit('blur', $event)"
-        @mouseenter="$emit('mouseenter', $event)"
-        @mouseleave="$emit('mouseleave', $event)"
-      ></AutoComplete>
-      <small class="p-error" id="text-error" v-if="errorState.errorMessage">
-        {{ errorState.errorMessage || "&nbsp;" }}
-      </small>
+        :name="options.label"
+        :rules="computedRules"
+        v-slot="{ field, errorMessage }"
+      >
+        <AutoComplete
+          v-model="contact"
+          :disabled="isDisabled"
+          :suggestions="items"
+          :minLength="options.minLength"
+          class="w-full neoAutoCompleteC"
+          :class="{
+            'rtl-loader': isRTL,
+            'p-invalid': errorMessage || errorState.errorMessage,
+          }"
+          @complete="search"
+          @item-select="select"
+          :optionLabel="options.optionLabel"
+          :invalid="isInvalid"
+          @focus="$emit('focus', $event)"
+          @blur="$emit('blur', $event)"
+          @mouseenter="$emit('mouseenter', $event)"
+          @mouseleave="$emit('mouseleave', $event)"
+        ></AutoComplete>
+        <small
+          class="p-error"
+          id="text-error"
+          v-if="errorMessage || errorState.errorMessage"
+        >
+          {{ errorMessage || errorState.errorMessage || "&nbsp;" }}
+        </small>
+      </Field>
     </div>
   </div>
 </template>
