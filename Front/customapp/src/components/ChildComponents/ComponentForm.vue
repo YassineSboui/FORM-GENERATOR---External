@@ -803,52 +803,53 @@ const submitNotice = async () => {
     const isVHTML = options?.type == "HTML";
     const isDate = options?.type == "DATE";
     const isTime = options?.type == "Time";
-    if (isFile) {
-      if (!options.useAILise) {
-        const files = Fields.value[element];
-        if (Array.isArray(files)) {
-          for (const elem of files) {
-            NoticeAttachements.value.push({
-              guid: elem.guid,
-              fileName: elem.fileName,
-            });
-          }
-        }
+    if (isFile && !options.useAILise) {
+      for (const elem of Fields.value[element]) {
+        NoticeAttachements.value.push({
+          guid: elem.guid,
+          fileName: elem.fileName,
+        });
       }
+    } else if (isPhoto) {
+      NoticeFiles.value = mapFileField(Fields.value[element]);
     } else if (isEditor) {
       NoticeHtml.value[element] = Fields.value[element] ?? "";
-    } else if (isTreewiew) {
-      if (options.selectedType == "Organigramme") {
-        NoticeMapping.value[element] =
-          Object.keys(Fields.value[element])[0] ?? "";
-        NoticeData.value[element] = Object.keys(Fields.value[element])[0] ?? "";
-      } else {
-        NoticeMapping.value[element] = Object.keys(Fields.value[element]) ?? [];
-        NoticeData.value[element] = Object.keys(Fields.value[element]) ?? [];
-      }
-    } else if (related && !isFlowchart) {
-      NoticeMapping.value[element] = Fields.value[element] ?? "";
-      NoticeData.value[element] = Fields.value[element] ?? "";
-    } else if (isFlowchart && related) {
-      NoticeMapping.value[element] = Fields.value[element].id ?? "";
-      NoticeData.value[element] = Fields.value[element] ?? "";
     } else if (isUploadTable) {
       NoticeUploadTable.value[element] = Fields.value[element] ?? "";
       NoticeData.value[element] = Fields.value[element] ?? "";
-    } else if (isPhoto) {
-      NoticeFiles.value = mapFileField(Fields.value[element]);
+    } else if (isTreewiew) {
+      const keys = Object.keys(Fields.value[element] || {});
+      if (options.selectedType === "Organigramme") {
+        const firstKey = keys[0] ?? "";
+        NoticeMapping.value[element] = firstKey;
+        NoticeData.value[element] = firstKey;
+      } else {
+        NoticeMapping.value[element] = keys;
+        NoticeData.value[element] = keys;
+      }
     } else if (isDate) {
-      if (Fields.value[element]?.includes("T")) {
-        NoticeData.value[element] = Fields.value[element].split("T")[0];
-        NoticeMapping.value[element] = Fields.value[element].split("T")[0];
+      const val = Fields.value[element];
+      if (typeof val === "string" && val.includes("T")) {
+        const dateOnly = val.split("T")[0];
+        NoticeData.value[element] = dateOnly;
+        NoticeMapping.value[element] = dateOnly;
       }
     } else if (isTime) {
-      const fullDate = new Date(Fields.value[element]);
-      const hours = fullDate.getHours().toString().padStart(2, "0");
-      const minutes = fullDate.getMinutes().toString().padStart(2, "0");
-      const timeOnly = `${hours}:${minutes}`;
-      NoticeData.value[element] = timeOnly;
-      NoticeMapping.value[element] = timeOnly;
+      const val = Fields.value[element];
+      if (val) {
+        const fullDate = new Date(val);
+        const hours = fullDate.getHours().toString().padStart(2, "0");
+        const minutes = fullDate.getMinutes().toString().padStart(2, "0");
+        const timeOnly = `${hours}:${minutes}`;
+        NoticeData.value[element] = timeOnly;
+        NoticeMapping.value[element] = timeOnly;
+      }
+    } else if (isFlowchart && related) {
+      NoticeMapping.value[element] = Fields.value[element]?.id ?? "";
+      NoticeData.value[element] = Fields.value[element] ?? "";
+    } else if (related && !isFlowchart) {
+      NoticeMapping.value[element] = Fields.value[element] ?? "";
+      NoticeData.value[element] = Fields.value[element] ?? "";
     } else if (!isVHTML && options !== undefined) {
       NoticeData.value[element] = Fields.value[element] ?? "";
     }
