@@ -444,7 +444,7 @@ export default defineComponent({
   margin-top: var(--dynamic-header-height);
   margin-bottom: 60px; /* Footer height */
   height: calc(
-    100vh - var(--dynamic-header-height) - 100px
+    100vh - var(--dynamic-header-height) - 80px
   ); /* 50px is the footer height */
   overflow-y: auto; /* Enable vertical scrolling */
 }

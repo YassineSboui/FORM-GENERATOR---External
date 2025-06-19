@@ -25,6 +25,7 @@
         props.reOrder || config.objectConfig.formConfig.enableReorder
       "
       @rowReorder="onRowReorder"
+      v-model:selection="selectedObjects"
     >
       <template #header v-if="type === 'DIALOG' && !store.local">
         <div class="flex justify-content-end">
@@ -45,8 +46,12 @@
           </div>
         </div>
       </template>
-
-      <Column expander style="width: 5rem" />
+      <Column
+        v-if="config.objectConfig.formConfig.selectable"
+        :selectionMode="config.objectConfig.formConfig.selectionMode"
+        headerStyle="width: 3rem"
+      ></Column>
+      <!-- <Column expander style="width: 5rem" /> -->
       <Column
         v-if="props.reOrder || config.objectConfig.formConfig.enableReorder"
         rowReorder
@@ -241,6 +246,7 @@
         props.reOrder || config.objectConfig.formConfig.enableReorder
       "
       @rowReorder="onRowReorder"
+      v-model:selection="selectedObjects"
     >
       <template #header v-if="type === 'DIALOG' && !store.local">
         <!-- || config.objectConfig.formConfig.selectionMode -->
@@ -275,6 +281,11 @@
       headerStyle="width: 3rem"
       v-if="config.objectConfig.formConfig.selectionMode"
     ></Column> -->
+      <Column
+        v-if="config.objectConfig.formConfig.selectable"
+        :selectionMode="config.objectConfig.formConfig.selectionMode"
+        headerStyle="width: 3rem"
+      ></Column>
       <Column
         v-if="props.reOrder || config.objectConfig.formConfig.enableReorder"
         rowReorder
@@ -720,9 +731,9 @@ const store = useAppStore();
 const index = ref(null as any);
 let form = ref<any>(null);
 // Event emitters
-const emit = defineEmits(["update:modelValue", "column"]);
+const emit = defineEmits(["update:modelValue", "column", "selectedObjects"]);
 const app = getCurrentInstance() as any;
-
+const selectedObjects = ref([] as any);
 // Computed properties
 
 // Dynamic class for dialog based on resolution
@@ -1813,7 +1824,18 @@ async function deleteObject(id: any) {
     objects.value = objects.value.filter((item: any) => item.id != id);
   }
 }
-
+// watch selectedRows to get the selected objects
+watch(selectedObjects, (newValue) => {
+  if (!newValue || newValue.length === 0) {
+    console.log("No rows selected");
+    emit("selectedObjects", []); // Emit an empty array if no rows are selected
+    return;
+  }
+  if (newValue) {
+    console.log("Selected rows:", newValue);
+    emit("selectedObjects", selectedObjects.value);
+  }
+});
 defineExpose({
   refs,
   formDialog,

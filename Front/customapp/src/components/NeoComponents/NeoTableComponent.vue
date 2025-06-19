@@ -33,6 +33,7 @@
         :params="options.params"
         :readonly="options.readonly"
         ref="TableRef"
+        @selectedObjects="getSelectedObjects($event)"
       />
       <small class="p-error" id="text-error" v-if="errorState.errorMessage">
         {{ errorState.errorMessage || "&nbsp;" }}
@@ -322,8 +323,18 @@ export default defineComponent({
     //   // TableRef.value[props.options.name] = null;
     // });
     const TableRef = ref(null);
+    const selectedObjects = ref([]);
+    const getSelectedObjects = (event: any) => {
+      console.log("Selected Objects:", event);
+      selectedObjects.value = event;
+    };
+    const exposeSelectedObjects = () => {
+      return selectedObjects.value;
+    };
     defineExpose({
       TableRef,
+      getSelectedObjects,
+      exposeSelectedObjects,
     });
 
     return {
@@ -337,6 +348,7 @@ export default defineComponent({
       errorState,
       TableRef,
       localOptions,
+      selectedObjects,
       handleFocus,
       setValue,
       addValues,
@@ -349,6 +361,8 @@ export default defineComponent({
       setFieldError,
       clearFieldError,
       updateOptions,
+      exposeSelectedObjects,
+      getSelectedObjects,
     };
   },
 });

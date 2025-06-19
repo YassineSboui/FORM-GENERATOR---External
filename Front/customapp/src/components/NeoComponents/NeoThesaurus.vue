@@ -79,6 +79,7 @@
     <OverlayPanel
       ref="op"
       class="thesaurus-frame"
+      :class="{ 'thesaurus-frame-top': showOnTop }"
       :append-to="neoThesaurusRef"
       style="width: 80%"
     >
@@ -236,7 +237,7 @@ export default {
   },
   setup(props, { emit }) {
     const terms: Ref<Term[]> = ref([]);
-
+    const showOnTop = ref(false);
     watch(
       terms,
       async (newValue) => {
@@ -413,11 +414,18 @@ export default {
 
     const openThesaurusFrame = (event: any) => {
       if (!op.value.visible) {
+        // Check available space
+        const inputRect = neoThesaurusRef.value?.getBoundingClientRect();
+        const panelHeight = 280; // Should match $thesaurus-frame-height
+        const spaceBelow = window.innerHeight - (inputRect?.bottom ?? 0);
+        const spaceAbove = inputRect?.top ?? 0;
+
+        showOnTop.value = spaceBelow < panelHeight && spaceAbove > panelHeight;
+
         op.value.toggle(event);
         loadRootTermLevel();
         selectAllThesaurus();
       }
-      // setFocusOnSearchInput();
     };
     /*
     const setFocusOnSearchInput = () => {
@@ -694,6 +702,7 @@ const trySearchThesaurusTerm = (event: any) => {
       removeItem,
       setFieldError,
       clearFieldError,
+      showOnTop,
     };
   },
 };
