@@ -804,10 +804,19 @@ const submitNotice = async () => {
     const isDate = options?.type == "DATE";
     const isTime = options?.type == "Time";
     if (isFile && !options.useAILise) {
-      for (const elem of Fields.value[element]) {
+      const files = Fields.value[element];
+      if (Array.isArray(files)) {
+        for (const elem of files) {
+          NoticeAttachements.value.push({
+            guid: elem.guid,
+            fileName: elem.fileName,
+          });
+        }
+      } else if (files && typeof files === "object") {
+        // Single file object
         NoticeAttachements.value.push({
-          guid: elem.guid,
-          fileName: elem.fileName,
+          guid: files.guid,
+          fileName: files.fileName,
         });
       }
     } else if (isPhoto) {
@@ -947,11 +956,10 @@ const submitNotice = async () => {
         // appStore.setLoading(false);
         toast.add({
           severity: "success",
-          summary: t("successMessage") + obj.chrono,
+          summary: t("ComponentForm.successMessage") + " " + obj.chrono,
           life: 3000,
         });
         clearFieldsFunc(itemsFormCopy.value, 0);
-
         httpRequest.setLoading(false);
       }
     },
