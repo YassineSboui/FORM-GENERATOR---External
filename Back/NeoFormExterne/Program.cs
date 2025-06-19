@@ -106,6 +106,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 var app = builder.Build();
 
 app.UseHttpLogging();
+// ✅ Supprimer le header X-Frame-Options injecté par défaut
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers.Remove("X-Frame-Options");
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
 app.UseRouting();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -184,5 +195,4 @@ app.MapReverseProxy(proxyPipeline =>
         await next();
     });
 });
-
 app.Run();

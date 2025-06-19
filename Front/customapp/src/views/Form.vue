@@ -444,7 +444,7 @@ export default defineComponent({
   margin-top: var(--dynamic-header-height);
   margin-bottom: 60px; /* Footer height */
   height: calc(
-    100vh - var(--dynamic-header-height) - 80px
+    100vh - var(--dynamic-header-height) - 100px
   ); /* 50px is the footer height */
   overflow-y: auto; /* Enable vertical scrolling */
 }
@@ -506,6 +506,7 @@ body.dark {
 
 body.dark .form-viewer-container,
 body.dark .main-container,
+body.dark .main-container .form-container,
 body.dark .form-viewer-container-content,
 body.dark .form-viewer-container-footer,
 body.dark .form-viewer-container-header {
