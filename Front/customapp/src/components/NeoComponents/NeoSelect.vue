@@ -456,6 +456,10 @@ export default {
     });
 
     const updateItems = async (newElements: string | any[]) => {
+      if (newElements === undefined || newElements === null) {
+        console.warn("New elements are undefined or null, skipping update.");
+        return;
+      }
       let parsedElements: any[] = [];
       if (typeof newElements === "string") {
         try {

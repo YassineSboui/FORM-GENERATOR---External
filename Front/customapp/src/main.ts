@@ -213,6 +213,12 @@ function mountApp() {
   app.use(i18n);
   app.use(ToastService);
   app.use(ConfirmationService);
+  if (!import.meta.env.DEV) {
+    // Development environment: use console.error for warnings
+    console.error = (...args) => {
+      console.warn("[PROD WARNING]:", ...args);
+    };
+  }
   app.mount("#app");
 }
 

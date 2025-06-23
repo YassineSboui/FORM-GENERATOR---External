@@ -157,6 +157,10 @@ export default {
     };
 
     const updateItems = (newElements: string | any[]) => {
+      if (newElements === undefined || newElements === null) {
+        console.warn("New elements are undefined or null, skipping update.");
+        return;
+      }
       let parsedElements: any[] = [];
 
       // Check if newElements is a string, and try to parse it
