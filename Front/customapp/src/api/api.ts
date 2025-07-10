@@ -1030,3 +1030,33 @@ export const GetAuthInfo = async ({
     throw error;
   }
 };
+export const validateOidcCode = async (
+  code: string,
+  state: string,
+  guid: string,
+  client: string,
+  personalCode: string
+) => {
+  const httpRequest = useHttpRequest();
+  try {
+    const apiUrl = `${httpRequest.externalUrl}local/api/auth/validate-oidc`;
+    const configUrl = `${
+      httpRequest.externalUrl + client
+    }/api/external/auth-type`;
+    console.log("Validating OIDC code with URL:", httpRequest);
+    console.log("Client ID:", client);
+    console.log("Personal Code:", personalCode);
+    const response = await axios.post(apiUrl, {
+      code,
+      state,
+      guid,
+      configUrl,
+      personalCode,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error validating OIDC code:", error);
+    logger.error(error);
+    throw error;
+  }
+};

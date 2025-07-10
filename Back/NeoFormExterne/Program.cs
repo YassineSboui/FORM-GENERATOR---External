@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using NeoForm_Externe.Filters;
 using Newtonsoft.Json.Linq;
 using System.Security.Claims;
+using NeoForm_Externe.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,9 +38,12 @@ builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IObjectService, ObjectService>();
 builder.Services.AddScoped<IExternalSourceService, ExternalSourceService>();
 builder.Services.AddScoped<IClientStoreService, ClientStoreService>();
+builder.Services.AddScoped<IOidcService, OidcService>();
+builder.Services.AddScoped<IUserAuthenticationRepository, UserAuthenticationRepository>();
 builder.Services.AddSingleton<ClientSessionService>();
 builder.Services.AddHostedService<CleanupBackgroundService>();
-
+// Add background service for cleanup
+builder.Services.AddHostedService<AuthenticationCleanupService>();
 // Register the dynamic API key filter
 builder.Services.AddScoped<DynamicApiKeyAuthFilter>();
 

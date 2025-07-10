@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoForm_Externe.Data;
 
@@ -11,9 +12,11 @@ using NeoForm_Externe.Data;
 namespace NeoForm_Externe.Migrations
 {
     [DbContext(typeof(ExternalNeoFormContext))]
-    partial class ExternalNeoFormContextModelSnapshot : ModelSnapshot
+    [Migration("20250710102245_AddOidcAuthentication")]
+    partial class AddOidcAuthentication
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,15 +72,18 @@ namespace NeoForm_Externe.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("IdToken")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<string>("RefreshToken")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserEmail")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")

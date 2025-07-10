@@ -1,5 +1,6 @@
 ﻿using NeoForm_Externe.Models;
 using Microsoft.EntityFrameworkCore;
+using static NeoForm_Externe.Models.Dto.UserAuthenticationDto;
 
 namespace NeoForm_Externe.Data
 {
@@ -10,6 +11,7 @@ namespace NeoForm_Externe.Data
 
         public DbSet<ObjectModels> Objects { get; set; }
         public DbSet<ClientInfo> Clients { get; set; } // ✅ Add ClientInfo DbSet
+        public DbSet<UserAuthentication> UserAuthentications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,7 +49,7 @@ namespace NeoForm_Externe.Data
                       .HasColumnName("isEncrypted");
             });
 
-       
+
             modelBuilder.Entity<ClientInfo>(entity =>
             {
                 entity.ToTable("Clients", "AppNeoForm");
@@ -61,6 +63,12 @@ namespace NeoForm_Externe.Data
                 entity.Property(e => e.BaseUrl)
                       .IsRequired()
                       .HasMaxLength(300);
+            });
+
+            modelBuilder.Entity<UserAuthentication>(entity =>
+            {
+                entity.HasIndex(e => e.Guid);
+                entity.HasIndex(e => new { e.Guid, e.IsActive });
             });
         }
     }

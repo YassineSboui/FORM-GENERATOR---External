@@ -299,10 +299,11 @@ export default defineComponent({
                   const cleanUrl = `${window.location.origin}${window.location.pathname}${originalQuery}`;
                   console.log("Cleaning URL to:", cleanUrl);
                   window.history.replaceState({}, document.title, cleanUrl);
-                }
 
-                // Clean up session storage
-                sessionStorage.removeItem("original_query");
+                  // Clean up session storage after successful restoration
+                  sessionStorage.removeItem("original_query");
+                  sessionStorage.removeItem("original_guid");
+                }
 
                 // Clean up session storage
                 sessionStorage.removeItem("original_query");
@@ -314,6 +315,12 @@ export default defineComponent({
                 sessionStorage.setItem(
                   "original_query",
                   window.location.search
+                );
+
+                // Store the original guid for token validation
+                sessionStorage.setItem(
+                  "original_guid",
+                  route.params.guid as string
                 );
 
                 // Store the current form URL to return to after authentication
