@@ -37,6 +37,11 @@ builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IObjectService, ObjectService>();
 builder.Services.AddScoped<IExternalSourceService, ExternalSourceService>();
 builder.Services.AddScoped<IClientStoreService, ClientStoreService>();
+builder.Services.AddSingleton<ClientSessionService>();
+builder.Services.AddHostedService<CleanupBackgroundService>();
+
+// Register the dynamic API key filter
+builder.Services.AddScoped<DynamicApiKeyAuthFilter>();
 
 // Dynamic YARP config with DI-safe singleton provider
 builder.Services.AddSingleton<IDynamicClientProvider, DynamicClientProvider>();
@@ -130,6 +135,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 // Reverse Proxy Routing
@@ -169,7 +175,18 @@ app.MapReverseProxy(proxyPipeline =>
 
         var query = QueryHelpers.ParseQuery(context.Request.QueryString.ToString());
 
-        // ✅ Skip token if local
+        // ✅ Special handling for /auth-type endpoint - no token required
+        if (path.Contains("/auth-type", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Information("Proxying /auth-type endpoint without authentication for client {clientId}", clientId);
+            Log.Information("Original path: {path}, subPath: {subPath}", path, subPath);
+            context.Request.Path = subPath;
+            context.SetEndpoint(null);
+            await next();
+            return;
+        }
+
+        // ✅ Regular endpoints require token authentication
         if (!query.TryGetValue("code", out var code) || !query.TryGetValue("guid", out var guid))
         {
             context.Response.StatusCode = 400;
@@ -178,12 +195,12 @@ app.MapReverseProxy(proxyPipeline =>
         }
 
         var tokenService = context.RequestServices.GetRequiredService<TokenService>();
-        var token = await tokenService.GetOrRefreshTokenAsync(clientId, baseUrl, code.ToString(), guid.ToString());
+        var token = await tokenService.GetOrRefreshTokenAsync(clientId, baseUrl!, code.ToString(), guid.ToString());
 
         // Clean the query
         var cleanQuery = query
             .Where(q => q.Key != "code" && q.Key != "guid")
-            .ToDictionary(q => q.Key, q => q.Value.ToString());
+            .Select(q => new KeyValuePair<string, string?>(q.Key, q.Value.ToString()));
 
         context.Request.QueryString = QueryString.Create(cleanQuery);
         context.Request.Headers["Authorization"] = $"Bearer {token}";

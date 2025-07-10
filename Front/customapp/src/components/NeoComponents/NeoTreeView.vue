@@ -235,7 +235,7 @@ export default {
         label_AR: "",
         label_ENG: "",
         name: "",
-        label: "Test",
+        label: "TreeView",
         type: "TREEVIEW",
         required: false,
         readonly: false,

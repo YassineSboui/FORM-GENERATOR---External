@@ -1,18 +1,22 @@
 ﻿using Microsoft.Extensions.Primitives;
 using NeoForm_Externe.Interfaces;
 using Yarp.ReverseProxy.Configuration;
+using System.Collections.Concurrent;
 
 namespace NeoForm_Externe.Proxy
 {
     public class CustomProxyConfigProvider : IProxyConfigProvider
     {
         private readonly IDynamicClientProvider _clientProvider;
-        private CustomProxyConfig _config;
+        private readonly ILogger<CustomProxyConfigProvider> _logger;
+        private volatile CustomProxyConfig _config;
         private readonly CancellationTokenSource _cts = new();
+        private readonly object _lock = new();
 
-        public CustomProxyConfigProvider(IDynamicClientProvider clientProvider)
+        public CustomProxyConfigProvider(IDynamicClientProvider clientProvider, ILogger<CustomProxyConfigProvider> logger)
         {
             _clientProvider = clientProvider;
+            _logger = logger;
             _config = BuildConfig();
         }
 
@@ -20,8 +24,12 @@ namespace NeoForm_Externe.Proxy
 
         public void UpdateDestination(string clusterId, string destinationUrl)
         {
-            _config = BuildConfig();
-            _cts.Cancel();
+            lock (_lock)
+            {
+                _config = BuildConfig();
+                _cts.Cancel();
+                _logger.LogInformation($"Proxy configuration updated for cluster {clusterId}");
+            }
         }
 
         private CustomProxyConfig BuildConfig()
@@ -50,21 +58,47 @@ namespace NeoForm_Externe.Proxy
                     }
                 });
 
+                // Clean the client URL by removing /neoform suffix to avoid double paths
+                var cleanedUrl = client.Value.TrimEnd('/');
+                if (cleanedUrl.EndsWith("/neoform", StringComparison.OrdinalIgnoreCase))
+                {
+                    cleanedUrl = cleanedUrl.Substring(0, cleanedUrl.Length - 8); // Remove "/neoform"
+                }
+
+                _logger.LogDebug($"Proxy destination for client {client.Key}: original='{client.Value}', cleaned='{cleanedUrl}'");
+
                 clusters.Add(new ClusterConfig
                 {
                     ClusterId = clusterId,
+                    LoadBalancingPolicy = "RoundRobin",
+                    // Temporarily disable health checks since backend services may not be running
+                    /*
+                    HealthCheck = new HealthCheckConfig
+                    {
+                        Active = new ActiveHealthCheckConfig
+                        {
+                            Enabled = true,
+                            Interval = TimeSpan.FromMinutes(1),
+                            Timeout = TimeSpan.FromSeconds(30),
+                            Policy = "ConsecutiveFailures",
+                            Path = "/health"
+                        }
+                    },
+                    */
                     Destinations = new Dictionary<string, DestinationConfig>
                     {
                         {
                             "default", new DestinationConfig
                             {
-                                Address = client.Value
+                                Address = cleanedUrl,
+                                // Health = client.Value + "/health"
                             }
                         }
                     }
                 });
             }
 
+            _logger.LogDebug($"Built proxy configuration with {routes.Count} routes and {clusters.Count} clusters");
             return new CustomProxyConfig(routes, clusters);
         }
 

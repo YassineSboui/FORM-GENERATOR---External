@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NeoForm_Externe.Attributes;
+using NeoForm_Externe.Filters;
 using NeoForm_Externe.Interfaces;
 using NeoForm_Externe.Models;
 using Newtonsoft.Json.Linq;
@@ -30,7 +30,7 @@ namespace NeoForm_Externe.Controllers
             return Ok(objects);
         }
 
-   
+
         [HttpGet("guid/{guid}")]
         public async Task<IActionResult> GetObjectByGuid(string guid)
         {
@@ -39,7 +39,7 @@ namespace NeoForm_Externe.Controllers
         }
 
         [HttpPost("Publish")]
-        [ApiKeyAuth]
+        [ServiceFilter(typeof(DynamicApiKeyAuthFilter))]
         [ProducesResponseType(typeof(ObjectModels), 200)]
         public async Task<IActionResult> PublishObject([FromBody] JObject obj)
         {

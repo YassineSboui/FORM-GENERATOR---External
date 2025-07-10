@@ -187,7 +187,10 @@
         :frozen="EditFrozen"
         v-if="
           (type === 'INLINE' && lockedRows.length > 0) ||
-          (type === 'DIALOG' && objects.length > 0 && editingRows.length === 0)
+          (type === 'DIALOG' &&
+            objects.length > 0 &&
+            editingRows.length === 0 &&
+            config.objectConfig.formConfig.withActions)
         "
         :dir="isRTL ? 'rtl' : 'ltr'"
       >
@@ -430,8 +433,12 @@
       <!-- v-if="
       (type === 'INLINE' && lockedRows.length > 0) ||
       (type === 'DIALOG' && objects.length > 0 && editingRows.length === 0)
+
+      selectable: false,
+      withActions: false,
     " -->
       <Column
+        v-if="config.objectConfig.formConfig.withActions"
         style="width: 10%; max-width: 100px; min-width: 100px"
         :rowEditor="true"
         header-class="headerClass"
@@ -1201,6 +1208,41 @@ const onRowEditSave = async (event: any) => {
   var isJsonOutput = props.config.objectConfig.formConfig.sortie == "JSON";
   let { newData, index, data } = event; // Destructure the event object to get newData, index, and data
 
+  // Find the 'beforeRowSave' event function, if any
+  const beforeRowSaveFunction =
+    props.config.objectConfig.formConfig?.events?.find(
+      (event: any) => event.rule.code == "beforeRowSave"
+    )?.code;
+  // Execute the 'beforeRowSave' function BEFORE any validation or saving logic
+  console.log("beforeRowSaveFunction", beforeRowSaveFunction);
+  if (beforeRowSaveFunction != undefined) {
+    try {
+      // Store original data for comparison
+      const originalData = JSON.stringify(fieldsValue.value);
+
+      // Execute the function and capture the potentially modified newData
+
+      const result = await eval(
+        "(async () => { " +
+          "const store = useAppStore(); " +
+          beforeRowSaveFunction +
+          "; return newData; " + // Return the potentially modified newData
+          "})()"
+      );
+
+      // Check if newData was modified and update fieldsValue.value
+      if (result && JSON.stringify(result) !== originalData) {
+        console.log(
+          "newData was modified by beforeRowSave, updating fieldsValue"
+        );
+        fieldsValue.value = result;
+        newData = result; // Also update the local value variable
+      }
+    } catch (error) {
+      console.error("error", error);
+      logger.error(error);
+    }
+  }
   // Find the 'afterRowSave' event function, if any
   const afterRowSaveFunction =
     props.config.objectConfig.formConfig?.events?.find(
@@ -1503,6 +1545,44 @@ const handleFieldsValue = async (value: any) => {
 
   fieldsValue.value = { ...value }; // Store the field values
 
+  // Find the 'beforeRowSave' event function, if any
+  const beforeRowSaveFunction =
+    props.config.objectConfig.formConfig?.events?.find(
+      (event: any) => event.rule.code == "beforeRowSave"
+    )?.code;
+  // Execute the 'beforeRowSave' function BEFORE any validation or saving logic
+  console.log("beforeRowSaveFunction", beforeRowSaveFunction);
+  if (beforeRowSaveFunction != undefined) {
+    try {
+      // Store original data for comparison
+      const originalData = JSON.stringify(fieldsValue.value);
+
+      // Execute the function and capture the potentially modified newData
+
+      const result = await eval(
+        "(async () => { " +
+          "const store = useAppStore(); " +
+          "let newData = " +
+          JSON.stringify(fieldsValue.value) +
+          "; " +
+          beforeRowSaveFunction +
+          "; return newData; " + // Return the potentially modified newData
+          "})()"
+      );
+
+      // Check if newData was modified and update fieldsValue.value
+      if (result && JSON.stringify(result) !== originalData) {
+        console.log(
+          "newData was modified by beforeRowSave, updating fieldsValue"
+        );
+        fieldsValue.value = result;
+        value = result; // Also update the local value variable
+      }
+    } catch (error) {
+      console.error("error", error);
+      logger.error(error);
+    }
+  }
   // Handle editing of an existing table column
   if (isEditTableCol.value !== null) {
     const id = isEditTableCol.value;
@@ -1566,7 +1646,30 @@ const handleFieldsValue = async (value: any) => {
       store.addID(value.column_name); // Add the column name to the store
     }
   }
+  // Find the 'afterRowSave' event function, if any
+  const afterRowSaveFunction =
+    props.config.objectConfig.formConfig?.events?.find(
+      (event: any) => event.rule.code == "afterRowSave"
+    )?.code;
 
+  // Execute the 'afterRowSave' function, if it exists
+  console.log("afterRowSaveFunction", afterRowSaveFunction);
+  if (afterRowSaveFunction != undefined) {
+    try {
+      await eval(
+        "(async () => { " +
+          "const store = useAppStore(); " +
+          "const newData = " +
+          JSON.stringify(fieldsValue.value) +
+          "; " +
+          afterRowSaveFunction +
+          "})()"
+      );
+    } catch (error) {
+      console.error("error", error);
+      logger.error(error);
+    }
+  }
   myWatchedVariable.value = false; // Reset watched variable
   hideDialog(); // Close the dialog
 };

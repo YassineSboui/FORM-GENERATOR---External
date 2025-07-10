@@ -14,7 +14,7 @@ axios.interceptors.request.use(
       config.headers = config.headers || {};
       config.headers["Authorization"] = `Bearer ${keycloak.token}`;
     }
-    if (!url.includes("neoformexternal/local")) {
+    if (!url.includes("neoformexternal/local") && !url.includes("auth-type")) {
       if (!config.params) {
         config.params = {};
       }

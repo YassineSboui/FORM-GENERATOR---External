@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NeoForm_Externe.Attributes;
 using NeoForm_Externe.Interfaces;
 using NeoForm_Externe.Models.Dto;
 using NeoForm_Externe.Services;
+using NeoForm_Externe.Filters;
 
 namespace NeoFormExterne.Controllers
 {
@@ -28,20 +28,34 @@ namespace NeoFormExterne.Controllers
         [HttpPost]
         public IActionResult AddClient([FromBody] ClientDto clientDto)
         {
-            _clientStore.AddClient(clientDto.ClientId, clientDto.Url);
-            return Ok();
+            if (string.IsNullOrEmpty(clientDto.ApiKey))
+            {
+                _clientStore.AddClient(clientDto.ClientId, clientDto.Url);
+            }
+            else
+            {
+                _clientStore.AddClient(clientDto.ClientId, clientDto.Url, clientDto.ApiKey);
+            }
+            return Ok(new { message = "Client added successfully" });
         }
 
         [HttpPut("{clientId}")]
-        public IActionResult UpdateClient(string clientId, [FromBody] string newUrl)
+        public IActionResult UpdateClient(string clientId, [FromBody] UpdateClientRequest request)
         {
-            if (string.IsNullOrEmpty(newUrl))
+            if (string.IsNullOrEmpty(request.Url))
             {
                 return BadRequest("New URL cannot be empty");
             }
 
-            _clientStore.UpdateClient(clientId, newUrl);
-            return Ok();
+            if (string.IsNullOrEmpty(request.ApiKey))
+            {
+                _clientStore.UpdateClient(clientId, request.Url);
+            }
+            else
+            {
+                _clientStore.UpdateClient(clientId, request.Url, request.ApiKey);
+            }
+            return Ok(new { message = "Client updated successfully" });
         }
 
         [HttpDelete("{clientId}")]
@@ -53,11 +67,27 @@ namespace NeoFormExterne.Controllers
 
         [HttpGet("Clients")]
         [AllowAnonymous]
-        [ApiKeyAuth]
+        [ServiceFilter(typeof(DynamicApiKeyAuthFilter))]
         public IActionResult GetClientByUrl([FromQuery] string url)
         {
             var client = _clientStore.GetClientByUrl(url);
             return client == null ? NotFound("Client not found") : Ok(client);
         }
+
+        [HttpGet("{clientId}/apikey")]
+        public IActionResult GetClientApiKey(string clientId)
+        {
+            if (_clientStore.TryGetClientApiKey(clientId, out var apiKey))
+            {
+                return Ok(new { clientId, apiKey });
+            }
+            return NotFound("Client not found");
+        }
+    }
+
+    public class UpdateClientRequest
+    {
+        public string Url { get; set; } = string.Empty;
+        public string ApiKey { get; set; } = string.Empty;
     }
 }

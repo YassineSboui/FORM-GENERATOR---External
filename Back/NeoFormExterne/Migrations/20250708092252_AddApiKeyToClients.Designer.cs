@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoForm_Externe.Data;
 
@@ -10,9 +11,11 @@ using NeoForm_Externe.Data;
 namespace NeoForm_Externe.Migrations
 {
     [DbContext(typeof(ExternalNeoFormContext))]
-    partial class ExternalNeoFormContextModelSnapshot : ModelSnapshot
+    [Migration("20250708092252_AddApiKeyToClients")]
+    partial class AddApiKeyToClients
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

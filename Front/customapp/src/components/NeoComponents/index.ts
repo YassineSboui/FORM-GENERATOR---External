@@ -28,6 +28,7 @@ export { default as NeoRecap } from "./NeoRecap.vue";
 export { default as NeoThesaurus } from "./NeoThesaurus.vue";
 export { default as NeoContact } from "./NeoContact.vue";
 export { default as NeoTreeView } from "./NeoTreeView.vue";
+export { default as NeoCustomTreeView } from "./NeoCustomTreeView.vue";
 export { default as NeoQrCode } from "./NeoQrCode.vue";
 export { default as NeoPhoto } from "./NeoPhoto.vue";
 export { default as NeoSign } from "./NeoSign.vue";

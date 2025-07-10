@@ -17,7 +17,9 @@ namespace NeoForm_Externe.Services
     {
         private readonly IObjectService _objectService;
         private readonly ILogger<ExternalSourceService> _logger;
-        public ExternalSourceService( IObjectService objectService , ILogger<ExternalSourceService> logger)
+        private readonly SemaphoreSlim _concurrencySemaphore = new(10, 10); // Limit concurrent operations
+
+        public ExternalSourceService(IObjectService objectService, ILogger<ExternalSourceService> logger)
         {
             _objectService = objectService;
             _logger = logger;
@@ -25,13 +27,55 @@ namespace NeoForm_Externe.Services
 
         public async Task<ExecuteQueryResponse> ExecuteDbqByObjectName(ExecuteQueryRequest req)
         {
-            var queryObject = (await _objectService.GetObjectByObjectName(req.ObjectName)).ToObjectDto();
-            var queryConfig = queryObject.ObjectJson.ObjectConfig.CollectionQueryConfig;
-            if (queryObject.ObjectType != "CDQ") throw new KeyNotFoundException("query not found");
-            var databaseObject = (await _objectService.GetObjectByGuidAsync(queryConfig.DatabaseConfigGuid)).ToObjectDto();
-            if (databaseObject.ObjectType != "CDB") throw new KeyNotFoundException("query not found");
-            var databaseConfig = databaseObject.ObjectJson.ObjectConfig.CollectionDatabaseConfig;
-            return await ExecuteWithParams(databaseConfig, queryConfig, req.Params);
+            await _concurrencySemaphore.WaitAsync();
+            try
+            {
+                _logger.LogInformation($"Executing database query for object: {req.ObjectName}");
+
+                var queryObjectResult = await _objectService.GetObjectByObjectName(req.ObjectName);
+                if (queryObjectResult == null)
+                {
+                    throw new KeyNotFoundException($"Query object not found: {req.ObjectName}");
+                }
+
+                var queryObject = queryObjectResult.ToObjectDto();
+                var queryConfig = queryObject.ObjectJson?.ObjectConfig?.CollectionQueryConfig;
+
+                if (queryObject.ObjectType != "CDQ")
+                {
+                    throw new InvalidOperationException($"Object {req.ObjectName} is not a query object (CDQ)");
+                }
+
+                if (queryConfig == null)
+                {
+                    throw new InvalidOperationException($"Query configuration is missing for object: {req.ObjectName}");
+                }
+
+                var databaseObjectResult = await _objectService.GetObjectByGuidAsync(queryConfig.DatabaseConfigGuid);
+                if (databaseObjectResult == null)
+                {
+                    throw new KeyNotFoundException($"Database object not found for GUID: {queryConfig.DatabaseConfigGuid}");
+                }
+
+                var databaseObject = databaseObjectResult.ToObjectDto();
+                var databaseConfig = databaseObject.ObjectJson?.ObjectConfig?.CollectionDatabaseConfig;
+
+                if (databaseObject.ObjectType != "CDB")
+                {
+                    throw new InvalidOperationException($"Referenced object is not a database object (CDB)");
+                }
+
+                if (databaseConfig == null)
+                {
+                    throw new InvalidOperationException("Database configuration is missing");
+                }
+
+                return await ExecuteWithParams(databaseConfig, queryConfig, req.Params);
+            }
+            finally
+            {
+                _concurrencySemaphore.Release();
+            }
         }
 
         private async Task<ExecuteQueryResponse> ExecuteWithParams(CollectionDatabaseDto databaseConfig, CollectionQueryDto queryConfig, IList<Param> parameters)
@@ -100,40 +144,74 @@ namespace NeoForm_Externe.Services
         private async Task<DataTable> ExecuteSqlServer(CollectionDatabaseDto databaseConfig, CollectionQueryDto queryConfig, IList<Param> parameters)
         {
             using SqlConnection conn = new SqlConnection(databaseConfig.ConnectionString);
-            await conn.OpenAsync();
-            SqlDataAdapter da = new SqlDataAdapter(queryConfig.Query, conn);
-            foreach (var item in parameters)
+            try
             {
-                da.SelectCommand.Parameters.Add(new SqlParameter
+                await conn.OpenAsync();
+                using SqlDataAdapter da = new SqlDataAdapter(queryConfig.Query, conn);
+                da.SelectCommand.CommandTimeout = 30; // Set command timeout
+
+                foreach (var item in parameters)
                 {
-                    ParameterName = item.Key,
-                    Value = item.Value
-                });
+                    da.SelectCommand.Parameters.Add(new SqlParameter
+                    {
+                        ParameterName = item.Key,
+                        Value = string.IsNullOrEmpty(item.Value) ? DBNull.Value : item.Value
+                    });
+                }
+
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                _logger.LogInformation($"SQL Server query executed successfully, returned {dt.Rows.Count} rows");
+                return dt;
             }
-            DataTable dt = new DataTable();
-            da.Fill(dt);
-            await conn.CloseAsync();
-            return dt;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error executing SQL Server query for parameters: {string.Join(", ", parameters.Select(p => $"{p.Key}={p.Value}"))}");
+                throw;
+            }
+            finally
+            {
+                if (conn.State == ConnectionState.Open)
+                    await conn.CloseAsync();
+            }
         }
 
         private async Task<DataTable> ExecuteMySql(CollectionDatabaseDto databaseConfig, CollectionQueryDto queryConfig, IList<Param> parameters)
         {
             using MySqlConnection connection = new MySqlConnection(databaseConfig.ConnectionString);
-            await connection.OpenAsync();
-            using MySqlCommand command = new MySqlCommand(queryConfig.Query, connection);
-            foreach (var item in parameters)
+            try
             {
-                command.Parameters.Add(new MySqlParameter
+                await connection.OpenAsync();
+                using MySqlCommand command = new MySqlCommand(queryConfig.Query, connection)
                 {
-                    ParameterName = item.Key,
-                    Value = item.Value
-                });
+                    CommandTimeout = 30 // Set command timeout
+                };
+
+                foreach (var item in parameters)
+                {
+                    command.Parameters.Add(new MySqlParameter
+                    {
+                        ParameterName = item.Key,
+                        Value = string.IsNullOrEmpty(item.Value) ? DBNull.Value : item.Value
+                    });
+                }
+
+                DataTable dataTable = new DataTable();
+                using MySqlDataReader reader = (MySqlDataReader)await command.ExecuteReaderAsync();
+                dataTable.Load(reader);
+                _logger.LogInformation($"MySQL query executed successfully, returned {dataTable.Rows.Count} rows");
+                return dataTable;
             }
-            DataTable dataTable = new DataTable();
-            using MySqlDataReader reader = command.ExecuteReader();
-            dataTable.Load(reader);
-            await connection.CloseAsync();
-            return dataTable;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error executing MySQL query for parameters: {string.Join(", ", parameters.Select(p => $"{p.Key}={p.Value}"))}");
+                throw;
+            }
+            finally
+            {
+                if (connection.State == ConnectionState.Open)
+                    await connection.CloseAsync();
+            }
         }
 
         public async Task<string> ExecuteApiByObjectName(executeApiRequestByObjectName req)
@@ -146,10 +224,10 @@ namespace NeoForm_Externe.Services
             {
                 // Récupération de la configuration de l'objet
                 ObjectModels objectModel = await _objectService.GetObjectByObjectName(req.ObjectName);
-            
+
 
                 ObjectJsonDto? objectJson = JsonConvert.DeserializeObject<ObjectJsonDto>(objectModel.ObjectJson);
-         
+
 
                 if (objectJson == null)
                 {
@@ -197,7 +275,7 @@ namespace NeoForm_Externe.Services
                     .Where(p => p.Value != null)
                     .ToList();
 
-         
+
 
                 // Replace variables in the entire apiConfig object
                 objectJson.ObjectConfig.ExternalApiConfig = ReplaceVariablesInObject(objectJson.ObjectConfig.ExternalApiConfig, variables);
@@ -218,7 +296,7 @@ namespace NeoForm_Externe.Services
                 }
                 baseUrl = baseUrl.Replace("{", "").Replace("}", "");
 
-    
+
 
                 var client = new RestClient(new RestClientOptions(baseUrl));
                 var request = new RestRequest
@@ -289,23 +367,23 @@ namespace NeoForm_Externe.Services
                     }
                 }
 
-       
+
 
 
                 RestResponse response = await client.ExecuteAsync(request);
 
                 if (!response.IsSuccessful)
                 {
-             
+
                     throw new HttpRequestException($"Erreur API: {response.StatusCode} - {response.ErrorMessage}");
                 }
 
-   
+
                 return response.Content;
             }
             catch (Exception ex)
             {
-     
+
                 throw;
             }
         }

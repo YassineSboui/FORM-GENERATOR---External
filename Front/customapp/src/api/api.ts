@@ -1010,3 +1010,23 @@ export const deleteClientById = async (clientId: string) => {
   const response = await axios.delete(apiUrl);
   return response.data;
 };
+export const GetAuthInfo = async ({
+  code,
+  guid,
+}: {
+  code: string;
+  guid: string;
+}) => {
+  const httpRequest = useHttpRequest();
+  try {
+    const apiUrl = `${httpRequest.apiUrl}/api/external/auth-type`;
+    const response = await axios.get(apiUrl, {
+      params: { code, guid },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting auth type from access:", error);
+    logger.error(error);
+    throw error;
+  }
+};

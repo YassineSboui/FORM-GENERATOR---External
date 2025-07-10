@@ -448,7 +448,6 @@ import {
   generateModel,
   fetchNotice,
   fetchMetadata,
-  updateNotice,
   fetchDataByTableGuid,
   logger,
   callEliseWebService,
@@ -790,43 +789,44 @@ const submitNotice = async () => {
   }
 
   console.log("app.refs", app.refs);
-  for (let element in app.refs) {
-    const options = app.refs[element][0]?.options;
-    const related = options?.relatedToElise;
-    const isEditor = options?.type == "Editor";
-    const isFile = options?.type == "Upload";
-    const isPhoto = options?.type == "PHOTO";
-    const isTable = options?.type == "Table";
-    const isFlowchart = options?.type == "FLOWCHART";
-    const isTreewiew = options?.type == "TREEVIEW";
-    const isUploadTable = isTable && options?.isUploadTable;
-    const isVHTML = options?.type == "HTML";
-    const isDate = options?.type == "DATE";
-    const isTime = options?.type == "Time";
-    if (isFile && !options.useAILise) {
+
+  // Field processing strategies
+  const fieldProcessors = {
+    Upload: (element: string, options: any) => {
+      if (options.useAILise) return;
+
       const files = Fields.value[element];
       if (Array.isArray(files)) {
-        for (const elem of files) {
+        files.forEach((elem) => {
           NoticeAttachements.value.push({
             guid: elem.guid,
             fileName: elem.fileName,
           });
-        }
+        });
       } else if (files && typeof files === "object") {
-        // Single file object
         NoticeAttachements.value.push({
           guid: files.guid,
           fileName: files.fileName,
         });
       }
-    } else if (isPhoto) {
+    },
+
+    PHOTO: (element: string, options: any) => {
       NoticeFiles.value = mapFileField(Fields.value[element]);
-    } else if (isEditor) {
+    },
+
+    Editor: (element: string, options: any) => {
       NoticeHtml.value[element] = Fields.value[element] ?? "";
-    } else if (isUploadTable) {
-      NoticeUploadTable.value[element] = Fields.value[element] ?? "";
-      NoticeData.value[element] = Fields.value[element] ?? "";
-    } else if (isTreewiew) {
+    },
+
+    Table: (element: string, options: any) => {
+      if (options?.isUploadTable) {
+        NoticeUploadTable.value[element] = Fields.value[element] ?? "";
+        NoticeData.value[element] = Fields.value[element] ?? "";
+      }
+    },
+
+    TREEVIEW: (element: string, options: any) => {
       const keys = Object.keys(Fields.value[element] || {});
       if (options.selectedType === "Organigramme") {
         const firstKey = keys[0] ?? "";
@@ -836,32 +836,76 @@ const submitNotice = async () => {
         NoticeMapping.value[element] = keys;
         NoticeData.value[element] = keys;
       }
-    } else if (isDate) {
+    },
+
+    DATE: (element: string, options: any) => {
       const val = Fields.value[element];
+      const related = options?.relatedToElise;
+
       if (typeof val === "string" && val.includes("T")) {
         const dateOnly = val.split("T")[0];
         NoticeData.value[element] = dateOnly;
-        NoticeMapping.value[element] = dateOnly;
+        if (related) {
+          NoticeMapping.value[element] = dateOnly;
+        }
+      } else {
+        NoticeData.value[element] = Fields.value[element];
+        if (related) {
+          NoticeMapping.value[element] = Fields.value[element];
+        }
       }
-    } else if (isTime) {
+    },
+
+    Time: (element: string, options: any) => {
       const val = Fields.value[element];
+      const related = options?.relatedToElise;
+      let timeOnly = null as any;
+
       if (val) {
         const fullDate = new Date(val);
         const hours = fullDate.getHours().toString().padStart(2, "0");
         const minutes = fullDate.getMinutes().toString().padStart(2, "0");
-        const timeOnly = `${hours}:${minutes}`;
-        NoticeData.value[element] = timeOnly;
-        NoticeMapping.value[element] = timeOnly;
+        timeOnly = `${hours}:${minutes}`;
       }
-    } else if (isFlowchart && related) {
-      NoticeMapping.value[element] = Fields.value[element]?.id ?? "";
-      NoticeData.value[element] = Fields.value[element] ?? "";
-    } else if (related && !isFlowchart) {
-      NoticeMapping.value[element] = Fields.value[element] ?? "";
-      NoticeData.value[element] = Fields.value[element] ?? "";
-    } else if (!isVHTML && options !== undefined) {
-      NoticeData.value[element] = Fields.value[element] ?? "";
-    }
+
+      NoticeData.value[element] = timeOnly ?? "";
+      if (related) {
+        NoticeMapping.value[element] = timeOnly ?? "";
+      }
+    },
+
+    FLOWCHART: (element: string, options: any) => {
+      const related = options?.relatedToElise;
+      if (related) {
+        NoticeMapping.value[element] = Fields.value[element]?.id ?? "";
+        NoticeData.value[element] = Fields.value[element] ?? "";
+      }
+    },
+
+    // Default handler for related fields and general data
+    default: (element: string, options: any) => {
+      const related = options?.relatedToElise;
+      const isVHTML = options?.type === "HTML";
+
+      if (related) {
+        NoticeMapping.value[element] = Fields.value[element] ?? "";
+        NoticeData.value[element] = Fields.value[element] ?? "";
+      } else if (!isVHTML && options !== undefined) {
+        NoticeData.value[element] = Fields.value[element] ?? "";
+      }
+    },
+  };
+
+  // Process each field using the appropriate strategy
+  for (let element in app.refs) {
+    const options = app.refs[element][0]?.options;
+    if (!options) continue;
+
+    const fieldType = options.type;
+    const processor =
+      fieldProcessors[fieldType as keyof typeof fieldProcessors] ||
+      fieldProcessors.default;
+    processor(element, options);
   }
   newNotice.Attachements = NoticeAttachements.value;
   newNotice.data = {
@@ -1027,45 +1071,47 @@ const mapFileField = (field: any) => {
 
 const handleFieldSettingSplitterZone = (pageItem: any) => {
   const columnNames = ["column1", "column2", "column3", "column4"];
-  columnNames.forEach((columnName) => {
-    for (let z = 0; z < pageItem.rows[columnName].length; z++) {
-      const row = pageItem.rows[columnName][z];
-      if (row.zone === "ZR" && row.isSection === false) {
-        localFields.value[row.code] ??= [];
-        handleFieldSettingRepeatableZone(row);
-      } else if (row.zone === "ZR" && row.isSection) {
-        const columns = ["column1", "column2", "column3", "column4"];
-        const item = row.rows["column1"];
-        for (let k = 0; k < item.length; k++) {
-          columns.forEach((col) => {
-            for (let d = 0; d < item[k].rows[col].length; d++) {
-              const options = item[k].rows[col][d]?.options;
-              if (options) {
-                localFields.value[options.name] ??= "";
-              }
-            }
-            // const options = item[col][k]?.options;
-            // if (options) {
-            //   localFields.value[options.name] ??= "";
-            // }
-          });
-        }
-      }
-      Object.values(row.rows).forEach((col: any) => {
-        Object.values(col).forEach((field: any) => {
-          const options = field.options;
-          if (options) {
-            localFields.value[options.name] ??= "";
+
+  const processOptions = (options: any) => {
+    if (options) {
+      localFields.value[options.name] ??= "";
+    }
+  };
+
+  const processRow = (row: any) => {
+    if (row.zone === "ZR" && row.isSection === false) {
+      localFields.value[row.code] ??= [];
+      handleFieldSettingRepeatableZone(row);
+    } else if (row.zone === "ZR" && row.isSection) {
+      const item = row.rows["column1"];
+      for (let k = 0; k < item.length; k++) {
+        columnNames.forEach((col) => {
+          for (let d = 0; d < item[k].rows[col].length; d++) {
+            processOptions(item[k].rows[col][d]?.options);
           }
         });
+      }
+    }
+
+    Object.values(row.rows).forEach((col: any) => {
+      Object.values(col).forEach((field: any) => {
+        processOptions(field.options);
       });
+    });
+  };
+
+  columnNames.forEach((columnName) => {
+    for (let z = 0; z < pageItem.rows[columnName].length; z++) {
+      processRow(pageItem.rows[columnName][z]);
     }
   });
 };
+
 const handleFieldSettingRepeatableZone = (pageItem: any) => {
   const itemCol = pageItem.rows.column1;
+  const columns = ["column1", "column2", "column3", "column4"];
+
   for (let k = 0; k < itemCol.length; k++) {
-    const columns = ["column1", "column2", "column3", "column4"];
     columns.forEach((col) => {
       for (let z = 0; z < itemCol[k].rows[col].length; z++) {
         const options = itemCol[k].rows[col][z]?.options;
@@ -1083,39 +1129,60 @@ const handleFieldSettingRepeatableZone = (pageItem: any) => {
 };
 
 const handleFieldSetting = (pageItem: any, clear = false) => {
-  if (pageItem.zone === "ZS") {
-    handleFieldSettingSplitterZone(pageItem);
-  } else if (pageItem.zone === "ZR" && pageItem.isSection === false) {
-    localFields.value[pageItem.code] ??= [];
-    handleFieldSettingRepeatableZone(pageItem);
-  } else if (pageItem.zone === "ZR" && pageItem.isSection) {
-    const columnNames = ["column1", "column2", "column3", "column4"];
-    const itemZone = pageItem.rows["column1"];
-    for (let k = 0; k < itemZone.length; k++) {
+  const fieldSettingStrategies = {
+    ZS: () => handleFieldSettingSplitterZone(pageItem),
+
+    ZR_section: () => {
+      const columnNames = ["column1", "column2", "column3", "column4"];
+      const itemZone = pageItem.rows["column1"];
+
+      for (let k = 0; k < itemZone.length; k++) {
+        columnNames.forEach((columnName) => {
+          for (let z = 0; z < itemZone[k].rows[columnName].length; z++) {
+            const options = itemZone[k].rows[columnName][z]?.options;
+            if (options) {
+              localFields.value[options.name] ??= "";
+            }
+          }
+        });
+      }
+    },
+
+    ZR_repeatable: () => {
+      localFields.value[pageItem.code] ??= [];
+      handleFieldSettingRepeatableZone(pageItem);
+    },
+
+    default: () => {
+      const columnNames = ["column1", "column2", "column3", "column4"];
       columnNames.forEach((columnName) => {
-        for (let z = 0; z < itemZone[k].rows[columnName].length; z++) {
-          const options = itemZone[k].rows[columnName][z]?.options;
+        for (let z = 0; z < pageItem.rows[columnName].length; z++) {
+          const options = pageItem.rows[columnName][z]?.options;
           if (options) {
-            localFields.value[options.name] ??= "";
+            if (clear) {
+              localFields.value[options.name] = "";
+            } else {
+              localFields.value[options.name] ??= "";
+            }
           }
         }
       });
-    }
-  } else {
-    const columnNames = ["column1", "column2", "column3", "column4"];
-    columnNames.forEach((columnName) => {
-      for (let z = 0; z < pageItem.rows[columnName].length; z++) {
-        const options = pageItem.rows[columnName][z]?.options;
-        if (options) {
-          if (clear) {
-            localFields.value[options.name] = "";
-          } else {
-            localFields.value[options.name] ??= "";
-          }
-        }
-      }
-    });
+    },
+  };
+
+  // Determine strategy based on zone and section type
+  let strategyKey = "default";
+  if (pageItem.zone === "ZS") {
+    strategyKey = "ZS";
+  } else if (pageItem.zone === "ZR" && pageItem.isSection === false) {
+    strategyKey = "ZR_repeatable";
+  } else if (pageItem.zone === "ZR" && pageItem.isSection) {
+    strategyKey = "ZR_section";
   }
+
+  const strategy =
+    fieldSettingStrategies[strategyKey as keyof typeof fieldSettingStrategies];
+  strategy();
 };
 const processPage = (pageItem: any, clear = false) => {
   // const columnNames = ["column1", "column2", "column3", "column4"];
@@ -1558,31 +1625,39 @@ const isEmpty = (value: any) => {
 };
 
 const validateField = (pageItem: any, columnName: string, valid: boolean) => {
-  if (pageItem.zone === "ZS") {
-    return validateFieldSplitterZone(pageItem, columnName, valid);
-  } else if (pageItem.zone === "ZR") {
-    Fields.value[pageItem.code] ??= [];
-    return validateFieldRepeatableZone(pageItem, columnName, valid);
-  } else {
-    for (let z = 0; z < pageItem.rows[columnName].length; z++) {
-      const options = pageItem.rows[columnName][z]?.options;
-      if (options && options.type === "HTML") {
-        if (options && options.required && options.hidden !== true) {
-          return false;
+  const validationStrategies = {
+    ZS: () => validateFieldSplitterZone(pageItem, columnName, valid),
+    ZR: () => {
+      Fields.value[pageItem.code] ??= [];
+      return validateFieldRepeatableZone(pageItem, columnName, valid);
+    },
+    default: () => {
+      const isFieldValid = (options: any) => {
+        if (!options || options.hidden === true || !options.required) {
+          return true;
         }
-      } else {
-        if (
-          options &&
-          options.required &&
-          options.hidden !== true &&
-          isEmpty(Fields.value[options.name])
-        ) {
+
+        if (options.type === "HTML") {
+          return false; // HTML fields are always invalid if required and not hidden
+        }
+
+        return !isEmpty(Fields.value[options.name]);
+      };
+
+      for (let z = 0; z < pageItem.rows[columnName].length; z++) {
+        const options = pageItem.rows[columnName][z]?.options;
+        if (!isFieldValid(options)) {
           return false;
         }
       }
-    }
-  }
-  return valid; // Return valid if no changes
+      return valid;
+    },
+  };
+
+  const strategy =
+    validationStrategies[pageItem.zone as keyof typeof validationStrategies] ||
+    validationStrategies.default;
+  return strategy();
 };
 
 const validateFieldRepeatableZone = (
@@ -1593,35 +1668,37 @@ const validateFieldRepeatableZone = (
   const itemCol = pageItem.rows.column1;
   if (pageItem.show === false) {
     return true;
-  } else {
-    for (let k = 0; k < itemCol.length; k++) {
-      for (let z = 0; z < pageItem.rows[columnName].length; z++) {
-        const columnNames = ["column1", "column2", "column3", "column4"];
-        columnNames.forEach((columnNameZ) => {
-          Object.values(pageItem.rows[columnName][z].rows[columnNameZ]).forEach(
-            (field: any) => {
-              const options = field.options;
-              if (
-                options &&
-                options.required &&
-                options.hidden !== true &&
-                isEmpty(Fields.value[options.name])
-              ) {
-                valid = false;
-              }
-            }
-          );
-        });
-        if (!valid) {
-          break;
+  }
+
+  const validateFieldOptions = (options: any) => {
+    return !(
+      options &&
+      options.required &&
+      options.hidden !== true &&
+      isEmpty(Fields.value[options.name])
+    );
+  };
+
+  for (let k = 0; k < itemCol.length; k++) {
+    for (let z = 0; z < pageItem.rows[columnName].length; z++) {
+      const columnNames = ["column1", "column2", "column3", "column4"];
+      for (const columnNameZ of columnNames) {
+        const fields = Object.values(
+          pageItem.rows[columnName][z].rows[columnNameZ]
+        );
+        for (const field of fields) {
+          const options = (field as any).options;
+          if (!validateFieldOptions(options)) {
+            return false;
+          }
         }
       }
       if (!valid) {
-        break;
+        return false;
       }
     }
-    return valid;
   }
+  return valid;
 };
 
 const validateFieldSplitterZone = (
@@ -1629,25 +1706,35 @@ const validateFieldSplitterZone = (
   columnName: string,
   valid: boolean
 ) => {
+  const validateFieldOptions = (options: any) => {
+    return !(
+      options &&
+      options.required &&
+      options.hidden !== true &&
+      isEmpty(Fields.value[options.name])
+    );
+  };
+
   for (let z = 0; z < pageItem.rows[columnName].length; z++) {
     const row = pageItem.rows[columnName][z];
+
     if (row.zone === "ZR") {
       Fields.value[row.code] ??= [];
       valid = validateFieldRepeatableZone(row, columnName, valid);
+      if (!valid) return false;
     }
+
+    // Validate all nested fields
     Object.values(row.rows).forEach((col: any) => {
       Object.values(col).forEach((field: any) => {
         const options = field.options;
-        if (
-          options &&
-          options.required &&
-          options.hidden !== true &&
-          isEmpty(Fields.value[options.name])
-        ) {
+        if (!validateFieldOptions(options)) {
           valid = false;
         }
       });
     });
+
+    if (!valid) return false;
   }
   return valid;
 };

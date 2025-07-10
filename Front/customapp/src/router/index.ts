@@ -18,6 +18,12 @@ const routes = [
     meta: { fullMode: true },
   },
   {
+    path: "/auth/callback",
+    name: "auth-callback",
+    component: () => import("../views/AuthCallback.vue"),
+    meta: { fullMode: true },
+  },
+  {
     path: "/unauthorized",
     name: "unauthorized",
     component: () => import("@/views/UnauthorizedView.vue"),

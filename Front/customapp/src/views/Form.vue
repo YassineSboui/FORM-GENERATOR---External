@@ -1,5 +1,9 @@
 <template>
-  <div class="form-viewer-container" :dir="isRTL ? 'rtl' : 'ltr'" v-if="object">
+  <div
+    class="form-viewer-container"
+    :dir="isRTL ? 'rtl' : 'ltr'"
+    v-if="object && isAuthenticated"
+  >
     <div class="form-viewer-container-header" v-if="showFormHeader">
       <div class="flex justify-content-start">
         <div v-if="formName">{{ formName }}</div>
@@ -108,6 +112,26 @@
       </div>
     </div>
   </div>
+  <div
+    v-else-if="!isAuthenticated && authRequired"
+    class="form-viewer-container-content"
+  >
+    <div
+      class="flex justify-content-center align-items-center flex-column"
+      style="height: 100%"
+    >
+      <div class="text-center">
+        <i
+          class="pi pi-spin pi-spinner"
+          style="font-size: 2rem; margin-bottom: 1rem"
+        ></i>
+        <p>Authenticating...</p>
+        <p class="text-sm text-gray-600">
+          Please wait while we redirect you to the authentication provider.
+        </p>
+      </div>
+    </div>
+  </div>
   <div v-else class="form-viewer-container-content">
     <div
       class="flex justify-content-center align-items-center"
@@ -133,7 +157,7 @@ import {
   watch,
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { fetchOneObject } from "@/api/api";
+import { fetchOneObject, GetAuthInfo } from "@/api/api";
 import { useI18n } from "vue-i18n";
 import { i18n } from "@/main"; // Import i18n from main.ts
 import { useAppStore } from "@/store/app.store";
@@ -144,9 +168,9 @@ import Aura from "@primeuix/themes/aura";
 import Lara from "@primeuix/themes/lara";
 import Nora from "@primeuix/themes/nora";
 import Material from "@primeuix/themes/material";
-import { localize } from "@vee-validate/i18n";
 import arabic from "@/i18n/ar";
 import french from "@/i18n/fr";
+import keycloak from "@/keycloak";
 export default defineComponent({
   setup() {
     const { t } = useI18n();
@@ -174,6 +198,9 @@ export default defineComponent({
     const formfound = ref(true);
     const PrimeVue = usePrimeVue();
     const localFormConfig = ref({} as any);
+    const isAuthenticated = ref(false);
+    const authRequired = ref(false);
+    const authConfig = ref(null as any);
 
     const themePresets = {
       lara: Lara,
@@ -226,38 +253,199 @@ export default defineComponent({
         },
       };
     };
-
     onBeforeMount(async () => {
       appStore.setExternalAuth(
         route.query.code as string,
         route.params.guid as string
       );
-      console.log("Auth Updated");
-      object.value = await fetchOneObject(formID.value);
 
-      localFormConfig.value = JSON.parse(
-        object.value?.objectJson
-      ).objectConfig.formConfig;
-      applyDynamicTheme();
-      formName.value = localFormConfig.value.formName;
-      isStepper.value = localFormConfig.value.isStepper;
-      isRTL.value = localFormConfig.value.isRTL;
-      isMultilingual.value = localFormConfig.value.isMultilingual;
-      languages.value = localFormConfig.value.languages;
-      // languagesList.value = convertLanguages(languages.value);
-      console.log("languages.value", languages.value);
-      steps.value = localFormConfig.value.stepNumber;
-      showPageNames.value = localFormConfig.value.showPageNames;
-      if (isStepper.value) {
-        names.value = JSON.parse(
-          object.value?.objectJson
-        ).objectConfig.formTemplate[0].config.names;
+      if (route.query.code && route.params.guid) {
+        try {
+          const authInfo = await GetAuthInfo({
+            code: route.query.code as string,
+            guid: route.params.guid as string,
+          });
+          console.log("Auth info received:", authInfo);
+
+          if (!authInfo.valid) {
+            router.push({ name: "unauthorized" });
+            return;
+          }
+
+          if (authInfo.authtype === "oidc") {
+            authRequired.value = true;
+            authConfig.value = authInfo.authconfig;
+
+            // For Azure AD and other OIDC providers, we need to handle this differently
+            try {
+              // Check if we're returning from successful authentication
+              const authFlag = sessionStorage.getItem("oidc_authenticated");
+              console.log("Checking authentication flag:", authFlag);
+
+              if (authFlag === "true") {
+                // We have successfully authenticated
+                isAuthenticated.value = true;
+                console.log("Successfully authenticated with OIDC");
+
+                // Clean up the authentication flag
+                sessionStorage.removeItem("oidc_authenticated");
+
+                // Restore the original URL parameters
+                // Restore the original query string
+                const originalQuery = sessionStorage.getItem("original_query");
+                console.log("Restoring original query:", originalQuery);
+
+                if (originalQuery) {
+                  const cleanUrl = `${window.location.origin}${window.location.pathname}${originalQuery}`;
+                  console.log("Cleaning URL to:", cleanUrl);
+                  window.history.replaceState({}, document.title, cleanUrl);
+                }
+
+                // Clean up session storage
+                sessionStorage.removeItem("original_query");
+
+                // Clean up session storage
+                sessionStorage.removeItem("original_query");
+              } else {
+                // We need to redirect to the OIDC provider
+                console.log("Redirecting to OIDC provider...");
+
+                // Store the original query string for preserving URL structure
+                sessionStorage.setItem(
+                  "original_query",
+                  window.location.search
+                );
+
+                // Store the current form URL to return to after authentication
+                sessionStorage.setItem("return_url", window.location.href);
+
+                // Generate a random state for security
+                const randomState = Math.random().toString(36).substring(2, 15);
+                sessionStorage.setItem("oidc_state", randomState);
+
+                // Use a generic callback URL with the correct base path from Vite config
+                const callbackUrl = `${window.location.origin}/neoformext/front/auth/callback`;
+
+                // Build the authorization URL
+                let authority = authInfo.authconfig.Authority;
+                // Ensure the authority has the https:// protocol
+                if (
+                  !authority.startsWith("http://") &&
+                  !authority.startsWith("https://")
+                ) {
+                  authority = "https://" + authority;
+                }
+
+                let authEndpoint;
+                if (authority.includes("auth0.com")) {
+                  // Auth0 uses /authorize
+                  authEndpoint = authority + "/authorize";
+                } else if (authority.includes("microsoftonline.com")) {
+                  // Azure AD uses /oauth2/v2.0/authorize
+                  authEndpoint = authority + "/oauth2/v2.0/authorize";
+                } else if (authority.includes("accounts.google.com")) {
+                  // Google uses /o/oauth2/v2/auth
+                  authEndpoint = authority + "/o/oauth2/v2/auth";
+                } else if (authority.includes("okta.com")) {
+                  // Okta uses /oauth2/v1/authorize
+                  authEndpoint = authority + "/oauth2/v1/authorize";
+                } else if (authority.includes("keycloak")) {
+                  // Keycloak - check if the authority already includes the realm path
+                  if (authority.includes("/auth/realms/")) {
+                    authEndpoint = authority + "/protocol/openid-connect/auth";
+                  } else {
+                    // Assume default realm if not specified
+                    authEndpoint =
+                      authority +
+                      "/auth/realms/master/protocol/openid-connect/auth";
+                  }
+                } else {
+                  // Generic OIDC providers typically use /authorize
+                  authEndpoint = authority + "/authorize";
+                }
+
+                const authUrl = new URL(authEndpoint);
+                authUrl.searchParams.append(
+                  "client_id",
+                  authInfo.authconfig.ClientId
+                );
+                authUrl.searchParams.append("response_type", "code");
+                authUrl.searchParams.append("redirect_uri", callbackUrl);
+                authUrl.searchParams.append("scope", authInfo.authconfig.Scope);
+                authUrl.searchParams.append("state", randomState);
+
+                // Add any provider-specific parameters if they exist in authconfig
+                if (authInfo.authconfig.AdditionalParams) {
+                  try {
+                    const additionalParams =
+                      typeof authInfo.authconfig.AdditionalParams === "string"
+                        ? JSON.parse(authInfo.authconfig.AdditionalParams)
+                        : authInfo.authconfig.AdditionalParams;
+
+                    for (const [key, value] of Object.entries(
+                      additionalParams
+                    )) {
+                      authUrl.searchParams.append(key, value as string);
+                    }
+                  } catch (error) {
+                    console.warn(
+                      "Failed to parse additional parameters",
+                      error
+                    );
+                  }
+                }
+
+                // Redirect to the authorization endpoint
+                window.location.href = authUrl.toString();
+                return;
+              }
+            } catch (oidcError) {
+              console.error("OIDC authentication failed:", oidcError);
+              return;
+            }
+          } else {
+            // No authentication required or different auth type
+            isAuthenticated.value = true;
+          }
+        } catch (error) {
+          console.error("Failed to get auth info:", error);
+          // Continue loading the form even if auth check fails
+          isAuthenticated.value = true;
+        }
+      } else {
+        console.log("No external auth code or GUID found.");
+        isAuthenticated.value = true;
       }
-      i18n.global.locale.value = isRTL.value ? "ar" : "fr";
-      isRTL.value
-        ? (PrimeVue.config.locale = { ...arabic.LocaleOptions })
-        : (PrimeVue.config.locale = { ...french.LocaleOptions });
-      console.log("i18n locale set to:", i18n.global.locale.value);
+
+      // Only proceed to load the form if authenticated
+      if (isAuthenticated.value) {
+        console.log("Auth Updated");
+        object.value = await fetchOneObject(formID.value);
+
+        localFormConfig.value = JSON.parse(
+          object.value?.objectJson
+        ).objectConfig.formConfig;
+        applyDynamicTheme();
+        formName.value = localFormConfig.value.formName;
+        isStepper.value = localFormConfig.value.isStepper;
+        isRTL.value = localFormConfig.value.isRTL;
+        isMultilingual.value = localFormConfig.value.isMultilingual;
+        languages.value = localFormConfig.value.languages;
+        // languagesList.value = convertLanguages(languages.value);
+        console.log("languages.value", languages.value);
+        steps.value = localFormConfig.value.stepNumber;
+        showPageNames.value = localFormConfig.value.showPageNames;
+        if (isStepper.value) {
+          names.value = JSON.parse(
+            object.value?.objectJson
+          ).objectConfig.formTemplate[0].config.names;
+        }
+        i18n.global.locale.value = isRTL.value ? "ar" : "fr";
+        isRTL.value
+          ? (PrimeVue.config.locale = { ...arabic.LocaleOptions })
+          : (PrimeVue.config.locale = { ...french.LocaleOptions });
+        console.log("i18n locale set to:", i18n.global.locale.value);
+      }
     });
 
     const form: Ref<any[]> = computed(() => {
@@ -377,6 +565,9 @@ export default defineComponent({
       languages,
       isMultilingual,
       languagesList,
+      isAuthenticated,
+      authRequired,
+      authConfig,
       t,
       submit,
       handleIsSubmit,

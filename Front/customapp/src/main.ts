@@ -181,6 +181,7 @@ const globalComponents = {
   NeoThesaurus: NeoComponents.NeoThesaurus,
   NeoContact: NeoComponents.NeoContact,
   NeoTreeView: NeoComponents.NeoTreeView,
+  NeoCustomTreeView: NeoComponents.NeoCustomTreeView,
   NeoQrCode: NeoComponents.NeoQrCode,
   NeoPhoto: NeoComponents.NeoPhoto,
   NeoSign: NeoComponents.NeoSign,

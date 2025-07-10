@@ -6,7 +6,7 @@
 
     <div class="text-center">
       Vous n'êtes pas autorisé à accéder à cette page. Veuillez recommencer
-      l'action depuis avec un compte administrateur.
+      l'opération ou contacter votre administrateur.
     </div>
   </div>
 </template>
