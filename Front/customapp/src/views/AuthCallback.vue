@@ -10,10 +10,9 @@
           style="font-size: 2rem; margin-bottom: 1rem"
         ></i>
 
-        <p>Traitement de l'authentification...</p>
+        <p>{{ $t("AuthCallback.processingAuthentication") }}</p>
         <p class="text-sm text-gray-600">
-          Veuillez patienter pendant que nous complétons le processus
-          d'authentification.
+          {{ $t("AuthCallback.pleaseWait") }}
         </p>
       </div>
     </div>

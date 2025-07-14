@@ -1060,3 +1060,157 @@ export const validateOidcCode = async (
     throw error;
   }
 };
+
+// Email Authentication API functions
+export const validateEmailInvitation = async (
+  email: string,
+  guid: string,
+  personalCode: string,
+  client: string
+) => {
+  const httpRequest = useHttpRequest();
+  try {
+    const apiUrl = `${httpRequest.externalUrl}local/api/auth/validate-email`;
+    const configUrl = `${
+      httpRequest.externalUrl + client
+    }/api/external/auth-type`;
+    console.log(
+      "Validating email invitation:",
+      email,
+      "for GUID:",
+      guid,
+      "Personal Code:",
+      personalCode,
+      "Client:",
+      client
+    );
+
+    const response = await axios.post(apiUrl, {
+      email,
+      guid,
+      personalCode,
+      configUrl,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error validating email invitation:", error);
+    logger.error(error);
+    throw error;
+  }
+};
+
+export const sendEmailOTP = async (
+  email: string,
+  guid: string,
+  personalCode: string,
+  client: string
+) => {
+  const httpRequest = useHttpRequest();
+  try {
+    const apiUrl = `${httpRequest.externalUrl}local/api/auth/send-otp`;
+    const configUrl = `${
+      httpRequest.externalUrl + client
+    }/api/external/auth-type`;
+    console.log(
+      "Sending OTP to email:",
+      email,
+      "for GUID:",
+      guid,
+      "Personal Code:",
+      personalCode,
+      "Client:",
+      client
+    );
+
+    const response = await axios.post(apiUrl, {
+      email,
+      guid,
+      personalCode,
+      configUrl,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    logger.error(error);
+    throw error;
+  }
+};
+
+export const verifyEmailOTP = async (
+  email: string,
+  otp: string,
+  guid: string,
+  personalCode: string,
+  client: string
+) => {
+  const httpRequest = useHttpRequest();
+  try {
+    const apiUrl = `${httpRequest.externalUrl}local/api/auth/verify-otp`;
+    const configUrl = `${
+      httpRequest.externalUrl + client
+    }/api/external/auth-type`;
+    console.log(
+      "Verifying OTP for email:",
+      email,
+      "GUID:",
+      guid,
+      "Personal Code:",
+      personalCode,
+      "Client:",
+      client
+    );
+
+    const response = await axios.post(apiUrl, {
+      email,
+      otp,
+      guid,
+      personalCode,
+      configUrl,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    logger.error(error);
+    throw error;
+  }
+};
+
+// Validate authentication token to prevent session storage manipulation
+export const validateAuthToken = async (
+  token: string,
+  email: string,
+  guid: string,
+  personalCode: string,
+  client: string
+) => {
+  const httpRequest = useHttpRequest();
+  try {
+    const apiUrl = `${httpRequest.externalUrl}local/api/auth/validate-token`;
+    const configUrl = `${
+      httpRequest.externalUrl + client
+    }/api/external/auth-type`;
+    console.log(
+      "Validating auth token for email:",
+      email,
+      "GUID:",
+      guid,
+      "Personal Code:",
+      personalCode,
+      "Client:",
+      client
+    );
+
+    const response = await axios.post(apiUrl, {
+      token,
+      email,
+      guid,
+      personalCode,
+      configUrl,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error validating auth token:", error);
+    logger.error(error);
+    throw error;
+  }
+};

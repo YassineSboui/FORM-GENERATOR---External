@@ -40,6 +40,10 @@ builder.Services.AddScoped<IExternalSourceService, ExternalSourceService>();
 builder.Services.AddScoped<IClientStoreService, ClientStoreService>();
 builder.Services.AddScoped<IOidcService, OidcService>();
 builder.Services.AddScoped<IUserAuthenticationRepository, UserAuthenticationRepository>();
+// Register email authentication services
+builder.Services.AddScoped<IEmailAuthService, EmailAuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddMemoryCache(); // For OTP storage
 builder.Services.AddSingleton<ClientSessionService>();
 builder.Services.AddHostedService<CleanupBackgroundService>();
 // Add background service for cleanup

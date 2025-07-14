@@ -125,9 +125,9 @@
           class="pi pi-spin pi-spinner"
           style="font-size: 2rem; margin-bottom: 1rem"
         ></i>
-        <p>Authenticating...</p>
+        <p>{{ $t("Authentication.authenticating") }}</p>
         <p class="text-sm text-gray-600">
-          Please wait while we redirect you to the authentication provider.
+          {{ $t("Authentication.redirectingMessage") }}
         </p>
       </div>
     </div>
@@ -144,6 +144,146 @@
       />
     </div>
   </div>
+
+  <!-- Email Authentication Dialog -->
+  <Dialog
+    v-model:visible="showEmailDialog"
+    modal
+    :header="$t('EmailAuth.accessVerification')"
+    :style="{ width: '450px' }"
+    :closable="false"
+  >
+    <div class="flex flex-column align-items-center p-4">
+      <i
+        class="pi pi-envelope"
+        style="
+          font-size: 3rem;
+          color: var(--primary-color);
+          margin-bottom: 1rem;
+        "
+      ></i>
+      <h3 class="text-center mb-3">
+        {{ $t("EmailAuth.emailVerificationRequired") }}
+      </h3>
+      <p class="text-center mb-4">
+        {{ $t("EmailAuth.enterEmailMessage") }}
+      </p>
+
+      <div class="w-full">
+        <label for="email" class="block text-sm font-medium mb-2">{{
+          $t("EmailAuth.emailAddress")
+        }}</label>
+        <InputText
+          id="email"
+          v-model="emailInput"
+          type="email"
+          :placeholder="$t('EmailAuth.enterEmailPlaceholder')"
+          class="w-full"
+          :class="{ 'p-invalidCustom': emailValidationError }"
+          @keyup.enter="handleEmailSubmit"
+        />
+        <small
+          v-if="emailValidationError"
+          class="p-errorCustom"
+          style="color: #ef4444"
+          >{{ emailValidationError }}</small
+        >
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="flex justify-content-end gap-2">
+        <Button
+          :label="$t('EmailAuth.cancel')"
+          icon="pi pi-times"
+          severity="secondary"
+          @click="handleEmailCancel"
+        />
+        <Button
+          :label="$t('EmailAuth.continue')"
+          icon="pi pi-check"
+          :loading="emailLoading"
+          @click="handleEmailSubmit"
+        />
+      </div>
+    </template>
+  </Dialog>
+
+  <!-- OTP Verification Dialog -->
+  <Dialog
+    v-model:visible="showOTPDialog"
+    modal
+    :header="$t('EmailAuth.verifyYourEmail')"
+    :style="{ width: '450px' }"
+    :closable="false"
+  >
+    <div class="flex flex-column align-items-center p-4">
+      <i
+        class="pi pi-shield"
+        style="
+          font-size: 3rem;
+          color: var(--primary-color);
+          margin-bottom: 1rem;
+        "
+      ></i>
+      <h3 class="text-center mb-3">
+        {{ $t("EmailAuth.enterVerificationCode") }}
+      </h3>
+      <p class="text-center mb-4">
+        {{ $t("EmailAuth.codeSentTo") }}<br />
+        <strong>{{ userEmail }}</strong>
+      </p>
+
+      <div class="w-full text-center">
+        <label for="otp" class="block text-sm font-medium mb-2">{{
+          $t("EmailAuth.verificationCode")
+        }}</label>
+        <InputOtp
+          v-model="otpInput"
+          :length="6"
+          integerOnly
+          class="mb-3"
+          @complete="handleOTPComplete"
+        />
+        <small
+          v-if="otpValidationError"
+          class="p-errorCustom block mb-3"
+          style="color: #ef4444"
+          >{{ otpValidationError }}</small
+        >
+
+        <div class="text-center">
+          <p class="text-sm text-600 mb-2">
+            {{ $t("EmailAuth.didntReceiveCode") }}
+          </p>
+          <Button
+            :label="$t('EmailAuth.resendCode')"
+            link
+            class="p-0"
+            :loading="resendLoading"
+            @click="handleResendOTP"
+          />
+        </div>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="flex justify-content-end gap-2">
+        <Button
+          :label="$t('EmailAuth.back')"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          @click="handleOTPBack"
+        />
+        <Button
+          :label="$t('EmailAuth.verify')"
+          icon="pi pi-check"
+          :loading="otpLoading"
+          @click="handleOTPSubmit"
+        />
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <script lang="ts">
@@ -152,12 +292,20 @@ import {
   defineComponent,
   onBeforeMount,
   onMounted,
+  onBeforeUnmount,
   ref,
   type Ref,
   watch,
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { fetchOneObject, GetAuthInfo } from "@/api/api";
+import {
+  fetchOneObject,
+  GetAuthInfo,
+  validateEmailInvitation,
+  sendEmailOTP,
+  verifyEmailOTP,
+  validateAuthToken,
+} from "@/api/api";
 import { useI18n } from "vue-i18n";
 import { i18n } from "@/main"; // Import i18n from main.ts
 import { useAppStore } from "@/store/app.store";
@@ -170,7 +318,7 @@ import Nora from "@primeuix/themes/nora";
 import Material from "@primeuix/themes/material";
 import arabic from "@/i18n/ar";
 import french from "@/i18n/fr";
-import keycloak from "@/keycloak";
+
 export default defineComponent({
   setup() {
     const { t } = useI18n();
@@ -201,6 +349,19 @@ export default defineComponent({
     const isAuthenticated = ref(false);
     const authRequired = ref(false);
     const authConfig = ref(null as any);
+
+    // Email authentication variables
+    const showEmailDialog = ref(false);
+    const showOTPDialog = ref(false);
+    const emailInput = ref("");
+    const otpInput = ref("");
+    const emailValidationError = ref("");
+    const otpValidationError = ref("");
+    const resendLoading = ref(false);
+    const userEmail = ref("");
+    const emailLoading = ref(false);
+    const otpLoading = ref(false);
+    const authToken = ref(""); // Store secure authentication token (prevents sessionStorage manipulation)
 
     const themePresets = {
       lara: Lara,
@@ -253,6 +414,444 @@ export default defineComponent({
         },
       };
     };
+
+    // Email authentication functions
+    const validateEmail = (email: string) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    const validateEmailInvitationAPI = async (email: string) => {
+      try {
+        emailLoading.value = true;
+        emailValidationError.value = "";
+
+        const result = await validateEmailInvitation(
+          email,
+          route.params.guid as string,
+          route.query.code as string,
+          route.params.client as string
+        );
+        return result;
+      } catch (error: any) {
+        emailValidationError.value =
+          error.message || t("EmailAuth.failedToValidateEmail");
+        throw error;
+      } finally {
+        emailLoading.value = false;
+      }
+    };
+
+    const sendOTP = async (email: string) => {
+      try {
+        otpLoading.value = true;
+        otpValidationError.value = "";
+
+        const result = await sendEmailOTP(
+          email,
+          route.params.guid as string,
+          route.query.code as string,
+          route.params.client as string
+        );
+        return result;
+      } catch (error: any) {
+        otpValidationError.value =
+          error.message || t("EmailAuth.failedToSendOTP");
+        throw error;
+      } finally {
+        otpLoading.value = false;
+      }
+    };
+
+    const verifyOTP = async (email: string, otp: string) => {
+      try {
+        otpLoading.value = true;
+        otpValidationError.value = "";
+
+        const result = await verifyEmailOTP(
+          email,
+          otp,
+          route.params.guid as string,
+          route.query.code as string,
+          route.params.client as string
+        );
+        return result;
+      } catch (error: any) {
+        otpValidationError.value =
+          error.message || t("EmailAuth.otpVerificationFailed");
+        throw error;
+      } finally {
+        otpLoading.value = false;
+      }
+    };
+
+    // Validate stored authentication token for security
+    const validateStoredAuth = async () => {
+      try {
+        const storedToken = sessionStorage.getItem("email_auth_token");
+        const storedEmail = sessionStorage.getItem("authenticated_email");
+
+        if (!storedToken || !storedEmail) {
+          console.log("No stored authentication token or email found");
+          return false;
+        }
+
+        // For ALL email authentication (both OTP and non-OTP), verify with server
+        // This prevents sessionStorage manipulation attacks
+        console.log("Validating stored authentication with server...");
+
+        // Check if this is a simple session token (non-OTP case) or a JWT token (OTP case)
+        if (storedToken.startsWith("email_session_")) {
+          console.log(
+            "Simple session token detected, verifying email with server..."
+          );
+
+          // For non-OTP authentication, re-validate the email with the server
+          // This ensures the email is still authorized and prevents sessionStorage bypass
+          try {
+            const emailValidationResult = await validateEmailInvitation(
+              storedEmail,
+              route.params.guid as string,
+              route.query.code as string,
+              route.params.client as string
+            );
+
+            if (emailValidationResult.valid) {
+              console.log("Stored email is still valid on server");
+              authToken.value = storedToken;
+              userEmail.value = storedEmail;
+              return true;
+            } else {
+              console.log(
+                "Stored email is no longer valid on server, clearing session"
+              );
+              // Clear invalid session data
+              sessionStorage.removeItem("email_authenticated");
+              sessionStorage.removeItem("authenticated_email");
+              sessionStorage.removeItem("email_auth_token");
+              return false;
+            }
+          } catch (emailError) {
+            console.error("Email re-validation failed:", emailError);
+            // Clear potentially compromised session data
+            sessionStorage.removeItem("email_authenticated");
+            sessionStorage.removeItem("authenticated_email");
+            sessionStorage.removeItem("email_auth_token");
+            return false;
+          }
+        } else {
+          // This should be a JWT token, validate it with the server
+          console.log("JWT token detected, validating with server...");
+          const result = await validateAuthToken(
+            storedToken,
+            storedEmail,
+            route.params.guid as string,
+            route.query.code as string,
+            route.params.client as string
+          );
+
+          if (result.valid) {
+            console.log("Stored authentication token is valid");
+            authToken.value = storedToken;
+            userEmail.value = storedEmail;
+            return true;
+          } else {
+            console.log(
+              "Stored authentication token is invalid, clearing session"
+            );
+            // Clear invalid session data
+            sessionStorage.removeItem("email_authenticated");
+            sessionStorage.removeItem("authenticated_email");
+            sessionStorage.removeItem("email_auth_token");
+            return false;
+          }
+        }
+      } catch (error) {
+        console.error("Error validating stored auth token:", error);
+        // Clear potentially compromised session data
+        sessionStorage.removeItem("email_authenticated");
+        sessionStorage.removeItem("authenticated_email");
+        sessionStorage.removeItem("email_auth_token");
+        return false;
+      }
+    };
+
+    // Email Dialog Handlers
+    const handleEmailSubmit = async () => {
+      emailValidationError.value = "";
+
+      if (!emailInput.value.trim()) {
+        emailValidationError.value = t("EmailAuth.enterEmailAddress");
+        return;
+      }
+
+      if (!validateEmail(emailInput.value)) {
+        emailValidationError.value = t("EmailAuth.enterValidEmail");
+        return;
+      }
+
+      try {
+        userEmail.value = emailInput.value;
+        const result = await validateEmailInvitationAPI(emailInput.value);
+
+        if (result.valid) {
+          showEmailDialog.value = false;
+
+          if (authConfig.value.VerifyEmail) {
+            // Need OTP verification
+            await sendOTP(emailInput.value);
+            showOTPDialog.value = true;
+          } else {
+            // Email is valid, no OTP needed
+            // For non-OTP verification, we can proceed without a secure token for now
+            // but we should generate a simple session identifier for basic security
+            authToken.value =
+              result.token ||
+              `email_session_${Date.now()}_${Math.random()
+                .toString(36)
+                .substr(2, 9)}`;
+            completeEmailAuthentication();
+          }
+        } else {
+          emailValidationError.value = t("EmailAuth.emailNotAuthorized");
+        }
+      } catch (error: any) {
+        console.error("Email validation error:", error);
+
+        // Handle different HTTP status codes
+        if (error.response?.status === 400) {
+          const errorMessage = error.response?.data?.message || error.message;
+          if (
+            errorMessage.includes("not authorized") ||
+            errorMessage.includes("whitelist")
+          ) {
+            emailValidationError.value = t("EmailAuth.emailNotAuthorized");
+          } else if (
+            errorMessage.includes("rate limit") ||
+            errorMessage.includes("too many")
+          ) {
+            emailValidationError.value = t("EmailAuth.tooManyAttempts");
+          } else {
+            emailValidationError.value = t("EmailAuth.invalidEmailFormat");
+          }
+        } else if (error.response?.status === 500) {
+          emailValidationError.value = t("EmailAuth.serverError");
+        } else if (error.response?.status === 404) {
+          emailValidationError.value = t("EmailAuth.formNotFound");
+        } else {
+          emailValidationError.value =
+            error.message || t("EmailAuth.validationFailed");
+        }
+      }
+    };
+
+    const handleEmailCancel = () => {
+      clearAuthenticationData();
+      showEmailDialog.value = false;
+      router.push({ name: "unauthorized" });
+    };
+
+    // OTP Dialog Handlers
+    const handleOTPSubmit = async () => {
+      otpValidationError.value = "";
+
+      if (!otpInput.value || otpInput.value.length !== 6) {
+        otpValidationError.value = t("EmailAuth.enterSixDigitCode");
+        return;
+      }
+
+      if (!/^\d{6}$/.test(otpInput.value)) {
+        otpValidationError.value = t("EmailAuth.codeMustBeSixDigits");
+        return;
+      }
+
+      try {
+        const result = await verifyOTP(userEmail.value, otpInput.value);
+
+        if (result.valid) {
+          if (result.token) {
+            authToken.value = result.token;
+            showOTPDialog.value = false;
+            completeEmailAuthentication();
+          } else {
+            otpValidationError.value = t("EmailAuth.verificationFailed");
+          }
+        } else {
+          otpValidationError.value = t("EmailAuth.invalidVerificationCode");
+        }
+      } catch (error: any) {
+        console.error("OTP verification error:", error);
+
+        // Handle different HTTP status codes
+        if (error.response?.status === 400) {
+          const errorMessage = error.response?.data?.message || error.message;
+          if (
+            errorMessage.includes("expired") ||
+            errorMessage.includes("invalid")
+          ) {
+            otpValidationError.value = t("EmailAuth.invalidOrExpiredCode");
+          } else if (
+            errorMessage.includes("rate limit") ||
+            errorMessage.includes("too many")
+          ) {
+            otpValidationError.value = t("EmailAuth.tooManyAttempts");
+          } else {
+            otpValidationError.value = t("EmailAuth.invalidVerificationCode");
+          }
+        } else if (error.response?.status === 500) {
+          otpValidationError.value = t("EmailAuth.serverError");
+        } else {
+          otpValidationError.value =
+            error.message || t("EmailAuth.verificationFailed");
+        }
+      }
+    };
+
+    const handleOTPComplete = (value: string) => {
+      if (value && value.length === 6) {
+        handleOTPSubmit();
+      }
+    };
+
+    const handleOTPBack = () => {
+      showOTPDialog.value = false;
+      showEmailDialog.value = true;
+      otpInput.value = "";
+      otpValidationError.value = "";
+    };
+
+    const handleResendOTP = async () => {
+      try {
+        resendLoading.value = true;
+        await sendOTP(userEmail.value);
+        otpValidationError.value = "";
+        // Show success message briefly
+        otpValidationError.value = t("EmailAuth.codeSentSuccessfully");
+        setTimeout(() => {
+          otpValidationError.value = "";
+        }, 3000);
+      } catch (error: any) {
+        console.error("Resend OTP error:", error);
+
+        // Handle different HTTP status codes
+        if (error.response?.status === 400) {
+          const errorMessage = error.response?.data?.message || error.message;
+          if (
+            errorMessage.includes("rate limit") ||
+            errorMessage.includes("too many")
+          ) {
+            otpValidationError.value = t("EmailAuth.tooManyAttempts");
+          } else {
+            otpValidationError.value = t("EmailAuth.failedToResendCode");
+          }
+        } else if (error.response?.status === 500) {
+          otpValidationError.value = t("EmailAuth.serverError");
+        } else {
+          otpValidationError.value =
+            error.message || t("EmailAuth.failedToResendCode");
+        }
+      } finally {
+        resendLoading.value = false;
+      }
+    };
+
+    const openEmailDialog = () => {
+      emailInput.value = "";
+      emailValidationError.value = "";
+      showEmailDialog.value = true;
+    };
+
+    // Clear authentication data (for logout or security purposes)
+    const clearAuthenticationData = () => {
+      sessionStorage.removeItem("email_authenticated");
+      sessionStorage.removeItem("authenticated_email");
+      sessionStorage.removeItem("email_auth_token");
+      authToken.value = "";
+      userEmail.value = "";
+      isAuthenticated.value = false;
+    };
+
+    const completeEmailAuthentication = async () => {
+      // Store secure authentication data
+      sessionStorage.setItem("email_authenticated", "true");
+      sessionStorage.setItem("authenticated_email", userEmail.value);
+      sessionStorage.setItem("email_auth_token", authToken.value); // Store secure token
+      isAuthenticated.value = true;
+
+      // Clear any existing error messages
+      emailValidationError.value = "";
+      otpValidationError.value = "";
+
+      // Clear input fields
+      emailInput.value = "";
+      otpInput.value = "";
+
+      // Ensure all dialogs are closed
+      showEmailDialog.value = false;
+      showOTPDialog.value = false;
+
+      console.log("Successfully authenticated with email:", userEmail.value);
+
+      // Load the form data after authentication
+      await loadFormData();
+    };
+
+    // Extract form loading logic into a separate function
+    const loadFormData = async () => {
+      try {
+        // For email authentication, validate token before loading sensitive data
+        if (authRequired.value && authConfig.value?.authtype === "invitation") {
+          if (!authToken.value) {
+            console.error("No authentication token available");
+            clearAuthenticationData();
+            openEmailDialog();
+            return;
+          }
+
+          // Always re-validate authentication with server before loading form data
+          // This prevents sessionStorage manipulation attacks for both OTP and non-OTP cases
+          console.log(
+            "Re-validating authentication before loading form data..."
+          );
+          const isValid = await validateStoredAuth();
+          if (!isValid) {
+            console.error(
+              "Authentication validation failed, requiring re-authentication"
+            );
+            openEmailDialog();
+            return;
+          }
+        }
+
+        console.log("Loading form data...");
+        object.value = await fetchOneObject(formID.value);
+
+        localFormConfig.value = JSON.parse(
+          object.value?.objectJson
+        ).objectConfig.formConfig;
+        applyDynamicTheme();
+        formName.value = localFormConfig.value.formName;
+        isStepper.value = localFormConfig.value.isStepper;
+        isRTL.value = localFormConfig.value.isRTL;
+        isMultilingual.value = localFormConfig.value.isMultilingual;
+        languages.value = localFormConfig.value.languages;
+        steps.value = localFormConfig.value.stepNumber;
+        showPageNames.value = localFormConfig.value.showPageNames;
+        if (isStepper.value) {
+          names.value = JSON.parse(
+            object.value?.objectJson
+          ).objectConfig.formTemplate[0].config.names;
+        }
+        i18n.global.locale.value = isRTL.value ? "ar" : "fr";
+        isRTL.value
+          ? (PrimeVue.config.locale = { ...arabic.LocaleOptions })
+          : (PrimeVue.config.locale = { ...french.LocaleOptions });
+        console.log("Form data loaded successfully");
+      } catch (error) {
+        console.error("Failed to load form data:", error);
+      }
+    };
+
     onBeforeMount(async () => {
       appStore.setExternalAuth(
         route.query.code as string,
@@ -410,6 +1009,56 @@ export default defineComponent({
               console.error("OIDC authentication failed:", oidcError);
               return;
             }
+          } else if (authInfo.authtype === "invitation") {
+            authRequired.value = true;
+            authConfig.value = authInfo.authconfig;
+
+            // Check if already authenticated with email
+            const emailAuthFlag = sessionStorage.getItem("email_authenticated");
+            const authenticatedEmail = sessionStorage.getItem(
+              "authenticated_email"
+            );
+
+            console.log("Checking email authentication flag:", emailAuthFlag);
+
+            if (emailAuthFlag === "true" && authenticatedEmail) {
+              // Validate stored authentication with server for security
+              // This prevents sessionStorage manipulation attacks by verifying
+              // both the email and token with the backend server
+              console.log(
+                "Validating stored email authentication with server..."
+              );
+              const isTokenValid = await validateStoredAuth();
+
+              if (isTokenValid) {
+                // Authentication is valid
+                isAuthenticated.value = true;
+                console.log(
+                  "Server confirmed authentication is valid for email:",
+                  authenticatedEmail
+                );
+                // Load form data since we're already authenticated
+                await loadFormData();
+              } else {
+                // Token/email validation failed, require re-authentication
+                console.log(
+                  "Server validation failed - stored authentication is invalid, requiring re-authentication"
+                );
+                setTimeout(() => {
+                  openEmailDialog();
+                }, 500);
+                return;
+              }
+            } else {
+              // Need to authenticate with email
+              console.log("Opening email authentication dialog...");
+              // Don't load form data yet, wait for authentication
+              // Delay the dialog to ensure the component is fully mounted
+              setTimeout(() => {
+                openEmailDialog();
+              }, 500);
+              return; // Exit early, don't load form data
+            }
           } else {
             // No authentication required or different auth type
             isAuthenticated.value = true;
@@ -427,31 +1076,7 @@ export default defineComponent({
       // Only proceed to load the form if authenticated
       if (isAuthenticated.value) {
         console.log("Auth Updated");
-        object.value = await fetchOneObject(formID.value);
-
-        localFormConfig.value = JSON.parse(
-          object.value?.objectJson
-        ).objectConfig.formConfig;
-        applyDynamicTheme();
-        formName.value = localFormConfig.value.formName;
-        isStepper.value = localFormConfig.value.isStepper;
-        isRTL.value = localFormConfig.value.isRTL;
-        isMultilingual.value = localFormConfig.value.isMultilingual;
-        languages.value = localFormConfig.value.languages;
-        // languagesList.value = convertLanguages(languages.value);
-        console.log("languages.value", languages.value);
-        steps.value = localFormConfig.value.stepNumber;
-        showPageNames.value = localFormConfig.value.showPageNames;
-        if (isStepper.value) {
-          names.value = JSON.parse(
-            object.value?.objectJson
-          ).objectConfig.formTemplate[0].config.names;
-        }
-        i18n.global.locale.value = isRTL.value ? "ar" : "fr";
-        isRTL.value
-          ? (PrimeVue.config.locale = { ...arabic.LocaleOptions })
-          : (PrimeVue.config.locale = { ...french.LocaleOptions });
-        console.log("i18n locale set to:", i18n.global.locale.value);
+        await loadFormData();
       }
     });
 
@@ -541,6 +1166,82 @@ export default defineComponent({
       }
     });
 
+    // Periodic security check to detect session manipulation
+    const startSecurityCheck = () => {
+      if (authRequired.value && authConfig.value?.authtype === "invitation") {
+        const securityInterval = setInterval(async () => {
+          const storedAuth = sessionStorage.getItem("email_authenticated");
+          const storedEmail = sessionStorage.getItem("authenticated_email");
+          const storedToken = sessionStorage.getItem("email_auth_token");
+
+          // Check if session data was manually modified or manipulated
+          if (storedAuth === "true" && storedEmail && !storedToken) {
+            console.warn(
+              "Security alert: Authentication token missing - possible sessionStorage manipulation"
+            );
+            clearAuthenticationData();
+            openEmailDialog();
+            clearInterval(securityInterval);
+            return;
+          }
+
+          // Additional check: verify the stored email hasn't been changed to a different email
+          if (
+            isAuthenticated.value &&
+            userEmail.value &&
+            storedEmail !== userEmail.value
+          ) {
+            console.warn(
+              "Security alert: Stored email does not match authenticated email - possible sessionStorage manipulation"
+            );
+            clearAuthenticationData();
+            openEmailDialog();
+            clearInterval(securityInterval);
+            return;
+          }
+
+          // Validate authentication periodically (every 5 minutes)
+          // This includes server-side validation for both OTP and non-OTP emails
+          // Prevents sessionStorage manipulation attacks including email changes
+          if (isAuthenticated.value && authToken.value) {
+            try {
+              const isValid = await validateStoredAuth();
+              if (!isValid) {
+                console.warn(
+                  "Security alert: Authentication validation failed - session may have been compromised"
+                );
+                clearAuthenticationData();
+                openEmailDialog();
+                clearInterval(securityInterval);
+              }
+            } catch (error) {
+              console.error("Security check failed:", error);
+              clearAuthenticationData();
+              openEmailDialog();
+              clearInterval(securityInterval);
+            }
+          }
+        }, 5 * 60 * 1000); // Check every 5 minutes
+
+        // Store interval ID to clear it later if needed
+        (window as any).securityCheckInterval = securityInterval;
+      }
+    };
+
+    // Start security monitoring after authentication
+    watch(isAuthenticated, (newValue) => {
+      if (newValue && authRequired.value) {
+        setTimeout(startSecurityCheck, 1000);
+      }
+    });
+
+    // Cleanup security interval on component unmount
+    onBeforeUnmount(() => {
+      if ((window as any).securityCheckInterval) {
+        clearInterval((window as any).securityCheckInterval);
+      }
+    });
+
     // Optionally, initialize from system preference
     // onMounted(() => {
     //   isDarkMode.value = window.matchMedia(
@@ -575,6 +1276,25 @@ export default defineComponent({
       isAuthenticated,
       authRequired,
       authConfig,
+      // Email authentication
+      showEmailDialog,
+      showOTPDialog,
+      emailInput,
+      otpInput,
+      emailValidationError,
+      otpValidationError,
+      resendLoading,
+      userEmail,
+      emailLoading,
+      otpLoading,
+      handleEmailSubmit,
+      handleEmailCancel,
+      handleOTPSubmit,
+      handleOTPComplete,
+      handleOTPBack,
+      handleResendOTP,
+      openEmailDialog,
+      validateEmail,
       t,
       submit,
       handleIsSubmit,
@@ -710,5 +1430,26 @@ body.dark .form-viewer-container-footer,
 body.dark .form-viewer-container-header {
   background-color: #181818 !important;
   color: #fff !important;
+}
+
+/* Error message styling */
+.p-errorCustom {
+  color: #ef4444 !important;
+  font-weight: 500;
+}
+
+body.dark .p-errorCustom {
+  color: #f87171 !important;
+}
+
+/* Input error styling */
+.p-invalidCustom {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px #ef4444 !important;
+}
+
+body.dark .p-invalidCustom {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 0 1px #f87171 !important;
 }
 </style>
