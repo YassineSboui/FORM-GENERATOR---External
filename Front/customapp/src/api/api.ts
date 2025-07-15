@@ -1214,3 +1214,15 @@ export const validateAuthToken = async (
     throw error;
   }
 };
+export const getClientApiKey = async (clientId: string) => {
+  const httpRequest = useHttpRequest();
+  try {
+    const apiUrl = `${httpRequest.externalUrl}clients/${clientId}/apikey`;
+    const response = await axios.get(apiUrl);
+    return response.data.apiKey; // Returns the API key for the specified client
+  } catch (error) {
+    console.error("Error fetching client API key:", error);
+    logger.error(error);
+    throw error;
+  }
+};
