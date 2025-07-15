@@ -227,5 +227,8 @@ const frensh = {
     gallery: "Galerie",
     camera: "Caméra",
   },
+  NeoMap: {
+    SearchPlaceholder: "Rechercher un lieu...",
+  },
 };
 export default frensh;

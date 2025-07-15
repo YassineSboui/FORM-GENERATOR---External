@@ -236,5 +236,8 @@ const arabic = {
     gallery: "معرض الصور",
     camera: "الكاميرا",
   },
+  NeoMap: {
+    SearchPlaceholder: "البحث عن موقع...",
+  },
 };
 export default arabic;
