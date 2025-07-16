@@ -90,7 +90,8 @@
 
 <script lang="ts">
 import { computed, onBeforeMount, reactive, ref, watch } from "vue";
-import { icons } from "@/data/icons";
+// Update the path below if your icons file is located elsewhere
+import { icons } from "../../data/icons";
 interface OptionConfig {
   label_AR: string;
   label_ENG: string;
