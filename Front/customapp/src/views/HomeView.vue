@@ -504,13 +504,10 @@ const saveEditClient = async () => {
 
   saving.value = true;
   try {
-    const clientData = {
-      clientId: editingClientId.value,
+    await updateClient(editingClientId.value, {
       url: editingClientUrl.value,
-      apiKey: editingClientApiKey.value,
-    };
-
-    await updateClient(clientData);
+      apiKey: editingClientApiKey.value || null,
+    });
     toast.add({
       severity: "success",
       summary: "Succès",
@@ -604,13 +601,10 @@ const regenerateApiKey = (clientId) => {
         const newApiKey = generateApiKey();
         const client = clientsArray.value.find((c) => c.clientId === clientId);
         if (client) {
-          const clientData = {
-            clientId: client.clientId,
+          await updateClient(client.clientId, {
             url: client.url,
-            apiKey: newApiKey,
-          };
-
-          await updateClient(clientData);
+            apiKey: newApiKey || null,
+          });
           toast.add({
             severity: "success",
             summary: "Succès",

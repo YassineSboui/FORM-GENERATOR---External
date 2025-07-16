@@ -987,18 +987,17 @@ export const fetchClients = async () => {
   return data; // returns Dictionary: { clientId: url }
 };
 
-export const addClient = async (clientId: string, url: string) => {
+export const addClient = async (payload: any) => {
   const httpRequest = useHttpRequest();
   const apiUrl = `${httpRequest.externalUrl}clients`;
-  const payload = { clientId, url };
   const response = await axios.post(apiUrl, payload);
   return response.data;
 };
 
-export const updateClient = async (clientId: string, newUrl: string) => {
+export const updateClient = async (clientId: string, payload: any) => {
   const httpRequest = useHttpRequest();
   const apiUrl = `${httpRequest.externalUrl}clients/${clientId}`;
-  const response = await axios.put(apiUrl, newUrl, {
+  const response = await axios.put(apiUrl, payload, {
     headers: { "Content-Type": "application/json" },
   });
   return response.data;
