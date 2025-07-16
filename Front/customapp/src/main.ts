@@ -57,7 +57,6 @@ import "primeicons/primeicons.css";
 import "material-icons/iconfont/material-icons.css";
 import "./assets/css/style.css";
 import "@/scss/layout.scss";
-import NeoMap from "./components/NeoComponents/NeoMap.vue";
 
 // VeeValidate rules registration
 for (const rule in rules) {
@@ -187,6 +186,7 @@ const globalComponents = {
   NeoPhoto: NeoComponents.NeoPhoto,
   NeoSign: NeoComponents.NeoSign,
   NeoMap: NeoComponents.NeoMap,
+  NeoIcon: NeoComponents.NeoIcon,
 };
 
 Object.entries(globalComponents).forEach(([name, comp]) => {

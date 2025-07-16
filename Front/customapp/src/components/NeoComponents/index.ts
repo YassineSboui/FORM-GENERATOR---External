@@ -34,3 +34,4 @@ export { default as NeoPhoto } from "./NeoPhoto.vue";
 export { default as NeoSign } from "./NeoSign.vue";
 export { default as NeoSelectBySearch } from "./NeoSelectBySearch.vue";
 export { default as NeoMap } from "./NeoMap.vue";
+export { default as NeoIcon } from "./NeoIcon.vue";
