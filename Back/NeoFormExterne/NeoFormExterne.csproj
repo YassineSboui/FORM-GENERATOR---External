@@ -33,4 +33,20 @@
     <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Development.json">
+      <ExcludeFromPublish>true</ExcludeFromPublish>
+    </None>
+  </ItemGroup>
+
+  <Target Name="DeleteUnwantedAppSettings" AfterTargets="Publish">
+    <Delete Files="$(PublishDir)appsettings.Development.json" />
+  </Target>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="call ../postBuild.bat" />
+  </Target>
+
 </Project>
