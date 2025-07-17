@@ -9,14 +9,16 @@ namespace NeoForm_Externe.Proxy
     {
         private readonly IDynamicClientProvider _clientProvider;
         private readonly ILogger<CustomProxyConfigProvider> _logger;
+        private readonly IWebHostEnvironment _env;
         private volatile CustomProxyConfig _config;
         private readonly CancellationTokenSource _cts = new();
         private readonly object _lock = new();
 
-        public CustomProxyConfigProvider(IDynamicClientProvider clientProvider, ILogger<CustomProxyConfigProvider> logger)
+        public CustomProxyConfigProvider(IDynamicClientProvider clientProvider, ILogger<CustomProxyConfigProvider> logger, IWebHostEnvironment env)
         {
             _clientProvider = clientProvider;
             _logger = logger;
+            _env = env;
             _config = BuildConfig();
         }
 
@@ -58,11 +60,14 @@ namespace NeoForm_Externe.Proxy
                     }
                 });
 
-                // Clean the client URL by removing /neoform suffix to avoid double paths
+                // Clean the client URL by removing /neoform suffix to avoid double paths (only in development)
                 var cleanedUrl = client.Value.TrimEnd('/');
-                if (cleanedUrl.EndsWith("/neoform", StringComparison.OrdinalIgnoreCase))
+                if (_env.IsDevelopment())
                 {
-                    cleanedUrl = cleanedUrl.Substring(0, cleanedUrl.Length - 8); // Remove "/neoform"
+                    if (cleanedUrl.EndsWith("/neoform", StringComparison.OrdinalIgnoreCase))
+                    {
+                        cleanedUrl = cleanedUrl.Substring(0, cleanedUrl.Length - 8); // Remove "/neoform"
+                    }
                 }
 
                 _logger.LogDebug($"Proxy destination for client {client.Key}: original='{client.Value}', cleaned='{cleanedUrl}'");

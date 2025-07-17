@@ -4,6 +4,7 @@ using System.Net.Http;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Hosting;
 
 namespace NeoForm_Externe.Services
 {
@@ -11,15 +12,17 @@ namespace NeoForm_Externe.Services
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<TokenService> _logger;
+        private readonly IWebHostEnvironment _env;
 
         // Use ConcurrentDictionary for thread safety
         private readonly ConcurrentDictionary<string, TokenInfoModels> _tokens = new();
         private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-        public TokenService(IHttpClientFactory httpClientFactory, ILogger<TokenService> logger)
+        public TokenService(IHttpClientFactory httpClientFactory, ILogger<TokenService> logger, IWebHostEnvironment env)
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
+            _env = env;
         }
 
         public async Task<string> GetOrRefreshTokenAsync(string clientId, string baseUrl, string code, string guid)
@@ -91,8 +94,8 @@ namespace NeoForm_Externe.Services
 
             var baseUri = baseUrl.TrimEnd('/');
 
-            // Remove /neoform path if present to get the actual base URL
-            if (baseUri.EndsWith("/neoform", StringComparison.OrdinalIgnoreCase))
+            // Remove /neoform path if present to get the actual base URL (only in development)
+            if (_env.IsDevelopment() && baseUri.EndsWith("/neoform", StringComparison.OrdinalIgnoreCase))
             {
                 baseUri = baseUri.Substring(0, baseUri.Length - "/neoform".Length);
             }
