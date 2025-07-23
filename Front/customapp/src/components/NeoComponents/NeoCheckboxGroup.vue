@@ -38,22 +38,22 @@
           :key="element.id"
         >
           <neo-checkbox
-            :inputId="label"
-            v-model="element.value"
+            :inputId="label + '-' + element.label"
+            :modelValue="internalValue.includes(element.label)"
+            @update:modelValue="(checked : any) => emitValue(element.label, checked)"
             :label="element.label"
             :options="{ disabled: isDisabled }"
-            @update:modelValue="emitValue(element)"
           ></neo-checkbox>
         </div>
       </div>
       <div class="horizontal grid mt-1" v-else>
         <div class="col" v-for="element in options.elements" :key="element.id">
           <neo-checkbox
-            :inputId="label"
-            v-model="element.value"
+            :inputId="label + '-' + element.label"
+            :modelValue="internalValue.includes(element.label)"
+            @update:modelValue="(checked : any) => emitValue(element.label, checked)"
             :label="element.label"
             :options="{ disabled: isDisabled }"
-            @update:modelValue="emitValue(element)"
             :isRTL="isRTL"
           ></neo-checkbox>
         </div>
@@ -128,25 +128,35 @@ export default {
   },
   setup(props, { emit }) {
     const internalValue = computed({
-      get(): any {
-        return typeof props.modelValue == "string" && props.modelValue === ""
-          ? []
-          : props.modelValue;
+      get(): any[] {
+        const mv = props.modelValue;
+        if (Array.isArray(mv)) {
+          return mv;
+        } else if (typeof mv === "string") {
+          try {
+            const parsed = JSON.parse(mv);
+            if (Array.isArray(parsed)) return parsed;
+            return [];
+          } catch {
+            return [];
+          }
+        } else if (mv == null) {
+          return [];
+        } else {
+          return [];
+        }
       },
       set(value: any) {
-        const updatedArray = [...props.modelValue]; // Copy the current modelValue array
-
+        const updatedArray = Array.isArray(props.modelValue)
+          ? [...props.modelValue]
+          : [];
         props.options.elements.forEach((e: any) => {
           if (e.value && updatedArray.indexOf(e.label) === -1) {
-            // Add to the array if not already present
             updatedArray.push(e.label);
           } else if (!e.value && updatedArray.indexOf(e.label) !== -1) {
-            // Remove from the array if present
             updatedArray.splice(updatedArray.indexOf(e.label), 1);
           }
         });
-
-        // Only emit if the array has actually changed to prevent recursion
         if (JSON.stringify(updatedArray) !== JSON.stringify(props.modelValue)) {
           emit("update:modelValue", updatedArray);
         }
@@ -181,15 +191,46 @@ export default {
     };
 
     // Function to update field
-    const setValue = (value: string) => {
+    const setValue = (value: any) => {
+      if (!Array.isArray(value)) {
+        //try to parse the value as JSON if it's a string
+        console.warn("setValue expects an array, got:", value);
+        if (typeof value === "string") {
+          try {
+            value = JSON.parse(value);
+          } catch (error) {
+            console.error("Failed to parse value as JSON:", error);
+            logger.error(error);
+            return;
+          }
+        } else {
+          console.warn("Value is not an array or string, skipping update.");
+        }
+      }
+      console.log("Setting value:", value);
       internalValue.value = value;
       emit("update:modelValue", value);
     };
-    const updateField = (value: string) => {
+    const updateField = (value: any) => {
+      if (!Array.isArray(value)) {
+        //try to parse the value as JSON if it's a string
+        console.warn("setValue expects an array, got:", value);
+        if (typeof value === "string") {
+          try {
+            value = JSON.parse(value);
+          } catch (error) {
+            console.error("Failed to parse value as JSON:", error);
+            logger.error(error);
+            return;
+          }
+        } else {
+          console.warn("Value is not an array or string, skipping update.");
+        }
+      }
+      console.log("Setting value:", value);
       internalValue.value = value;
       emit("update:modelValue", value);
     };
-
     const updateItems = (newElements: string | any[]) => {
       if (newElements === undefined || newElements === null) {
         console.warn("New elements are undefined or null, skipping update.");
@@ -259,8 +300,18 @@ export default {
     // Function to show field
     const showField = () => updateOptions({ hidden: false });
 
-    function emitValue(val: any) {
-      internalValue.value = val.label;
+    function emitValue(label: string, checked: boolean) {
+      let newValue = Array.isArray(internalValue.value)
+        ? [...internalValue.value]
+        : [];
+      const idx = newValue.indexOf(label);
+      if (checked && idx === -1) {
+        newValue.push(label);
+      } else if (!checked && idx !== -1) {
+        newValue.splice(idx, 1);
+      }
+      internalValue.value = newValue;
+      emit("update:modelValue", newValue);
     }
 
     // Watcher for modelValue changes

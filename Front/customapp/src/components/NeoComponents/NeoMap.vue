@@ -554,7 +554,44 @@ export default {
         selectedCoordinates.value = null;
       }
     };
+    const updateField = (value: any) => {
+      let parsedValue = value;
+      if (typeof value === "string") {
+        try {
+          parsedValue = JSON.parse(value);
+        } catch (e) {
+          parsedValue = value;
+        }
+      }
 
+      internalValue.value = parsedValue;
+      clearMarkers();
+      if (parsedValue && globalMap.value) {
+        if (Array.isArray(parsedValue)) {
+          loadMarkers();
+          // Select last marker for display
+          if (
+            parsedValue.length > 0 &&
+            typeof parsedValue[parsedValue.length - 1]?.lat === "number" &&
+            typeof parsedValue[parsedValue.length - 1]?.lng === "number"
+          ) {
+            selectedCoordinates.value = parsedValue[parsedValue.length - 1];
+          } else {
+            selectedCoordinates.value = null;
+          }
+        } else if (
+          typeof parsedValue.lat === "number" &&
+          typeof parsedValue.lng === "number"
+        ) {
+          updateMapLocation(globalMap.value, parsedValue.lat, parsedValue.lng);
+          selectedCoordinates.value = parsedValue;
+        } else {
+          selectedCoordinates.value = null;
+        }
+      } else {
+        selectedCoordinates.value = null;
+      }
+    };
     const updateOptions = (updates: Partial<OptionConfig>) => {
       Object.assign(localOptions, updates);
       emit("update:options", localOptions);
@@ -641,6 +678,7 @@ export default {
       searchLocation,
       getValue,
       setValue,
+      updateField,
       updateOptions,
       hideField,
       showField,

@@ -345,9 +345,17 @@ export default {
     watch(
       () => props.modelValue,
       async (newValue) => {
-        if (typeof newValue === "string" && newValue.startsWith("LEXICON")) {
-          console.log("updating internalValue");
-          internalValue.value = await appStore.getObjectByLexicon(newValue);
+        if (typeof newValue === "string") {
+          const payload = {
+            searchTerm: newValue,
+            fullService: localOptions.fullService,
+            ignoredElements: [],
+            itemType: localOptions.itemType,
+            searchType: localOptions.searchType,
+            ldapAttribute: "",
+          };
+          let response = await searchFlowChart(payload);
+          internalValue.value = response.length > 0 ? response[0] : null;
         }
       }
     );

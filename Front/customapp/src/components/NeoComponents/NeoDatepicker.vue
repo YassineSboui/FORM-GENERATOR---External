@@ -208,7 +208,6 @@ export default {
     );
 
     const toPrimeVueFormat = (format: string): string => {
-      console.log("format", format);
       return (
         format
           // Year

@@ -162,7 +162,7 @@ const frensh = {
     confirmNo: "Annuler",
     missingInformationsHeader: "Informations manquantes",
     missingInformationsMessage:
-      "Veuillez remplir tous les champs obligatoires avant de soumettre le formulaire.",
+      "Veuillez remplir tous les champs obligatoires et vérifier que les valeurs saisies sont valides avant de soumettre le formulaire.",
     invalidInformationsHeader: "Informations invalides",
     invalidInformationsMessage:
       "Veuillez vérifier les informations saisies. Certaines données ne sont pas valides.",

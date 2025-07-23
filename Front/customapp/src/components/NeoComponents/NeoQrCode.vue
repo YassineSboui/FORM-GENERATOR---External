@@ -169,8 +169,10 @@ export default defineComponent({
       // Access the canvas element within qrcodeContainer, assuming it's the only element inside
       const canvas = qrcodeContainer.value?.querySelector("canvas");
       if (canvas && canvas instanceof HTMLCanvasElement) {
-        // Convert the canvas content to a Base64-encoded string
-        return canvas.toDataURL("image/png"); // Remove the prefix for the pure Base64 string
+        // Convert the canvas content to a Base64-encoded string (without the data URL prefix)
+        const dataUrl = canvas.toDataURL("image/png");
+        const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+        return base64;
       } else {
         console.warn("Canvas element not found in qrcodeContainer.");
         return null;

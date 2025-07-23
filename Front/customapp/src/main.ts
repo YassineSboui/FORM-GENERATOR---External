@@ -12,6 +12,9 @@ import BadgeDirective from "primevue/badgedirective";
 import Tooltip from "primevue/tooltip";
 import { createPinia } from "pinia";
 import * as NeoComponents from "@/components/NeoComponents";
+import * as DraggableZones from "@/components/Zones/Draggable";
+import * as PreviewZones from "@/components/Zones/Preview";
+import * as DraggableZonesT from "@/components/ZonesTable/Draggable";
 import * as ChildComponents from "@/components/ChildComponents";
 import keycloak from "./keycloak";
 import { Field, ErrorMessage, defineRule, configure } from "vee-validate";
@@ -192,6 +195,30 @@ const globalComponents = {
 Object.entries(globalComponents).forEach(([name, comp]) => {
   app.component(name, comp);
 });
+
+// Register draggable zones
+app.component("D-NeoBasicZones", DraggableZones.NeoBasicZones);
+app.component("D-NeoZones", DraggableZones.NeoZones);
+app.component("D-Z0111", DraggableZones.Z0111);
+app.component("D-Z1000", DraggableZones.Z1000);
+app.component("D-Z1011", DraggableZones.Z1011);
+app.component("D-Z1100", DraggableZones.Z1100);
+app.component("D-Z1110", DraggableZones.Z1110);
+app.component("D-Z1111", DraggableZones.Z1111);
+app.component("D-ZR", DraggableZones.ZR);
+app.component("D-ZS", DraggableZones.ZS);
+
+// Register preview zones
+app.component("P-ZR", PreviewZones.ZR);
+
+// Register table zones
+app.component("D-NeoBasicZonesT", DraggableZonesT.NeoBasicZonesT);
+app.component("D-Z0111T", DraggableZonesT.Z0111T);
+app.component("D-Z1000T", DraggableZonesT.Z1000T);
+app.component("D-Z1011T", DraggableZonesT.Z1011T);
+app.component("D-Z1100T", DraggableZonesT.Z1100T);
+app.component("D-Z1110T", DraggableZonesT.Z1110T);
+app.component("D-Z1111T", DraggableZonesT.Z1111T);
 
 // Register directives
 app.directive("tooltip", Tooltip);

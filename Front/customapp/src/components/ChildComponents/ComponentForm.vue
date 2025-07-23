@@ -464,6 +464,7 @@ import { AifileUpload } from "@/api/api";
 import { storeToRefs } from "pinia";
 import { localize } from "@vee-validate/i18n";
 import { useI18n } from "vue-i18n";
+import { cloneDeep } from "lodash";
 // export default {
 const props = defineProps({
   modelValue: {
@@ -545,6 +546,11 @@ const props = defineProps({
     required: false,
     default: true,
   },
+  systemVariables: {
+    type: Object,
+    required: false,
+    default: () => ({}),
+  },
 });
 // },
 const emit = defineEmits([
@@ -579,6 +585,9 @@ const duplicateClick = ref(0);
 const copy = ref({ copy: [] } as any);
 const toast = useToast();
 const internalFormConfig = ref({} as any);
+const systemVariables = computed(() => {
+  return props.systemVariables;
+});
 const Variables = ref({} as any);
 // const showPageNum = ref(1);
 
@@ -637,6 +646,8 @@ const newNotice = {
   ],
   models: [] as string[],
   uploadTable: {},
+  mappingName: "",
+  rackCode: "",
 };
 
 function useModel(modelGuid: string) {
@@ -923,97 +934,108 @@ const submitNotice = async () => {
     ...NoticeUploadTable.value,
   };
   newNotice.files = NoticeFiles.value;
+  newNotice.mappingName = systemVariables.value.MAPPING_NAME || "";
+  newNotice.rackCode = systemVariables.value.RACK_CODE || "";
 
-  confirm.require({
-    message: t("ComponentForm.confirmMessage"),
-    header: t("ComponentForm.confirmHeader"),
-    rejectLabel: t("ComponentForm.confirmNo"),
-    rejectClass: "p-button-danger",
-    acceptLabel: t("ComponentForm.confirmYes"),
-    accept: async () => {
-      httpRequest.setLoading(true);
-      const beforeSaveCode = internalFormConfig.value.events.find(
-        (evnt: any) => evnt.rule.code == "beforeSave"
-      )?.code;
-      if (beforeSaveCode) {
-        try {
-          await eval(
-            "(async () => { const store = useAppStore(); " +
-              beforeSaveCode +
-              "})()"
-          );
-        } catch (error) {
-          console.error("error", error);
-          logger.error(error);
-        }
+  const skipValidation =
+    systemVariables.value.DISPLAY_FORM_VALIDATION === false;
+
+  const acceptLogic = async () => {
+    httpRequest.setLoading(true);
+    const beforeSaveCode = internalFormConfig.value.events.find(
+      (evnt: any) => evnt.rule.code == "beforeSave"
+    )?.code;
+    if (beforeSaveCode) {
+      try {
+        await eval(
+          "(async () => { const store = useAppStore(); " +
+            beforeSaveCode +
+            "})()"
+        );
+      } catch (error) {
+        console.error("error", error);
+        logger.error(error);
       }
-      if (props.isGenerateModel) {
-        const ob = await generateXMLModel({
-          Data: newNotice.data,
-          Mapping: newNotice.mapping,
-          Html: newNotice.html,
-          Attachements: newNotice.Attachements,
-        });
-        await generateModel({
-          Data: newNotice.data,
-          Mapping: newNotice.mapping,
-          Html: newNotice.html,
-          Attachements: newNotice.Attachements,
-        });
-        if (ob) {
-          emit("emitXml", ob);
-          emit("done", true);
-        }
-      } else {
-        emit("done", false);
-        let obj;
-        // new document to be created
-        obj = await saveNotice({
-          objectId: props.isFormDisplay.objectId,
-          objectGuid: props.isFormDisplay.objectGuid,
-          noticeJson: newNotice,
-          newDoc: !!route.query.newDoc,
-          disableNotice: Boolean(route.query.disableNotice),
-        });
-        if (obj) {
-          const afterSaveCode = internalFormConfig.value.events.find(
-            (evnt: any) => evnt.rule.code == "afterSave"
-          )?.code;
-          if (afterSaveCode) {
-            store.setNotice(obj);
-            try {
-              await eval(
-                "(async () => { const store = useAppStore(); " +
-                  afterSaveCode +
-                  "})()"
-              );
-            } catch (error) {
-              console.error("error", error);
-              logger.error(error);
-            }
+    }
+    if (props.isGenerateModel) {
+      const ob = await generateXMLModel({
+        Data: newNotice.data,
+        Mapping: newNotice.mapping,
+        Html: newNotice.html,
+        Attachements: newNotice.Attachements,
+      });
+      await generateModel({
+        Data: newNotice.data,
+        Mapping: newNotice.mapping,
+        Html: newNotice.html,
+        Attachements: newNotice.Attachements,
+      });
+      if (ob) {
+        emit("emitXml", ob);
+        emit("done", true);
+      }
+    } else {
+      emit("done", false);
+      let obj;
+      // new document to be created
+      obj = await saveNotice({
+        objectId: props.isFormDisplay.objectId,
+        objectGuid: props.isFormDisplay.objectGuid,
+        noticeJson: newNotice,
+        newDoc: !!route.query.newDoc,
+        disableNotice: Boolean(route.query.disableNotice),
+      });
+      if (obj) {
+        const afterSaveCode = internalFormConfig.value.events.find(
+          (evnt: any) => evnt.rule.code == "afterSave"
+        )?.code;
+        if (afterSaveCode) {
+          store.setNotice(obj);
+          try {
+            await eval(
+              "(async () => { const store = useAppStore(); " +
+                afterSaveCode +
+                "})()"
+            );
+          } catch (error) {
+            console.error("error", error);
+            logger.error(error);
           }
-          emit("done", true);
-          // appStore.setLoading(false);
         }
-
         emit("done", true);
         // appStore.setLoading(false);
-        toast.add({
-          severity: "success",
-          summary: t("ComponentForm.successMessage") + " " + obj.chrono,
-          life: 3000,
-        });
-        clearFieldsFunc(itemsFormCopy.value, 0);
-        httpRequest.setLoading(false);
       }
-    },
-    reject: () => {
-      emit("done", false);
-    },
-    onHide: () => {
-      emit("done", false);
-    },
-  });
+
+      emit("done", true);
+      // appStore.setLoading(false);
+      toast.add({
+        severity: "success",
+        summary: t("ComponentForm.successMessage") + " " + obj.chrono,
+        life: 3000,
+      });
+      clearFieldsFunc(itemsFormCopy.value, 0);
+      httpRequest.setLoading(false);
+    }
+  };
+
+  if (skipValidation) {
+    await acceptLogic();
+  } else {
+    confirm.require({
+      message: t("ComponentForm.confirmMessage"),
+      header: t("ComponentForm.confirmHeader"),
+      rejectLabel: t("ComponentForm.confirmNo"),
+      rejectClass: "p-button-danger",
+      acceptLabel: t("ComponentForm.confirmYes"),
+      accept: acceptLogic,
+      reject: () => {
+        emit("done", false);
+      },
+      onHide: () => {
+        emit("done", false);
+      },
+    });
+  }
 };
 const httpRequest = useHttpRequest();
 const submit = async () => {
@@ -1633,17 +1655,27 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
     },
     default: () => {
       const isFieldValid = (options: any) => {
-        if (!options || options.hidden === true || !options.required) {
+        if (!options || options.hidden === true) {
           return true;
         }
-
         if (options.type === "HTML") {
-          return false; // HTML fields are always invalid if required and not hidden
+          return true;
         }
-
-        return !isEmpty(Fields.value[options.name]);
+        // Always check rules, even if not required
+        if (Array.isArray(options.rules)) {
+          const val = Fields.value[options.name];
+          for (const rule of options.rules) {
+            if (!validateByRule(val, rule)) {
+              return false;
+            }
+          }
+        }
+        // Only check required for empty value
+        if (options.required) {
+          return !isEmpty(Fields.value[options.name]);
+        }
+        return true;
       };
-
       for (let z = 0; z < pageItem.rows[columnName].length; z++) {
         const options = pageItem.rows[columnName][z]?.options;
         if (!isFieldValid(options)) {
@@ -1671,12 +1703,23 @@ const validateFieldRepeatableZone = (
   }
 
   const validateFieldOptions = (options: any) => {
-    return !(
-      options &&
-      options.required &&
-      options.hidden !== true &&
-      isEmpty(Fields.value[options.name])
-    );
+    if (!options || options.hidden === true) {
+      return true;
+    }
+    // Always check rules, even if not required
+    if (Array.isArray(options.rules)) {
+      const val = Fields.value[options.name];
+      for (const rule of options.rules) {
+        if (!validateByRule(val, rule)) {
+          return false;
+        }
+      }
+    }
+    // Only check required for empty value
+    if (options.required) {
+      return !isEmpty(Fields.value[options.name]);
+    }
+    return true;
   };
 
   for (let k = 0; k < itemCol.length; k++) {
@@ -1707,12 +1750,23 @@ const validateFieldSplitterZone = (
   valid: boolean
 ) => {
   const validateFieldOptions = (options: any) => {
-    return !(
-      options &&
-      options.required &&
-      options.hidden !== true &&
-      isEmpty(Fields.value[options.name])
-    );
+    if (!options || options.hidden === true) {
+      return true;
+    }
+    // Always check rules, even if not required
+    if (Array.isArray(options.rules)) {
+      const val = Fields.value[options.name];
+      for (const rule of options.rules) {
+        if (!validateByRule(val, rule)) {
+          return false;
+        }
+      }
+    }
+    // Only check required for empty value
+    if (options.required) {
+      return !isEmpty(Fields.value[options.name]);
+    }
+    return true;
   };
 
   for (let z = 0; z < pageItem.rows[columnName].length; z++) {
@@ -1880,6 +1934,316 @@ async function executeWebService(webServiceName: String, parameters: any) {
     return error;
   }
 }
+function validateByRule(
+  value: any,
+  rule: { code: string; expression: string }
+): boolean {
+  if (!rule || typeof rule.code !== "string") return true;
+  console.log("validateByRule", value, rule);
+  // Helper for empty
+  const isEmpty = (val: any) => {
+    if (val === null || val === undefined) return true;
+    if (typeof val === "string" && val.trim() === "") return true;
+    if (Array.isArray(val) && val.length === 0) return true;
+    if (
+      typeof val === "object" &&
+      !Array.isArray(val) &&
+      Object.keys(val).length === 0
+    )
+      return true;
+    return false;
+  };
+  if (isEmpty(value)) {
+    return rule.code === "required" ? false : false;
+  }
+  switch (rule.code) {
+    case "required":
+      return !isEmpty(value);
+    case "min": {
+      // Only check length for string or array
+      const min = parseInt(
+        rule.expression.split(":")[1] || rule.expression,
+        10
+      );
+      if (typeof value === "string" || Array.isArray(value))
+        return value.length >= min;
+      return true;
+    }
+    case "max": {
+      // Only check length for string or array
+      const max = parseInt(
+        rule.expression.split(":")[1] || rule.expression,
+        10
+      );
+      if (typeof value === "string" || Array.isArray(value))
+        return value.length <= max;
+      return true;
+    }
+    case "between": {
+      // between:min and max, e.g. between:5 and 10
+      const match = rule.expression.match(/between:(.+) and (.+)/);
+      if (match) {
+        const min = parseFloat(match[1]);
+        const max = parseFloat(match[2]);
+        if (typeof value === "number") return value >= min && value <= max;
+        if (typeof value === "string" || Array.isArray(value))
+          return value.length >= min && value.length <= max;
+      }
+      return true;
+    }
+    case "timeBetween":
+    case "dateBetween": {
+      // between:HH:MM and HH:MM or between:DD/MM/YYYY and DD/MM/YYYY
+      const match = rule.expression.match(/between:([\d/: ]+) and ([\d/: ]+)/);
+      if (match) {
+        const from = match[1].trim();
+        const to = match[2].trim();
+        // For time, value should be string "HH:MM" or Date
+        let valStr = value;
+        if (value instanceof Date) {
+          valStr = value.getHours() + ":" + value.getMinutes();
+        }
+        if (typeof valStr === "string") {
+          return valStr >= from && valStr <= to;
+        }
+      }
+      return true;
+    }
+    case "confirmed": {
+      // confirmed:@fieldName, value must match another field (not implemented here)
+      // Always return true, should be handled in parent context
+      return true;
+    }
+    case "digits": {
+      // digits:N
+      const match = rule.expression.match(/digits:(\d+)/);
+      if (match) {
+        const len = parseInt(match[1], 10);
+        return (
+          typeof value === "string" &&
+          value.length === len &&
+          /^\d+$/.test(value)
+        );
+      }
+      return true;
+    }
+    case "dimensions": {
+      // dimensions:WxH
+      const match = rule.expression.match(/dimensions:(\d+),(\d+)/);
+      if (match) {
+        // Not enough info to check, always true
+        return true;
+      }
+      return true;
+    }
+    case "ext": {
+      // ext:csv,pdf
+      const match = rule.expression.match(/ext:([\w,]+)/);
+      if (match) {
+        const allowed = match[1].split(",");
+        if (typeof value === "string") {
+          const ext = value.split(".").pop();
+          return allowed.includes(ext as any);
+        }
+      }
+      return true;
+    }
+    case "image": {
+      // Not enough info to check, always true
+      return true;
+    }
+    case "integer": {
+      return /^-?\d+$/.test(String(value));
+    }
+    case "is": {
+      // is:val
+      const match = rule.expression.match(/is:(.+)/);
+      if (match) {
+        return String(value) === match[1];
+      }
+      return true;
+    }
+    case "is_not": {
+      // is_not:val
+      const match = rule.expression.match(/is_not:(.+)/);
+      if (match) {
+        return String(value) !== match[1];
+      }
+      return true;
+    }
+    case "length": {
+      // length:N
+      const match = rule.expression.match(/length:(\d+)/);
+      if (match) {
+        const len = parseInt(match[1], 10);
+        return (
+          (typeof value === "string" || Array.isArray(value)) &&
+          value.length === len
+        );
+      }
+      return true;
+    }
+    case "max_value": {
+      // max_value:N
+      const match = rule.expression.match(/max_value:(\d+)/);
+      if (match) {
+        const max = parseInt(match[1], 10);
+        return typeof value === "number" && value <= max;
+      }
+      return true;
+    }
+    case "min_value": {
+      // min_value:N
+      const match = rule.expression.match(/min_value:(\d+)/);
+      if (match) {
+        const min = parseInt(match[1], 10);
+        return typeof value === "number" && value >= min;
+      }
+      return true;
+    }
+    case "mimes": {
+      // mimes:jpg,png
+      const match = rule.expression.match(/mimes:([\w,]+)/);
+      if (match) {
+        const allowed = match[1].split(",");
+        if (typeof value === "string") {
+          const ext = value.split(".").pop();
+          return allowed.includes(ext as any);
+        }
+      }
+      return true;
+    }
+    case "not_one_of": {
+      // not_one_of:val1,val2
+      const match = rule.expression.match(/not_one_of:([^,]+),([^,]+)/);
+      if (match) {
+        return value !== match[1] && value !== match[2];
+      }
+      return true;
+    }
+    case "one_of": {
+      // one_of:val1,val2
+      const match = rule.expression.match(/one_of:([^,]+),([^,]+)/);
+      if (match) {
+        return value === match[1] || value === match[2];
+      }
+      return true;
+    }
+    case "regex": {
+      let pattern = rule.expression;
+      let flags = "";
+      const regexParts = pattern.match(/^\/([^/]+)\/(\w*)$/);
+      if (regexParts) {
+        pattern = regexParts[1];
+        flags = regexParts[2];
+      } else if (pattern.startsWith("/") && pattern.endsWith("/")) {
+        pattern = pattern.slice(1, -1);
+      }
+      try {
+        const regex = new RegExp(pattern, flags);
+        return regex.test(String(value));
+      } catch (e) {
+        return false;
+      }
+    }
+    case "size": {
+      // size:N (for files, not enough info)
+      return true;
+    }
+    case "url": {
+      return /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/.test(
+        String(value)
+      );
+    }
+    case "timeAfter":
+    case "timeBefore": {
+      // after:HH:MM or before:HH:MM
+      const match = rule.expression.match(/(after|before):(\d{1,2}:\d{1,2})/);
+      if (match) {
+        const ref = match[2];
+        let valStr = value;
+        if (value instanceof Date) {
+          valStr =
+            value.getHours().toString().padStart(2, "0") +
+            ":" +
+            value.getMinutes().toString().padStart(2, "0");
+        }
+        if (typeof valStr === "string") {
+          if (rule.code.includes("After")) return valStr > ref;
+          if (rule.code.includes("Before")) return valStr < ref;
+        }
+      }
+      return true;
+    }
+    case "dateAfter":
+    case "dateAfterToday":
+    case "dateBefore":
+    case "dateBeforeToday": {
+      // after:DD/MM/YYYY or before:DD/MM/YYYY
+      const match = rule.expression.match(
+        /(after|before):(\d{1,2})\/(\d{1,2})\/(\d{4})/
+      );
+      if (match) {
+        const refDay = parseInt(match[2], 10);
+        const refMonth = parseInt(match[3], 10) - 1; // JS months 0-based
+        const refYear = parseInt(match[4], 10);
+        const refDate = new Date(refYear, refMonth, refDay);
+        let valDate;
+        if (value instanceof Date) {
+          valDate = value;
+        } else if (
+          typeof value === "string" &&
+          /^\d{4}-\d{2}-\d{2}/.test(value)
+        ) {
+          // ISO string
+          valDate = new Date(value);
+        } else if (
+          typeof value === "string" &&
+          /\d{1,2}\/\d{1,2}\/\d{4}/.test(value)
+        ) {
+          const [d, m, y] = value.split("/").map(Number);
+          valDate = new Date(y, m - 1, d);
+        }
+        if (valDate instanceof Date && !isNaN(valDate.getTime())) {
+          if (rule.code.includes("After")) return valDate > refDate;
+          if (rule.code.includes("Before")) return valDate < refDate;
+        }
+      }
+      return true;
+    }
+    case "dateIsNot": {
+      // different de :date1--date2
+      // Not enough info, always true
+      return true;
+    }
+    case "disabledDateRange":
+    case "disabledMonthDays":
+    case "disabledWeekDays": {
+      // Not enough info, always true
+      return true;
+    }
+    case "email": {
+      return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(value));
+    }
+    case "numeric": {
+      return /^-?\d*(\.\d+)?$/.test(String(value));
+    }
+    case "alpha": {
+      return /^[A-Za-z]+$/.test(String(value));
+    }
+    case "alpha_num": {
+      return /^[A-Za-z0-9]+$/.test(String(value));
+    }
+    case "alpha_dash": {
+      return /^[A-Za-z0-9_-]+$/.test(String(value));
+    }
+    case "alpha_spaces": {
+      return /^[A-Za-z\s]+$/.test(String(value));
+    }
+    default:
+      return true;
+  }
+}
 defineExpose({
   itemsForm,
   Fields,
@@ -1890,6 +2254,7 @@ defineExpose({
   showPageNum,
   disabledNextButton,
   disabledPreviousButton,
+  validateByRule,
   fetchTableData,
   enablePreviousButtonFunction,
   enableNextButtonFunction,

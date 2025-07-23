@@ -616,6 +616,8 @@ const newNotice = {
   ],
   models: [] as string[],
   uploadTable: {},
+  mappingName: "",
+  rackCode: "",
 };
 
 function useModel(modelGuid: string) {
@@ -817,6 +819,14 @@ const submitNotice = async () => {
   };
   newNotice.files = NoticeFiles.value;
 
+  // Add MAPPING_NAME and RACK_CODE from system variables
+  const systemVariables = internalFormConfig.value?.systemVariables || {};
+  if (systemVariables.MAPPING_NAME) {
+    newNotice.mappingName = systemVariables.MAPPING_NAME;
+  }
+  if (systemVariables.RACK_CODE) {
+    newNotice.rackCode = systemVariables.RACK_CODE;
+  }
   confirm.require({
     message: t("ComponentForm.confirmMessage"),
     header: t("ComponentForm.confirmHeader"),

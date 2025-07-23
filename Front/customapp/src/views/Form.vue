@@ -38,6 +38,7 @@
             :executeNavigateNext="executeNavigateNext"
             @update:executeNavigateNext="executeNavigateNext = $event"
             :language="language"
+            :systemVariables="systemVariables"
           ></component-form>
         </div>
       </div>
@@ -72,7 +73,11 @@
         <div class="col flex justify-content-start gap-1">
           <div>
             <Button
-              v-if="!newDoc"
+              v-if="
+                !newDoc &&
+                systemVariables.DISPLAY_BUTTON_CANCEL !== false &&
+                systemVariables.DISPLAY_BUTTON_CANCEL !== 'false'
+              "
               v-show="showPageNumF === 1 || showPageNames"
               @click="cancel"
               class="mr-2"
@@ -101,7 +106,11 @@
           </div>
           <div>
             <Button
-              v-if="showPageNumF === steps || steps === 0"
+              v-if="
+                (showPageNumF === steps || steps === 0) &&
+                systemVariables.DISPLAY_BUTTON_OK !== false &&
+                systemVariables.DISPLAY_BUTTON_OK !== 'false'
+              "
               @click="submit()"
               class="ml-2"
             >
@@ -291,7 +300,6 @@ import {
   computed,
   defineComponent,
   onBeforeMount,
-  onMounted,
   onBeforeUnmount,
   ref,
   type Ref,
@@ -343,6 +351,7 @@ export default defineComponent({
     const showPageNumF = ref(1);
     const languages: Ref<any[]> = ref([]);
     const languagesList: Ref<any[]> = ref([]);
+    const systemVariables: Ref<any> = ref({});
     const formfound = ref(true);
     const PrimeVue = usePrimeVue();
     const localFormConfig = ref({} as any);
@@ -830,6 +839,14 @@ export default defineComponent({
           object.value?.objectJson
         ).objectConfig.formConfig;
         applyDynamicTheme();
+        // Initialize system variables
+        systemVariables.value = localFormConfig.value.systemVariables || {
+          BUTTON_CANCEL: "Annuler",
+          BUTTON_OK: "Valider",
+          FORM_UID: "",
+          DISPLAY_BUTTON_CANCEL: true,
+          DISPLAY_BUTTON_OK: true,
+        };
         formName.value = localFormConfig.value.formName;
         isStepper.value = localFormConfig.value.isStepper;
         isRTL.value = localFormConfig.value.isRTL;
@@ -1070,7 +1087,8 @@ export default defineComponent({
         }
       } else {
         console.log("No external auth code or GUID found.");
-        isAuthenticated.value = true;
+        isAuthenticated.value = false;
+        router.push({ name: "unauthorized" });
       }
 
       // Only proceed to load the form if authenticated
@@ -1085,10 +1103,19 @@ export default defineComponent({
         ? JSON.parse(object.value.objectJson).objectConfig.formTemplate
         : [];
     });
-    const configForm: Ref<any[]> = computed(() => {
-      return object.value
-        ? JSON.parse(object.value.objectJson).objectConfig.formConfig
-        : [];
+    const configForm: Ref<any[]> = computed({
+      get: () => {
+        return object.value
+          ? JSON.parse(object.value.objectJson).objectConfig.formConfig
+          : {};
+      },
+      set: (value) => {
+        if (object.value) {
+          const objectJson = JSON.parse(object.value.objectJson);
+          objectJson.objectConfig.formConfig = value;
+          object.value.objectJson = JSON.stringify(objectJson);
+        }
+      },
     });
     const isFormDisplay = ref({
       value: true,
@@ -1141,10 +1168,15 @@ export default defineComponent({
     };
 
     // Computed properties for button texts
-    const cancelButtonText = computed(() => t("buttons.cancel"));
+    const cancelButtonText = computed(
+      () => systemVariables.value.BUTTON_CANCEL || t("FormButtons.cancel")
+    );
+
     const previousButtonText = computed(() => t("buttons.previous"));
     const nextButtonText = computed(() => t("buttons.next"));
-    const submitButtonText = computed(() => t("buttons.validate"));
+    const submitButtonText = computed(
+      () => systemVariables.value.BUTTON_OK || t("FormButtons.validate")
+    );
 
     const isDarkMode = ref(false);
 
@@ -1242,13 +1274,6 @@ export default defineComponent({
       }
     });
 
-    // Optionally, initialize from system preference
-    // onMounted(() => {
-    //   isDarkMode.value = window.matchMedia(
-    //     "(prefers-color-scheme: dark)"
-    //   ).matches;
-    // });
-
     return {
       form,
       formID,
@@ -1277,16 +1302,23 @@ export default defineComponent({
       authRequired,
       authConfig,
       // Email authentication
-      showEmailDialog,
-      showOTPDialog,
-      emailInput,
-      otpInput,
       emailValidationError,
       otpValidationError,
+      previousButtonText,
+      cancelButtonText,
+      submitButtonText,
+      showEmailDialog,
+      systemVariables,
+      nextButtonText,
+      showOTPDialog,
       resendLoading,
-      userEmail,
       emailLoading,
       otpLoading,
+      emailInput,
+      userEmail,
+      formfound,
+      isDarkMode,
+      otpInput,
       handleEmailSubmit,
       handleEmailCancel,
       handleOTPSubmit,
@@ -1295,20 +1327,14 @@ export default defineComponent({
       handleResendOTP,
       openEmailDialog,
       validateEmail,
-      t,
-      submit,
       handleIsSubmit,
-      handleDone,
-      cancel,
-      navigateNext,
-      submitStepper,
       navigateToPage,
-      formfound,
-      cancelButtonText,
-      previousButtonText,
-      nextButtonText,
-      submitButtonText,
-      isDarkMode,
+      submitStepper,
+      navigateNext,
+      handleDone,
+      submit,
+      cancel,
+      t,
     };
   },
 });
