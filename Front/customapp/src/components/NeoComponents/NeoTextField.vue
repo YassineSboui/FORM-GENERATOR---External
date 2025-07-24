@@ -18,7 +18,12 @@
         }}
 
         <!-- Required indicator -->
-        <span v-show="options.required" class="required-indicator"> * </span>
+        <span
+          v-show="options.required"
+          style="color: red; margin-left: 5px; margin-right: 5px"
+        >
+          *
+        </span>
         <i
           v-if="options.tooltip"
           class="pi pi-info-circle"
