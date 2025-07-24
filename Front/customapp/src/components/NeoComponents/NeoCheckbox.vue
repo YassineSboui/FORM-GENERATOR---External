@@ -3,7 +3,7 @@
     <div class="flex align-items-center input-container">
       <Field
         v-model="internalValue"
-        :name="options.label"
+        :name="options.label ?? ''"
         :rules="computedRules"
         v-slot="{ field, errorMessage }"
         ><div class="flex gap-2">

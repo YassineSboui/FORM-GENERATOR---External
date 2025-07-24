@@ -212,6 +212,20 @@ export default defineComponent({
       errorState.errorMessage = "";
     };
 
+    // Watch for field validity and clear error if valid
+    watch(
+      () => internalValue.value,
+      (newValue) => {
+        // If there is an error and the value is now valid, clear the error
+        if (errorState.errorMessage) {
+          // If required, not empty
+          if (newValue && newValue.trim() !== "") {
+            clearFieldError();
+          }
+        }
+      }
+    );
+
     // Validation rules computation
     const computedRules = computed(() => {
       if (Array.isArray(localOptions.rules)) {

@@ -273,6 +273,20 @@ export default {
       errorState.errorMessage = "";
     };
 
+    // Watch for field validity and clear error if valid
+    watch(
+      () => internalValue.value,
+      (newValue) => {
+        // If there is an error and the value is now valid, clear the error
+        if (errorState.errorMessage) {
+          // If required, not empty
+          if (newValue && newValue.trim() !== "") {
+            clearFieldError();
+          }
+        }
+      }
+    );
+
     return {
       internalValue,
       isDisabled,

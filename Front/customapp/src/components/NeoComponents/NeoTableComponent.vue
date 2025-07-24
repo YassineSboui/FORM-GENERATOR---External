@@ -331,11 +331,11 @@ export default defineComponent({
     const exposeSelectedObjects = () => {
       return selectedObjects.value;
     };
-    defineExpose({
-      TableRef,
-      getSelectedObjects,
-      exposeSelectedObjects,
-    });
+    // defineExpose({
+    //   TableRef,
+    //   getSelectedObjects,
+    //   exposeSelectedObjects,
+    // });
 
     return {
       isHidden,

@@ -60,6 +60,7 @@
       >
         <div class="map-container">
           <l-map
+            v-if="!isHidden && options.width && options.height"
             ref="leafletMap"
             :key="mapKey"
             :center="position"
@@ -223,7 +224,7 @@ export default {
     // ...existing code...
     const mapKey = ref(Date.now());
     const leafletMap = ref<any>(null);
-    const globalMap = ref<any>(null);
+    const globalMap = ref<any>(null) as any;
     // ...existing code...
 
     // Watch for map initialization and load markers if needed
@@ -257,21 +258,43 @@ export default {
     });
 
     const isUpdating = ref(false);
+    const mapLoading = ref(true);
+    const onMapReady = async (map: any) => {
+      map.attributionControl.remove();
+      try {
+        // Wait for next tick to ensure DOM is fully ready
+        await nextTick();
 
-    const onMapReady = (map: any) => {
-      globalMap.value = map;
+        // Additional check to ensure map container exists
+        if (!map || !map.getContainer()) {
+          console.error("Map container not found");
+          return;
+        }
 
-      // Load existing markers if any
-      if (internalValue.value) {
-        loadMarkers();
+        globalMap.value = map;
+
+        // Invalidate size to ensure proper rendering
+        setTimeout(() => {
+          if (map && map.invalidateSize) {
+            map.invalidateSize();
+          }
+        }, 100);
+
+        // Load existing markers if any
+        if (internalValue.value) {
+          loadMarkers();
+        }
+
+        // Add click event listener
+        map.on("click", (e: any) => {
+          if (isDisabled.value || readOnly.value) return;
+          const { lat, lng } = e.latlng;
+          updateMapLocation(map, lat, lng);
+        });
+      } catch (error) {
+        console.error("Error initializing map:", error);
       }
-
-      // Add click event listener
-      map.on("click", (e: any) => {
-        if (isDisabled.value || readOnly.value) return;
-        const { lat, lng } = e.latlng;
-        updateMapLocation(map, lat, lng);
-      });
+      mapLoading.value = false;
     };
     const updateMapLocation = (map: any, lat: number, lng: number) => {
       // Prevent recursive updates
@@ -352,10 +375,19 @@ export default {
       }
     };
 
-    const loadMarkers = () => {
-      if (!internalValue.value) return;
+    const loadMarkers = async () => {
+      if (!internalValue.value || !globalMap.value) return;
 
       try {
+        // Wait for map to be fully ready
+        await nextTick();
+
+        // Ensure map container exists
+        if (!globalMap.value.getContainer()) {
+          console.error("Map container not available for loading markers");
+          return;
+        }
+
         // Remove only markers managed by this component
         markers.value.forEach((marker: any) => {
           if (globalMap.value && marker) {
@@ -377,10 +409,7 @@ export default {
             }
           });
           if (lastCoord && globalMap.value) {
-            globalMap.value.setView(
-              [lastCoord.lat, lastCoord.lng],
-              18 // Use high zoom for accuracy
-            );
+            globalMap.value.setView([lastCoord.lat, lastCoord.lng], 18);
             selectedCoordinates.value = lastCoord;
           } else {
             selectedCoordinates.value = null;
@@ -395,7 +424,7 @@ export default {
           if (globalMap.value) {
             globalMap.value.setView(
               [internalValue.value.lat, internalValue.value.lng],
-              18 // Use high zoom for accuracy
+              18
             );
           }
         }
@@ -630,8 +659,21 @@ export default {
       () => props.options,
       (newOptions) => {
         Object.assign(localOptions, newOptions);
-        // Force map re-render by updating key
-        mapKey.value = Date.now();
+
+        // Only force re-render if critical options changed
+        const criticalOptionsChanged =
+          newOptions.width !== localOptions.width ||
+          newOptions.height !== localOptions.height ||
+          (newOptions.defaultCenter &&
+            (newOptions.defaultCenter.lat !== localOptions.defaultCenter?.lat ||
+              newOptions.defaultCenter.lng !==
+                localOptions.defaultCenter?.lng));
+
+        if (criticalOptionsChanged) {
+          // Force map re-render by updating key
+          mapKey.value = Date.now();
+        }
+
         // Update position only if defaultCenter changed
         if (newOptions.defaultCenter) {
           const newLat = newOptions.defaultCenter.lat || 36.8065;
@@ -643,18 +685,51 @@ export default {
       },
       { deep: true }
     );
-
     // Lifecycle
     onMounted(async () => {
+      // Wait for multiple ticks to ensure DOM is ready
       await nextTick();
-      // Map initialization is handled by @ready event
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Additional initialization can go here if needed
     });
 
-    // onUnmounted(() => {
-    //   if (globalMap.value) {
-    //     globalMap.value.remove();
-    //   }
-    // });
+    const reinitializeMap = async () => {
+      try {
+        if (globalMap.value) {
+          globalMap.value.remove();
+          globalMap.value = null;
+        }
+
+        // Force re-render
+        mapKey.value = Date.now();
+
+        // Wait for re-render
+        await nextTick();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error("Error reinitializing map:", error);
+      }
+    };
+    onUnmounted(() => {
+      try {
+        // Clear markers first
+        markers.value.forEach((marker: any) => {
+          if (globalMap.value && marker) {
+            globalMap.value.removeLayer(marker);
+          }
+        });
+        markers.value = [];
+
+        // Remove map instance
+        if (globalMap.value) {
+          globalMap.value.remove();
+          globalMap.value = null;
+        }
+      } catch (error) {
+        console.error("Error during cleanup:", error);
+      }
+    });
 
     return {
       internalValue,
@@ -678,7 +753,6 @@ export default {
       searchLocation,
       getValue,
       setValue,
-      updateField,
       updateOptions,
       hideField,
       showField,
@@ -686,6 +760,7 @@ export default {
       enableField,
       setFieldError,
       clearFieldError,
+      updateField,
     };
   },
 };

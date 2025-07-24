@@ -27,9 +27,28 @@
       @rowReorder="onRowReorder"
       v-model:selection="selectedObjects"
     >
-      <template #header v-if="type === 'DIALOG' && !store.local">
+      <template #header v-if="!store.local">
         <div class="flex justify-content-end">
-          <Button size="small" @click="openNew" style="margin: 0.25%">
+          <Button
+            v-if="
+              config.objectConfig.formConfig.selectable &&
+              selectedObjects &&
+              selectedObjects.length >= 2
+            "
+            size="small"
+            class="iconStyle"
+            style="margin: 0.25%"
+            @click="deleteSelectedRows"
+          >
+            <span class="pi pi-trash"></span>
+          </Button>
+          <Button
+            v-if="type === 'DIALOG'"
+            size="small"
+            @click="openNew"
+            class="iconStyle"
+            style="margin: 0.25%"
+          >
             <span class="p-button-text" v-if="addBtn">{{ addBtn }}</span>
             <span class="pi pi-plus" v-else></span>
           </Button>
@@ -251,30 +270,33 @@
       @rowReorder="onRowReorder"
       v-model:selection="selectedObjects"
     >
-      <template #header v-if="type === 'DIALOG' && !store.local">
-        <!-- || config.objectConfig.formConfig.selectionMode -->
+      <template #header v-if="!store.local">
         <div class="flex justify-content-end">
           <Button
+            v-if="
+              config.objectConfig.formConfig.selectable &&
+              selectedObjects &&
+              selectedObjects.length >= 2
+            "
+            size="small"
+            class="iconStyle"
+            style="margin: 0.25%"
+            @click="deleteSelectedRows"
+          >
+            <span class="pi pi-trash"></span>
+          </Button>
+          <Button
+            v-if="type === 'DIALOG'"
             size="small"
             @click="openNew"
             class="iconStyle"
-            v-if="type === 'DIALOG' && !store.local"
+            style="margin: 0.25%"
           >
             <span class="p-button-text" v-if="addBtn">{{ addBtn }}</span>
             <span class="pi pi-plus" v-else></span>
           </Button>
-          <!-- <SplitButton
-          v-else
-          class="button-form-white"
-          label="Actions"
-          :model="selectionModeButtons"
-          raised
-          text
-        /> -->
-          <!-- <SplitButton  label="Actions" :model="selectionModeButtons" /> -->
         </div>
       </template>
-
       <template #empty>Aucun objet trouvé.</template>
       <template #loading>Chargement des objets...</template>
 
@@ -1191,6 +1213,70 @@ const Delete = async (obj: any) => {
     reject: () => {
       // Optional: Handle rejection case if needed
     },
+  });
+};
+
+const deleteSelectedRows = () => {
+  if (!selectedObjects.value || selectedObjects.value.length < 2) return;
+  confirm.require({
+    message:
+      "Êtes-vous sûr de vouloir supprimer tous les éléments sélectionnés ?",
+    header: "Supprimer",
+    icon: "pi pi-info-circle",
+    rejectLabel: "Annuler",
+    rejectClass: "p-button-danger",
+    acceptLabel: "Supprimer",
+    accept: async () => {
+      const formConfig = props.config.objectConfig.formConfig;
+      const onRowDeleteEvent = formConfig?.events?.find(
+        (event: any) => event.rule.code === "onRowDelete"
+      )?.code;
+      let idsToDelete: any[] = [];
+      for (const row of selectedObjects.value) {
+        idsToDelete.push(row.id);
+        // If not JSON, call deleteData
+        if (formConfig?.sortie !== "JSON") {
+          try {
+            await deleteData(row.id);
+          } catch (error) {
+            console.error("Error deleting object:", error);
+            logger.error(error);
+          }
+        }
+        // Handle table creation case
+        if (props.isTableCreation) {
+          store.deleteID(row.column_name);
+        }
+      }
+      // Remove from local objects
+      objects.value = objects.value.filter(
+        (row: any) => !idsToDelete.includes(row.id)
+      );
+      selectedObjects.value = [];
+      await nextTick();
+      // If onRowDeleteFunction is defined, evaluate it (once after all deletions)
+      if (onRowDeleteEvent) {
+        try {
+          eval(
+            "(async () => { const store = useAppStore(); " +
+              onRowDeleteEvent +
+              "})()"
+          );
+        } catch (error) {
+          console.error("Error in onRowDelete function:", error);
+          logger.error(error);
+        }
+      }
+      toast.add({
+        severity: "success",
+        summary: "Succès",
+        detail: "Les éléments sélectionnés ont été supprimés avec succès.",
+        life: 3000,
+      });
+      onRowEditCancel();
+      hideDialog();
+    },
+    reject: () => {},
   });
 };
 

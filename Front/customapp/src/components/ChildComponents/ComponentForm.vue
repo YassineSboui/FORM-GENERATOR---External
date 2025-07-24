@@ -1647,6 +1647,7 @@ const isEmpty = (value: any) => {
 };
 
 const validateField = (pageItem: any, columnName: string, valid: boolean) => {
+  let allValid = true;
   const validationStrategies = {
     ZS: () => validateFieldSplitterZone(pageItem, columnName, valid),
     ZR: () => {
@@ -1654,35 +1655,39 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
       return validateFieldRepeatableZone(pageItem, columnName, valid);
     },
     default: () => {
-      const isFieldValid = (options: any) => {
-        if (!options || options.hidden === true) {
-          return true;
-        }
-        if (options.type === "HTML") {
-          return true;
-        }
-        // Always check rules, even if not required
-        if (Array.isArray(options.rules)) {
-          const val = Fields.value[options.name];
-          for (const rule of options.rules) {
-            if (!validateByRule(val, rule)) {
-              return false;
-            }
-          }
-        }
-        // Only check required for empty value
-        if (options.required) {
-          return !isEmpty(Fields.value[options.name]);
-        }
-        return true;
-      };
       for (let z = 0; z < pageItem.rows[columnName].length; z++) {
         const options = pageItem.rows[columnName][z]?.options;
-        if (!isFieldValid(options)) {
-          return false;
+        if (!options || options.hidden === true) continue;
+        if (options.type === "HTML") continue;
+        let fieldValid = true;
+        let messages: string[] = [];
+        if (Array.isArray(options.rules)) {
+          const val = Fields.value[options.name];
+          const result = validateFieldAllRules(
+            val,
+            options.rules,
+            options.label
+          );
+          fieldValid = result.valid;
+          messages = result.messages;
+          if (app.refs[options.name]?.[0]?.setFieldError) {
+            app.refs[options.name][0].setFieldError(messages.join("\n"));
+          }
+        } else if (options.required) {
+          fieldValid = !isEmpty(Fields.value[options.name]);
+          if (!fieldValid && app.refs[options.name]?.[0]?.setFieldError) {
+            app.refs[options.name][0].setFieldError(
+              (options.label || "Ce champ") + " est requis."
+            );
+          }
+        } else {
+          if (app.refs[options.name]?.[0]?.setFieldError) {
+            app.refs[options.name][0].setFieldError("");
+          }
         }
+        if (!fieldValid) allValid = false;
       }
-      return valid;
+      return allValid && valid;
     },
   };
 
@@ -1703,25 +1708,33 @@ const validateFieldRepeatableZone = (
   }
 
   const validateFieldOptions = (options: any) => {
-    if (!options || options.hidden === true) {
-      return true;
-    }
-    // Always check rules, even if not required
+    if (!options || options.hidden === true) return true;
+    let fieldValid = true;
+    let messages: string[] = [];
     if (Array.isArray(options.rules)) {
       const val = Fields.value[options.name];
-      for (const rule of options.rules) {
-        if (!validateByRule(val, rule)) {
-          return false;
-        }
+      const result = validateFieldAllRules(val, options.rules, options.label);
+      fieldValid = result.valid;
+      messages = result.messages;
+      if (app.refs[options.name]?.[0]?.setFieldError) {
+        app.refs[options.name][0].setFieldError(messages.join("\n"));
+      }
+    } else if (options.required) {
+      fieldValid = !isEmpty(Fields.value[options.name]);
+      if (!fieldValid && app.refs[options.name]?.[0]?.setFieldError) {
+        app.refs[options.name][0].setFieldError(
+          (options.label || "Ce champ") + " est requis."
+        );
+      }
+    } else {
+      if (app.refs[options.name]?.[0]?.setFieldError) {
+        app.refs[options.name][0].setFieldError("");
       }
     }
-    // Only check required for empty value
-    if (options.required) {
-      return !isEmpty(Fields.value[options.name]);
-    }
-    return true;
+    return fieldValid;
   };
 
+  let allValid = true;
   for (let k = 0; k < itemCol.length; k++) {
     for (let z = 0; z < pageItem.rows[columnName].length; z++) {
       const columnNames = ["column1", "column2", "column3", "column4"];
@@ -1732,16 +1745,16 @@ const validateFieldRepeatableZone = (
         for (const field of fields) {
           const options = (field as any).options;
           if (!validateFieldOptions(options)) {
-            return false;
+            allValid = false;
           }
         }
       }
       if (!valid) {
-        return false;
+        allValid = false;
       }
     }
   }
-  return valid;
+  return allValid && valid;
 };
 
 const validateFieldSplitterZone = (
@@ -1750,32 +1763,44 @@ const validateFieldSplitterZone = (
   valid: boolean
 ) => {
   const validateFieldOptions = (options: any) => {
-    if (!options || options.hidden === true) {
-      return true;
-    }
-    // Always check rules, even if not required
+    if (!options || options.hidden === true) return true;
+    let fieldValid = true;
+    let messages: string[] = [];
     if (Array.isArray(options.rules)) {
       const val = Fields.value[options.name];
-      for (const rule of options.rules) {
-        if (!validateByRule(val, rule)) {
-          return false;
-        }
+      const result = validateFieldAllRules(val, options.rules, options.label);
+      fieldValid = result.valid;
+      messages = result.messages;
+      if (app.refs[options.name]?.[0]?.setFieldError) {
+        app.refs[options.name][0].setFieldError(messages.join("\n"));
+      }
+    } else if (options.required) {
+      fieldValid = !isEmpty(Fields.value[options.name]);
+      if (!fieldValid && app.refs[options.name]?.[0]?.setFieldError) {
+        app.refs[options.name][0].setFieldError(
+          (options.label || "Ce champ") + " est requis."
+        );
+      }
+    } else {
+      if (app.refs[options.name]?.[0]?.setFieldError) {
+        app.refs[options.name][0].setFieldError("");
       }
     }
-    // Only check required for empty value
-    if (options.required) {
-      return !isEmpty(Fields.value[options.name]);
-    }
-    return true;
+    return fieldValid;
   };
 
+  let allValid = true;
   for (let z = 0; z < pageItem.rows[columnName].length; z++) {
     const row = pageItem.rows[columnName][z];
 
     if (row.zone === "ZR") {
       Fields.value[row.code] ??= [];
-      valid = validateFieldRepeatableZone(row, columnName, valid);
-      if (!valid) return false;
+      const repeatableValid = validateFieldRepeatableZone(
+        row,
+        columnName,
+        valid
+      );
+      if (!repeatableValid) allValid = false;
     }
 
     // Validate all nested fields
@@ -1783,14 +1808,12 @@ const validateFieldSplitterZone = (
       Object.values(col).forEach((field: any) => {
         const options = field.options;
         if (!validateFieldOptions(options)) {
-          valid = false;
+          allValid = false;
         }
       });
     });
-
-    if (!valid) return false;
   }
-  return valid;
+  return allValid && valid;
 };
 const initFields = () => {
   Object.keys(Fields.value).forEach((key) => {
@@ -1934,12 +1957,17 @@ async function executeWebService(webServiceName: String, parameters: any) {
     return error;
   }
 }
+// Universal validation function for rules from ValidationRules.vue
+// Returns { valid: boolean, msg: string } for a single rule
 function validateByRule(
   value: any,
-  rule: { code: string; expression: string }
-): boolean {
-  if (!rule || typeof rule.code !== "string") return true;
-  console.log("validateByRule", value, rule);
+  rule: { code: string; expression: string },
+  fieldLabel?: string
+): { valid: boolean; msg: string } {
+  if (!rule || typeof rule.code !== "string") return { valid: true, msg: "" };
+  console.log("rule", rule);
+  console.log("value", value);
+  console.log("fieldLabel", fieldLabel);
   // Helper for empty
   const isEmpty = (val: any) => {
     if (val === null || val === undefined) return true;
@@ -1953,181 +1981,265 @@ function validateByRule(
       return true;
     return false;
   };
+  const label = fieldLabel || "Ce champ";
   if (isEmpty(value)) {
-    return rule.code === "required" ? false : false;
+    if (rule.code === "required") {
+      return { valid: false, msg: `${label} est requis.` };
+    }
   }
+  console.log("rule.code", rule.code);
   switch (rule.code) {
     case "required":
-      return !isEmpty(value);
+      return {
+        valid: !isEmpty(value),
+        msg: !isEmpty(value) ? "" : `${label} est requis.`,
+      };
     case "min": {
-      // Only check length for string or array
       const min = parseInt(
         rule.expression.split(":")[1] || rule.expression,
         10
       );
-      if (typeof value === "string" || Array.isArray(value))
-        return value.length >= min;
-      return true;
+      if (typeof value === "string" || Array.isArray(value)) {
+        return {
+          valid: value.length >= min,
+          msg:
+            value.length >= min
+              ? ""
+              : `${label} doit contenir au moins ${min} caractères.`,
+        };
+      }
+      return { valid: true, msg: "" };
     }
     case "max": {
-      // Only check length for string or array
       const max = parseInt(
         rule.expression.split(":")[1] || rule.expression,
         10
       );
-      if (typeof value === "string" || Array.isArray(value))
-        return value.length <= max;
-      return true;
+      if (typeof value === "string" || Array.isArray(value)) {
+        return {
+          valid: value.length <= max,
+          msg:
+            value.length <= max
+              ? ""
+              : `${label} doit contenir au maximum ${max} caractères.`,
+        };
+      }
+      return { valid: true, msg: "" };
     }
     case "between": {
-      // between:min and max, e.g. between:5 and 10
       const match = rule.expression.match(/between:(.+) and (.+)/);
       if (match) {
         const min = parseFloat(match[1]);
         const max = parseFloat(match[2]);
-        if (typeof value === "number") return value >= min && value <= max;
-        if (typeof value === "string" || Array.isArray(value))
-          return value.length >= min && value.length <= max;
+        if (typeof value === "number") {
+          return {
+            valid: value >= min && value <= max,
+            msg:
+              value >= min && value <= max
+                ? ""
+                : `${label} doit être entre ${min} et ${max}.`,
+          };
+        }
+        if (typeof value === "string" || Array.isArray(value)) {
+          return {
+            valid: value.length >= min && value.length <= max,
+            msg:
+              value.length >= min && value.length <= max
+                ? ""
+                : `${label} doit contenir entre ${min} et ${max} caractères.`,
+          };
+        }
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "timeBetween":
     case "dateBetween": {
-      // between:HH:MM and HH:MM or between:DD/MM/YYYY and DD/MM/YYYY
       const match = rule.expression.match(/between:([\d/: ]+) and ([\d/: ]+)/);
       if (match) {
         const from = match[1].trim();
         const to = match[2].trim();
-        // For time, value should be string "HH:MM" or Date
         let valStr = value;
         if (value instanceof Date) {
           valStr = value.getHours() + ":" + value.getMinutes();
         }
         if (typeof valStr === "string") {
-          return valStr >= from && valStr <= to;
+          return {
+            valid: valStr >= from && valStr <= to,
+            msg:
+              valStr >= from && valStr <= to
+                ? ""
+                : `${label} doit être entre ${from} et ${to}.`,
+          };
         }
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "confirmed": {
-      // confirmed:@fieldName, value must match another field (not implemented here)
-      // Always return true, should be handled in parent context
-      return true;
+      return { valid: true, msg: "" };
     }
     case "digits": {
-      // digits:N
       const match = rule.expression.match(/digits:(\d+)/);
       if (match) {
         const len = parseInt(match[1], 10);
-        return (
-          typeof value === "string" &&
-          value.length === len &&
-          /^\d+$/.test(value)
-        );
+        return {
+          valid:
+            typeof value === "string" &&
+            value.length === len &&
+            /^\d+$/.test(value),
+          msg:
+            typeof value === "string" &&
+            value.length === len &&
+            /^\d+$/.test(value)
+              ? ""
+              : `${label} doit contenir exactement ${len} chiffres.`,
+        };
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "dimensions": {
-      // dimensions:WxH
-      const match = rule.expression.match(/dimensions:(\d+),(\d+)/);
-      if (match) {
-        // Not enough info to check, always true
-        return true;
-      }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "ext": {
-      // ext:csv,pdf
       const match = rule.expression.match(/ext:([\w,]+)/);
       if (match) {
         const allowed = match[1].split(",");
         if (typeof value === "string") {
           const ext = value.split(".").pop();
-          return allowed.includes(ext as any);
+          return {
+            valid: allowed.includes(ext as any),
+            msg: allowed.includes(ext as any)
+              ? ""
+              : `${label} doit avoir l'une des extensions suivantes : ${allowed.join(
+                  ", "
+                )}.`,
+          };
         }
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "image": {
-      // Not enough info to check, always true
-      return true;
+      return { valid: true, msg: "" };
     }
     case "integer": {
-      return /^-?\d+$/.test(String(value));
+      return {
+        valid: /^-?\d+$/.test(String(value)),
+        msg: /^-?\d+$/.test(String(value))
+          ? ""
+          : `${label} doit être un entier.`,
+      };
     }
     case "is": {
-      // is:val
       const match = rule.expression.match(/is:(.+)/);
       if (match) {
-        return String(value) === match[1];
+        return {
+          valid: String(value) === match[1],
+          msg:
+            String(value) === match[1] ? "" : `${label} doit être ${match[1]}.`,
+        };
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "is_not": {
-      // is_not:val
       const match = rule.expression.match(/is_not:(.+)/);
       if (match) {
-        return String(value) !== match[1];
+        return {
+          valid: String(value) !== match[1],
+          msg:
+            String(value) !== match[1]
+              ? ""
+              : `${label} ne doit pas être ${match[1]}.`,
+        };
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "length": {
-      // length:N
       const match = rule.expression.match(/length:(\d+)/);
       if (match) {
         const len = parseInt(match[1], 10);
-        return (
-          (typeof value === "string" || Array.isArray(value)) &&
-          value.length === len
-        );
+        return {
+          valid:
+            (typeof value === "string" || Array.isArray(value)) &&
+            value.length === len,
+          msg:
+            (typeof value === "string" || Array.isArray(value)) &&
+            value.length === len
+              ? ""
+              : `${label} doit contenir exactement ${len} caractères.`,
+        };
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "max_value": {
-      // max_value:N
       const match = rule.expression.match(/max_value:(\d+)/);
       if (match) {
         const max = parseInt(match[1], 10);
-        return typeof value === "number" && value <= max;
+        return {
+          valid: typeof value === "number" && value <= max,
+          msg:
+            typeof value === "number" && value <= max
+              ? ""
+              : `${label} doit être inférieur ou égal à ${max}.`,
+        };
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "min_value": {
-      // min_value:N
       const match = rule.expression.match(/min_value:(\d+)/);
       if (match) {
         const min = parseInt(match[1], 10);
-        return typeof value === "number" && value >= min;
+        return {
+          valid: typeof value === "number" && value >= min,
+          msg:
+            typeof value === "number" && value >= min
+              ? ""
+              : `${label} doit être supérieur ou égal à ${min}.`,
+        };
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "mimes": {
-      // mimes:jpg,png
       const match = rule.expression.match(/mimes:([\w,]+)/);
       if (match) {
         const allowed = match[1].split(",");
         if (typeof value === "string") {
           const ext = value.split(".").pop();
-          return allowed.includes(ext as any);
+          return {
+            valid: allowed.includes(ext as any),
+            msg: allowed.includes(ext as any)
+              ? ""
+              : `${label} doit être de l'un des types suivants : ${allowed.join(
+                  ", "
+                )}.`,
+          };
         }
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "not_one_of": {
-      // not_one_of:val1,val2
       const match = rule.expression.match(/not_one_of:([^,]+),([^,]+)/);
       if (match) {
-        return value !== match[1] && value !== match[2];
+        return {
+          valid: value !== match[1] && value !== match[2],
+          msg:
+            value !== match[1] && value !== match[2]
+              ? ""
+              : `${label} ne doit pas être ${match[1]} ou ${match[2]}.`,
+        };
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "one_of": {
-      // one_of:val1,val2
       const match = rule.expression.match(/one_of:([^,]+),([^,]+)/);
       if (match) {
-        return value === match[1] || value === match[2];
+        return {
+          valid: value === match[1] || value === match[2],
+          msg:
+            value === match[1] || value === match[2]
+              ? ""
+              : `${label} doit être ${match[1]} ou ${match[2]}.`,
+        };
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "regex": {
       let pattern = rule.expression;
@@ -2141,23 +2253,31 @@ function validateByRule(
       }
       try {
         const regex = new RegExp(pattern, flags);
-        return regex.test(String(value));
+        return {
+          valid: regex.test(String(value)),
+          msg: regex.test(String(value))
+            ? ""
+            : `${label} a un format invalide.`,
+        };
       } catch (e) {
-        return false;
+        return { valid: false, msg: `${label} a un format invalide.` };
       }
     }
     case "size": {
-      // size:N (for files, not enough info)
-      return true;
+      return { valid: true, msg: "" };
     }
     case "url": {
-      return /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/.test(
-        String(value)
-      );
+      const valid =
+        /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/.test(
+          String(value)
+        );
+      return {
+        valid,
+        msg: valid ? "" : `${label} doit être une URL valide.`,
+      };
     }
     case "timeAfter":
     case "timeBefore": {
-      // after:HH:MM or before:HH:MM
       const match = rule.expression.match(/(after|before):(\d{1,2}:\d{1,2})/);
       if (match) {
         const ref = match[2];
@@ -2169,23 +2289,32 @@ function validateByRule(
             value.getMinutes().toString().padStart(2, "0");
         }
         if (typeof valStr === "string") {
-          if (rule.code.includes("After")) return valStr > ref;
-          if (rule.code.includes("Before")) return valStr < ref;
+          if (rule.code.includes("After")) {
+            return {
+              valid: valStr > ref,
+              msg: valStr > ref ? "" : `${label} doit être après ${ref}.`,
+            };
+          }
+          if (rule.code.includes("Before")) {
+            return {
+              valid: valStr < ref,
+              msg: valStr < ref ? "" : `${label} doit être avant ${ref}.`,
+            };
+          }
         }
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "dateAfter":
     case "dateAfterToday":
     case "dateBefore":
     case "dateBeforeToday": {
-      // after:DD/MM/YYYY or before:DD/MM/YYYY
       const match = rule.expression.match(
         /(after|before):(\d{1,2})\/(\d{1,2})\/(\d{4})/
       );
       if (match) {
         const refDay = parseInt(match[2], 10);
-        const refMonth = parseInt(match[3], 10) - 1; // JS months 0-based
+        const refMonth = parseInt(match[3], 10) - 1;
         const refYear = parseInt(match[4], 10);
         const refDate = new Date(refYear, refMonth, refDay);
         let valDate;
@@ -2195,7 +2324,6 @@ function validateByRule(
           typeof value === "string" &&
           /^\d{4}-\d{2}-\d{2}/.test(value)
         ) {
-          // ISO string
           valDate = new Date(value);
         } else if (
           typeof value === "string" &&
@@ -2205,44 +2333,105 @@ function validateByRule(
           valDate = new Date(y, m - 1, d);
         }
         if (valDate instanceof Date && !isNaN(valDate.getTime())) {
-          if (rule.code.includes("After")) return valDate > refDate;
-          if (rule.code.includes("Before")) return valDate < refDate;
+          if (rule.code.includes("After")) {
+            return {
+              valid: valDate > refDate,
+              msg:
+                valDate > refDate
+                  ? ""
+                  : `${label} doit être après ${match[0].split(":")[1]}.`,
+            };
+          }
+          if (rule.code.includes("Before")) {
+            return {
+              valid: valDate < refDate,
+              msg:
+                valDate < refDate
+                  ? ""
+                  : `${label} doit être avant ${match[0].split(":")[1]}.`,
+            };
+          }
         }
       }
-      return true;
+      return { valid: true, msg: "" };
     }
     case "dateIsNot": {
-      // different de :date1--date2
-      // Not enough info, always true
-      return true;
+      return { valid: true, msg: "" };
     }
     case "disabledDateRange":
     case "disabledMonthDays":
     case "disabledWeekDays": {
-      // Not enough info, always true
-      return true;
+      return { valid: true, msg: "" };
     }
     case "email": {
-      return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(value));
+      const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(value));
+      return {
+        valid,
+        msg: valid ? "" : `${label} doit être une adresse e-mail valide.`,
+      };
     }
     case "numeric": {
-      return /^-?\d*(\.\d+)?$/.test(String(value));
+      const valid = /^-?\d*(\.\d+)?$/.test(String(value));
+      return {
+        valid,
+        msg: valid ? "" : `${label} doit être un nombre.`,
+      };
     }
     case "alpha": {
-      return /^[A-Za-z]+$/.test(String(value));
+      const valid = /^[A-Za-z]+$/.test(String(value));
+      return {
+        valid,
+        msg: valid ? "" : `${label} doit contenir uniquement des lettres.`,
+      };
     }
     case "alpha_num": {
-      return /^[A-Za-z0-9]+$/.test(String(value));
+      const valid = /^[A-Za-z0-9]+$/.test(String(value));
+      return {
+        valid,
+        msg: valid
+          ? ""
+          : `${label} doit contenir uniquement des lettres et des chiffres.`,
+      };
     }
     case "alpha_dash": {
-      return /^[A-Za-z0-9_-]+$/.test(String(value));
+      const valid = /^[A-Za-z0-9_-]+$/.test(String(value));
+      return {
+        valid,
+        msg: valid
+          ? ""
+          : `${label} doit contenir uniquement des lettres, des chiffres, des tirets ou des underscores.`,
+      };
     }
     case "alpha_spaces": {
-      return /^[A-Za-z\s]+$/.test(String(value));
+      const valid = /^[A-Za-z\s]+$/.test(String(value));
+      return {
+        valid,
+        msg: valid
+          ? ""
+          : `${label} doit contenir uniquement des lettres et des espaces.`,
+      };
     }
     default:
-      return true;
+      return { valid: true, msg: "" };
   }
+}
+
+// Validate all rules for a field, return { valid, messages[] }
+function validateFieldAllRules(
+  value: any,
+  rules: { code: string; expression: string }[],
+  fieldLabel?: string
+) {
+  let valid = true;
+  let messages: string[] = [];
+  for (const rule of rules) {
+    const result = validateByRule(value, rule, fieldLabel);
+    if (!result.valid && result.msg) {
+      valid = false;
+      messages.push(result.msg);
+    }
+  }
+  return { valid, messages };
 }
 defineExpose({
   itemsForm,

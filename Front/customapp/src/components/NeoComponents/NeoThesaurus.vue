@@ -653,6 +653,25 @@ const trySearchThesaurusTerm = (event: any) => {
       errorState.errorMessage = "";
     };
 
+    // Watch for field validity and clear error if valid
+    watch(
+      () => terms.value,
+      (newValue) => {
+        // If there is an error and the value is now valid, clear the error
+        if (errorState.errorMessage) {
+          let isNotEmpty = false;
+          if (Array.isArray(newValue)) {
+            isNotEmpty = newValue.length > 0;
+          } else if (typeof newValue === "string") {
+            isNotEmpty = (newValue as string).trim() !== "";
+          }
+          if (isNotEmpty) {
+            clearFieldError();
+          }
+        }
+      }
+    );
+
     // Add this watcher for required validation
     watch(
       [terms, () => props.options.required],

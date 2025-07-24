@@ -565,6 +565,28 @@ export default {
     const clearFieldError = () => {
       errorState.errorMessage = "";
     };
+
+    // Watch for field validity and clear error if valid
+    watch(
+      () => itemValue.value,
+      (newValue) => {
+        // If there is an error and the value is now valid, clear the error
+        if (errorState.errorMessage) {
+          let isNotEmpty = false;
+          if (typeof newValue === "string") {
+            isNotEmpty = newValue.trim() !== "";
+          } else if (Array.isArray(newValue)) {
+            isNotEmpty = newValue.length > 0;
+          } else if (typeof newValue === "object" && newValue !== null) {
+            isNotEmpty = Object.keys(newValue).length > 0;
+          }
+          if (isNotEmpty) {
+            clearFieldError();
+          }
+        }
+      }
+    );
+
     const fetchEnumerations = async () => {
       let res: any = await eliseEnumeration(props.options.eliseEnumerate);
       const tempArray = ref([] as any);
