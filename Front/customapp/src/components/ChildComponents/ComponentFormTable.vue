@@ -872,6 +872,7 @@ const submitNotice = async () => {
         if (!store.currentNotice) {
           obj = await saveNotice({
             objectId: props.isFormDisplay.objectId,
+            objectGuid: props.isFormDisplay.objectGuid,
             noticeJson: newNotice,
             newDoc: !!route.query.newDoc,
           });
