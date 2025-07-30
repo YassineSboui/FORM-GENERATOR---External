@@ -438,7 +438,7 @@
         </template>
       </Column>
 
-      <Column
+      <!-- <Column
         v-if="type !== 'DIALOG'"
         :rowEditor="true"
         style="width: 2%; min-width: 2rem"
@@ -449,16 +449,8 @@
         alignFrozen="right"
         :dir="isRTL ? 'rtl' : 'ltr'"
         class="p-cell-editing"
-      />
-      <!-- :frozen="EditFrozen" -->
+      /> -->
 
-      <!-- v-if="
-      (type === 'INLINE' && lockedRows.length > 0) ||
-      (type === 'DIALOG' && objects.length > 0 && editingRows.length === 0)
-
-      selectable: false,
-      withActions: false,
-    " -->
       <Column
         v-if="config.objectConfig.formConfig.withActions"
         style="width: 10%; max-width: 100px; min-width: 100px"
