@@ -40,6 +40,7 @@
           <neo-option
             v-model="internalValue"
             :label="element.label"
+            :value="element.value || element.code"
             :options="{ disabled: isDisabled }"
           ></neo-option>
         </div>
@@ -49,6 +50,7 @@
           <neo-option
             v-model="internalValue"
             :label="element.label"
+            :value="element.value || element.code"
             :options="{ disabled: isDisabled }"
             :isRTL="isRTL"
           ></neo-option>

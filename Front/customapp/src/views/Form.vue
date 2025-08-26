@@ -14,108 +14,112 @@
         <div></div>
       </div>
       <div v-else>
-        <div class="form-viewer">
-          <component-form
-            @done="handleDone"
-            v-model="form"
-            @update:isSubmit="handleIsSubmit"
-            :isSubmit="isSubmit"
-            :isFormDisplay="{
-              value: true,
-              objectId: object?.id,
-              objectGuid: object?.guid,
-            }"
-            :configForm="configForm"
-            :stepper="{
-              isStepper: isStepper,
-              steps: steps,
-              showPageNames: showPageNames,
-              names: names,
-            }"
-            :isRTL="isRTL"
-            :showPageNum="showPageNumF"
-            @update:showPageNum="showPageNumF = $event"
-            :executeNavigateNext="executeNavigateNext"
-            @update:executeNavigateNext="executeNavigateNext = $event"
-            :language="language"
-            :systemVariables="systemVariables"
-          ></component-form>
+        <div class="form-viewer form-container-wrapper">
+          <div class="form-card pb-5">
+            <component-form
+              @done="handleDone"
+              v-model="form"
+              @update:isSubmit="handleIsSubmit"
+              :isSubmit="isSubmit"
+              :isFormDisplay="{
+                value: true,
+                objectId: object?.id,
+                objectGuid: object?.guid,
+              }"
+              :configForm="configForm"
+              :stepper="{
+                isStepper: isStepper,
+                steps: steps,
+                showPageNames: showPageNames,
+                names: names,
+              }"
+              :isRTL="isRTL"
+              :showPageNum="showPageNumF"
+              @update:showPageNum="showPageNumF = $event"
+              :executeNavigateNext="executeNavigateNext"
+              @update:executeNavigateNext="executeNavigateNext = $event"
+              :language="language"
+              :systemVariables="systemVariables"
+            ></component-form>
+          </div>
         </div>
       </div>
     </div>
     <div
-      class="form-viewer-container-footer flex justify-content-between align-items-center"
+      class="form-viewer-container-footer"
       :class="{ 'custom-padding-rtl': isRTL }"
       v-if="isFormDisplay.value && form.length !== 0"
     >
-      <!-- Left: ToggleSwitch -->
-      <div>
-        <ToggleSwitch
-          v-model="isDarkMode"
-          class="mt-1 ml-4"
-          :style="{
-            color: isDarkMode ? '#fff' : '#FFEA00',
-          }"
-        >
-          <template #handle="{ checked }">
-            <i
-              :class="['pi', checked ? 'pi-moon' : 'pi-sun']"
-              :style="{
-                padding: '0 8px',
-                color: checked ? '#fff' : '#FFEA00',
-              }"
-            />
-          </template>
-        </ToggleSwitch>
-      </div>
-      <!-- Right: Navigation Buttons -->
-      <div class="flex justify-content-end gap-1">
-        <div class="col flex justify-content-start gap-1">
-          <div>
-            <Button
-              v-if="
-                !newDoc &&
-                systemVariables.DISPLAY_BUTTON_CANCEL !== false &&
-                systemVariables.DISPLAY_BUTTON_CANCEL !== 'false'
-              "
-              v-show="showPageNumF === 1 || showPageNames"
-              @click="cancel"
-              class="mr-2"
-            >
-              {{ cancelButtonText }}
-            </Button>
-          </div>
-          <div>
-            <Button
-              v-show="showPageNumF > 1 && !showPageNames"
-              @click="showPageNumF > 1 ? showPageNumF-- : showPageNumF"
-              class="mr-2"
-            >
-              {{ previousButtonText }}
-            </Button>
-          </div>
+      <div class="footer-content">
+        <!-- Left: ToggleSwitch -->
+        <div>
+          <ToggleSwitch
+            v-model="isDarkMode"
+            class="mt-1"
+            :style="{
+              color: isDarkMode ? '#fff' : '#FFEA00',
+            }"
+          >
+            <template #handle="{ checked }">
+              <i
+                :class="['pi', checked ? 'pi-moon' : 'pi-sun']"
+                :style="{
+                  padding: '0 8px',
+                  color: checked ? '#fff' : '#FFEA00',
+                }"
+              />
+            </template>
+          </ToggleSwitch>
         </div>
-        <div class="col flex justify-content-end gap-1">
-          <div>
-            <Button
-              v-show="showPageNumF < steps && !showPageNames"
-              @click="navigateToPage(showPageNumF + 1)"
-            >
-              {{ nextButtonText }}
-            </Button>
+        <!-- Right: Navigation Buttons -->
+        <div class="flex justify-content-end gap-1">
+          <div class="col flex justify-content-start gap-1">
+            <div>
+              <Button
+                v-if="
+                  !newDoc &&
+                  systemVariables.DISPLAY_BUTTON_CANCEL !== false &&
+                  systemVariables.DISPLAY_BUTTON_CANCEL !== 'false'
+                "
+                v-show="showPageNumF === 1 || showPageNames"
+                @click="cancel"
+                class="mr-2"
+              >
+                {{ cancelButtonText }}
+              </Button>
+            </div>
+            <div>
+              <Button
+                v-show="showPageNumF > 1 && !showPageNames"
+                @click="showPageNumF > 1 ? showPageNumF-- : showPageNumF"
+                class="mr-2"
+              >
+                {{ previousButtonText }}
+              </Button>
+            </div>
           </div>
-          <div>
-            <Button
-              v-if="
-                (showPageNumF === steps || steps === 0) &&
-                systemVariables.DISPLAY_BUTTON_OK !== false &&
-                systemVariables.DISPLAY_BUTTON_OK !== 'false'
-              "
-              @click="submit()"
-              class="ml-2"
-            >
-              {{ submitButtonText }}
-            </Button>
+          <div class="col flex justify-content-end gap-1">
+            <div>
+              <Button
+                v-show="showPageNumF < steps && !showPageNames"
+                @click="navigateToPage(showPageNumF + 1)"
+              >
+                {{ nextButtonText }}
+              </Button>
+            </div>
+            <div>
+              <Button
+                v-if="
+                  (showPageNumF === steps || steps === 0) &&
+                  systemVariables.DISPLAY_BUTTON_OK !== false &&
+                  systemVariables.DISPLAY_BUTTON_OK !== 'false'
+                "
+                @click="submit()"
+                class="ml-2"
+              >
+                {{ submitButtonText }}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -1354,15 +1358,43 @@ export default defineComponent({
     background-color: white;
   }
   &-content {
-    padding: 15px;
+    padding: 20px;
     margin-top: var(--dynamic-header-height);
     margin-bottom: 50px;
     overflow-y: auto;
-    height: calc(100% - 100px);
+    // height: calc(100% - 100px);
+    background-color: #f8f9fa; /* Soft light gray background */
+
+    height: calc(
+      100vh - var(--dynamic-header-height) - 5px
+    ); /* 60px is the footer height */
     .form-viewer {
       width: 100%;
       overflow-y: auto;
       overflow-x: hidden;
+    }
+
+    .form-container-wrapper {
+      display: flex;
+      justify-content: center;
+      padding: 20px 0;
+    }
+
+    .form-card {
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 30px;
+      margin: 0 20px;
+      width: 100%;
+      max-width: 1200px; /* Limit maximum width for better readability */
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: box-shadow 0.3s ease;
+      margin-top: 20px;
+      margin-bottom: 50px;
+      border-radius: 20px;
+      &:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      }
     }
   }
   &-footer {
@@ -1380,29 +1412,41 @@ export default defineComponent({
   max-height: 100vh !important;
   padding: unset !important;
 }
-.main-container {
-  background-color: white !important;
-}
-.form-viewer-container-content {
-  padding: 15px;
-  margin-top: var(--dynamic-header-height);
-  margin-bottom: 60px; /* Footer height */
-  height: calc(
-    100vh - var(--dynamic-header-height) - 100px
-  ); /* 50px is the footer height */
-  overflow-y: auto; /* Enable vertical scrolling */
-}
+
 .form-viewer-container-footer {
-  padding: 15px;
-  box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
+  padding: 15px 20px;
+  box-shadow: unset !important;
   color: #266c87;
   position: fixed;
   width: 100%;
   bottom: 0;
-  background-color: white;
-  height: 60px; /* Fixed footer height */
+  background-color: unset !important;
+  height: 60px;
   z-index: 1000 !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .footer-content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
+    margin-left: -5px;
+    padding: 15px;
+    border-radius: 20px;
+  }
 }
+body.dark .footer-content {
+  background-color: #1e1e1e !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
 .form-viewer-container-content {
   scroll-behavior: smooth; /* Smooth scrolling */
 }
@@ -1432,11 +1476,11 @@ export default defineComponent({
   display: flex;
   overflow-y: auto;
   padding: 10px 5px 0px 5px;
-  background-color: #efefef;
-  height: 90vh !important;
+  background-color: #f8f9fa;
+  // height: 90vh !important;
   .form-container {
     padding: 15px;
-    background-color: rgb(255, 255, 255);
+    background-color: #f8f9fa;
     width: 100%;
     border-radius: 10px;
     overflow-x: hidden;
@@ -1458,7 +1502,25 @@ body.dark .form-viewer-container-header {
   color: #fff !important;
 }
 
-/* Error message styling */
+/* Dark mode for form card */
+body.dark .form-viewer-container-content {
+  background-color: #121212 !important; /* Darker background for content area */
+}
+
+body.dark .form-card {
+  background-color: #1e1e1e !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
+/* Dark mode footer improvements */
+body.dark .form-viewer-container-footer {
+  background-color: unset !important;
+} /* Error message styling */
 .p-errorCustom {
   color: #ef4444 !important;
   font-weight: 500;

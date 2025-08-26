@@ -451,6 +451,7 @@ import {
   fetchDataByTableGuid,
   logger,
   callEliseWebService,
+  logBlockly,
 } from "@/api/api";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
@@ -1262,6 +1263,7 @@ const setLocale = () => {
 };
 const HeaderHeight = ref([] as any);
 onMounted(async () => {
+  logBlockly.info("onMounted");
   GlobalVariables.value = {};
   console.log("onMounted");
   setLocale();
@@ -2424,11 +2426,42 @@ function validateFieldAllRules(
 ) {
   let valid = true;
   let messages: string[] = [];
+
+  // Helper to check if field is empty
+  const isEmpty = (val: any) => {
+    if (val === null || val === undefined) return true;
+    if (typeof val === "string" && val.trim() === "") return true;
+    if (Array.isArray(val) && val.length === 0) return true;
+    if (
+      typeof val === "object" &&
+      !Array.isArray(val) &&
+      Object.keys(val).length === 0
+    )
+      return true;
+    return false;
+  };
+
+  const isFieldEmpty = isEmpty(value);
+  const hasRequiredRule = rules.some((rule) => rule.code === "required");
+
   for (const rule of rules) {
-    const result = validateByRule(value, rule, fieldLabel);
-    if (!result.valid && result.msg) {
-      valid = false;
-      messages.push(result.msg);
+    // Always validate 'required' rule regardless of field content
+    if (rule.code === "required") {
+      const result = validateByRule(value, rule, fieldLabel);
+      if (!result.valid && result.msg) {
+        valid = false;
+        messages.push(result.msg);
+      }
+    } else {
+      // For all other rules, only validate if the field is not empty
+      // This allows optional fields to be empty but validates them when they have content
+      if (!isFieldEmpty) {
+        const result = validateByRule(value, rule, fieldLabel);
+        if (!result.valid && result.msg) {
+          valid = false;
+          messages.push(result.msg);
+        }
+      }
     }
   }
   return { valid, messages };
@@ -2515,7 +2548,9 @@ defineExpose({
     width: 100%;
     top: 0;
     z-index: 1000;
-    background-color: #fff !important; // Light mode: solid white
+    background-color: #f8f9fa !important;
+    margin-left: -50px;
+    padding-left: 50px;
   }
 }
 .zone-page-sticky-header {
@@ -2545,6 +2580,6 @@ defineExpose({
   margin-top: var(--scrollbar-margin-top);
 }
 body.dark .pages-headers {
-  background-color: #181818 !important; // Dark mode: solid dark
+  background-color: #121212 !important; // Dark mode: solid dark
 }
 </style>

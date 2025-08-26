@@ -38,40 +38,66 @@
         'max-height': isParentNeoTable ? '30px' : '60px',
       }"
     >
+      <!-- append-to="self" -->
       <Field
         v-model="internalValue"
         :name="options.label"
         :rules="computedRules"
         v-slot="{ field, errorMessage }"
       >
-        <!-- append-to="self" -->
-        <AutoComplete
-          v-model="internalValue"
-          :disabled="isDisabled"
-          :suggestions="items"
-          :minLength="options.minLength"
-          class="w-full neoAutoCompleteC"
-          :class="{
-            'rtl-loader': isRTL,
-            'p-invalid': errorMessage || errorState.errorMessage,
-          }"
-          @complete="search(false)"
-          @item-select="select"
-          optionLabel="name"
-          data-key="id"
-          forceSelection
-          :invalid="isInvalid"
-          @focus="$emit('focus', $event)"
-          @blur="$emit('blur', $event)"
-          @mouseenter="$emit('mouseenter', $event)"
-          @mouseleave="$emit('mouseleave', $event)"
-        >
-          <template #option="slotProps">
-            <div class="flex items-center">
-              <div>{{ slotProps.option.name }}</div>
-            </div>
-          </template>
-        </AutoComplete>
+        <div class="autocomplete-wrapper">
+          <AutoComplete
+            v-model="internalValue"
+            :disabled="isDisabled"
+            :suggestions="items"
+            :minLength="options.minLength"
+            :placeholder="searchPlaceholder + (loading ? '...' : '')"
+            class="w-full neoAutoCompleteC"
+            :class="{
+              'rtl-loader': isRTL,
+              'p-invalid': errorMessage || errorState.errorMessage,
+            }"
+            @complete="search(false)"
+            @item-select="select"
+            optionLabel="name"
+            data-key="id"
+            forceSelection
+            :invalid="isInvalid"
+            @focus="$emit('focus', $event)"
+            @blur="$emit('blur', $event)"
+            @mouseenter="$emit('mouseenter', $event)"
+            @mouseleave="$emit('mouseleave', $event)"
+          >
+            <template #option="slotProps">
+              <div class="flex items-center">
+                <i
+                  v-if="options.itemType === 'User'"
+                  class="pi pi-user mr-2"
+                  style="color: #6366f1"
+                ></i>
+                <i
+                  v-else-if="options.itemType === 'Service'"
+                  class="pi pi-building mr-2"
+                  style="color: #10b981"
+                ></i>
+                <i
+                  v-else-if="options.itemType === 'All'"
+                  class="pi pi-users mr-2"
+                  style="color: #f59e0b"
+                ></i>
+                <div>{{ slotProps.option.name }}</div>
+              </div>
+            </template>
+          </AutoComplete>
+          <i
+            :class="[
+              dynamicIconClass,
+              'search-icon',
+              { 'search-icon-rtl': isRTL },
+            ]"
+            :style="{ color: dynamicIconColor }"
+          ></i>
+        </div>
         <small
           class="p-error"
           id="text-error"
@@ -90,7 +116,6 @@ import { searchFlowChart } from "@/api/api";
 import { ref } from "vue";
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { useAppStore } from "@/store/app.store";
-import app from "@/main";
 
 interface OptionConfig {
   label_AR: string;
@@ -203,6 +228,51 @@ export default {
     // Computed properties for disabled and hidden states
     const isDisabled = computed(() => localOptions.disabled);
     const isHidden = computed(() => localOptions.hidden);
+
+    // Computed property for search placeholder
+    const searchPlaceholder = computed(() => {
+      const itemType = localOptions.itemType;
+      if (itemType === "User") {
+        return "Rechercher un utilisateur";
+      } else if (itemType === "Service") {
+        return "Rechercher un service";
+      } else if (itemType === "All") {
+        return "Rechercher un utilisateur ou service";
+      } else {
+        return "Rechercher...";
+      }
+    });
+
+    // Computed property for dynamic icon class
+    const dynamicIconClass = computed(() => {
+      if (internalValue.value && typeof internalValue.value === "object") {
+        if (internalValue.value.id.startsWith("LEXICON")) {
+          return "pi pi-building";
+        } else {
+          return "pi pi-user";
+        }
+      }
+      return "pi pi-search"; // Default search icon
+    });
+
+    // Computed property for dynamic icon color
+    const dynamicIconColor = computed(() => {
+      if (
+        internalValue.value &&
+        typeof internalValue.value === "object" &&
+        internalValue.value.types
+      ) {
+        const types = internalValue.value.types;
+        if (types.includes(1) && !types.includes(2)) {
+          return "#6366f1"; // User color (blue)
+        } else if (types.includes(2) && !types.includes(1)) {
+          return "#10b981"; // Service color (green)
+        } else if (types.includes(1) && types.includes(2)) {
+          return "#f59e0b"; // Mixed color (orange)
+        }
+      }
+      return "#165c77"; // Default search icon color
+    });
 
     // Function to update field
     const setValue = (value: string) => {
@@ -356,6 +426,16 @@ export default {
       }
     );
 
+    // watch(
+    //   () => props.modelValue,
+    //   async (newValue) => {
+    //     if (typeof newValue === "string" && newValue.startsWith("LEXICON")) {
+    //       console.log("updating internalValue");
+    //       internalValue.value = await appStore.getObjectByLexicon(newValue);
+    //     }
+    //   }
+    // );
+
     watch(
       () => props.modelValue,
       async (newValue) => {
@@ -369,11 +449,47 @@ export default {
             ldapAttribute: "",
           };
           let response = await searchFlowChart(payload);
-          internalValue.value = response.length > 0 ? response[0] : null;
+          const key = localOptions.searchType
+            ? localOptions.searchType.toLowerCase()
+            : "";
+          if (
+            response.length !== 0 &&
+            (response[0] as Record<string, any>)[key] === newValue
+          ) {
+            internalValue.value = response.length > 0 ? response[0] : null;
+          }
         }
       }
     );
 
+    onMounted(async () => {
+      if (
+        props.modelValue !== undefined &&
+        props.modelValue !== null &&
+        props.modelValue !== ""
+      ) {
+        if (typeof props.modelValue === "string") {
+          const payload = {
+            searchTerm: props.modelValue,
+            fullService: localOptions.fullService,
+            ignoredElements: [],
+            itemType: localOptions.itemType,
+            searchType: "Id",
+            ldapAttribute: "",
+          };
+          let response = await searchFlowChart(payload);
+          const key = localOptions.searchType
+            ? localOptions.searchType.toLowerCase()
+            : "";
+          if (
+            response.length !== 0 &&
+            (response[0] as Record<string, any>)[key] === props.modelValue
+          ) {
+            internalValue.value = response.length > 0 ? response[0] : null;
+          }
+        }
+      }
+    });
     return {
       loading,
       search,
@@ -385,6 +501,9 @@ export default {
       isInvalid,
       computedRules,
       errorState,
+      searchPlaceholder,
+      dynamicIconClass,
+      dynamicIconColor,
       disableField,
       enableField,
       hideField,

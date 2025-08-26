@@ -165,8 +165,14 @@ export default defineComponent({
       return internalValue.value;
     };
 
-    const getImage = () => {
-      // Access the canvas element within qrcodeContainer, assuming it's the only element inside
+    const getImage = async () => {
+      // Wait for the next tick to ensure canvas is updated with new QR code value
+      await nextTick();
+
+      // Add a small delay to ensure canvas rendering is complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Access the canvas element within qrcodeContainer
       const canvas = qrcodeContainer.value?.querySelector("canvas");
       if (canvas && canvas instanceof HTMLCanvasElement) {
         // Convert the canvas content to a Base64-encoded string (without the data URL prefix)

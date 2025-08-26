@@ -63,9 +63,9 @@
         :label="$t('NeoPhotoProperties.camera')"
         icon="pi pi-camera"
         class="single-button"
-        @click="visible = true"
+        @click="openCameraDialog"
       />
-      <ButtonGroup v-if="showType == 'Les deux' && !readOnly">
+      <ButtonGroup v-if="showType == 'Both' && !readOnly">
         <Button
           :label="$t('NeoPhotoProperties.gallery')"
           icon="pi pi-images"
@@ -75,7 +75,7 @@
         <Button
           :label="$t('NeoPhotoProperties.camera')"
           icon="pi pi-camera"
-          @click="visible = true"
+          @click="openCameraDialog"
           class="gallery-button"
         />
       </ButtonGroup>
@@ -126,14 +126,14 @@
     <small class="p-error" id="text-error" v-if="errorState.errorMessage">
       {{ errorState.errorMessage || "&nbsp;" }}
     </small>
-
     <!-- Dialog for Camera Capture -->
     <Dialog
       v-model:visible="visible"
       modal
       header="Capture Photo"
-      :style="{ width: '30rem' }"
+      :style="{ width: '30rem', zIndex: 9999 }"
       id="camera-dialog"
+      :appendTo="'body'"
     >
       <div class="flex flex-col items-center">
         <div class="camera-container">
@@ -567,6 +567,12 @@ export default defineComponent({
       fileInput.value?.click();
     };
 
+    const openCameraDialog = () => {
+      console.log("Opening camera dialog, visible:", visible.value);
+      visible.value = true;
+      console.log("After setting visible:", visible.value);
+    };
+
     const loadDevices = async () => {
       try {
         devices.value = (
@@ -635,6 +641,7 @@ export default defineComponent({
       getFileExtension,
       // loadImages,
       openFileDialog,
+      openCameraDialog,
       handleFileChange,
     };
   },
@@ -803,5 +810,18 @@ body.dark .photo-preview-box {
   height: unset !important;
   border: 5px solid var(--p-primary-color);
   border-radius: 20px;
+}
+
+/* Ensure camera dialog appears on top */
+#camera-dialog {
+  z-index: 9999 !important;
+}
+
+#camera-dialog .p-dialog {
+  z-index: 9999 !important;
+}
+
+#camera-dialog .p-dialog-mask {
+  z-index: 9998 !important;
 }
 </style>

@@ -32,13 +32,12 @@
     </div>
 
     <div
-      class="input-container input-select"
+      class="input-container"
       :style="{
         height: isParentNeoTable ? '30px' : '60px',
         'max-height': isParentNeoTable ? '30px' : '60px',
       }"
     >
-      <!-- rest of the template -->
       <Field
         v-model="itemValue"
         :name="options.label"
@@ -52,7 +51,7 @@
           :readonly="options.readonly"
           :options="internalItems"
           :optionLabel="options.key ?? 'name'"
-          class="w-full"
+          class="w-full neoSelectDropdown"
           :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
           :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
           @click.stop
@@ -61,6 +60,7 @@
           @mouseenter="$emit('mouseenter', $event)"
           @mouseleave="$emit('mouseleave', $event)"
           :loading="isLoading"
+          :showClear="options.showClear"
         />
         <Select
           v-else
@@ -70,8 +70,7 @@
           :options="internalItems"
           :optionLabel="options.key ?? 'name'"
           :optionValue="options.value ?? 'code'"
-          class="w-full"
-          :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
+          class="w-full neoSelectDropdown"
           :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
           @click.stop
           @focus="$emit('focus', $event)"
@@ -79,6 +78,7 @@
           @mouseenter="$emit('mouseenter', $event)"
           @mouseleave="$emit('mouseleave', $event)"
           :loading="isLoading"
+          :showClear="options.showClear"
         ></Select>
         <small
           class="p-error"
@@ -237,7 +237,22 @@ export default {
         if ((parsedValue as any)[props.options.key]) {
           temporary.value = parsedValue;
         } else {
-          console.error("Data does not contain the correct key");
+          // Special case: if only the value property is given, find the full object from elements
+          if (
+            typeof parsedValue === "string" ||
+            typeof parsedValue === "number"
+          ) {
+            const foundElement = props.options.elements.find(
+              (item: any) => item[props.options.value] === parsedValue
+            );
+            if (foundElement) {
+              temporary.value = foundElement;
+            } else {
+              console.error("Data does not contain the correct key");
+            }
+          } else {
+            console.error("Data does not contain the correct key");
+          }
         }
       } else {
         // Handle normal string case
@@ -287,10 +302,31 @@ export default {
             [props.options.value]: (parsedValue as any)[props.options.value],
           };
         } else {
-          temporary.value = {
-            [props.options.key]: parsedValue,
-            [props.options.value]: parsedValue,
-          };
+          // Special case: if only the value property is given, find the full object from elements
+          if (
+            typeof parsedValue === "string" ||
+            typeof parsedValue === "number"
+          ) {
+            const foundElement = props.options.elements.find(
+              (item: any) => item[props.options.value] === parsedValue
+            );
+            if (foundElement) {
+              temporary.value = {
+                [props.options.key]: foundElement[props.options.key],
+                [props.options.value]: foundElement[props.options.value],
+              };
+            } else {
+              temporary.value = {
+                [props.options.key]: parsedValue,
+                [props.options.value]: parsedValue,
+              };
+            }
+          } else {
+            temporary.value = {
+              [props.options.key]: parsedValue,
+              [props.options.value]: parsedValue,
+            };
+          }
         }
       } else {
         // Handle normal string case
@@ -435,7 +471,21 @@ export default {
 
     const internalItems = computed({
       get() {
-        return props.items ?? props.options.elements;
+        const items = props.items ?? props.options.elements;
+
+        // Filtrer les éléments avec des noms vides
+        if (Array.isArray(items)) {
+          const nameKey = props.options.key ?? "name";
+          return items.filter((item) => {
+            if (typeof item === "object" && item !== null) {
+              const name = item[nameKey];
+              return name && name.toString().trim() !== "";
+            }
+            return true; // Garder les éléments non-objets
+          });
+        }
+
+        return items;
       },
       set(newValue): void {
         props.options.elements = newValue;
@@ -465,10 +515,7 @@ export default {
         try {
           parsedElements = JSON.parse(newElements);
         } catch (error) {
-          console.error(
-            "Failed to parse elements. Invalid JSON string:",
-            error
-          );
+          console.warn("Failed to parse elements. Invalid JSON string:", error);
           return; // Exit if parsing fails
         }
       } else {
@@ -486,11 +533,25 @@ export default {
                 if (key.required && !item[key.key]) {
                   return null; // Skip this item if the required key is not present
                 }
-                formattedItem[key.key] = item[key.key] || item; // Set each key to the string value
+                formattedItem[key.key] = item[key.key] || item;
               }
-              return formattedItem; // Return the formatted item
+
+              // Vérifier si le nom est vide
+              const nameKey = props.options.key ?? "name";
+              if (
+                !formattedItem[nameKey] ||
+                formattedItem[nameKey].trim() === ""
+              ) {
+                // Option 1: Filtrer (supprimer) les éléments sans nom
+                return null;
+
+                // Option 2: Donner un nom par défaut (décommentez la ligne ci-dessous et commentez la ligne au-dessus)
+                // formattedItem[nameKey] = `[Élément vide - ${formattedItem[props.options.value ?? 'code'] || 'Sans code'}]`;
+              }
+
+              return formattedItem;
             }
-            return null; // Return null if the item is not valid
+            return null;
           })
           .filter((item) => item !== null); // Filter out null items
       } else {
@@ -498,15 +559,25 @@ export default {
           .map((item) => {
             const formattedItem: Record<string, any> = {};
             for (const key of props.options.keys) {
-              // Check if the key is required and present
-              // if (key.required && !item[key.key]) {
-              //   return null; // Skip this item if the required key is not present
-              // }
-              formattedItem[key.key] = item[key.key] || item; // Set each key to the string value
+              formattedItem[key.key] = item[key.key] || item;
             }
-            return formattedItem; // Return the formatted item
+
+            // Si le nom est vide, soit filtrer l'élément soit lui donner un nom par défaut
+            const nameKey = props.options.key ?? "name";
+            if (
+              !formattedItem[nameKey] ||
+              formattedItem[nameKey].trim() === ""
+            ) {
+              // Option 1: Filtrer (supprimer) les éléments sans nom
+              return null;
+
+              // Option 2: Donner un nom par défaut (décommentez la ligne ci-dessous et commentez la ligne au-dessus)
+              // formattedItem[nameKey] = `[Élément vide - ${formattedItem[props.options.value ?? 'code'] || 'Sans code'}]`;
+            }
+
+            return formattedItem;
           })
-          .filter((item) => item !== null); // Filter out null items
+          .filter((item) => item !== null); // Filter out null items (éléments vides)
       }
       console.log("formattedElements", formattedElements);
       // Log the formatted elements for debugging
@@ -586,7 +657,6 @@ export default {
         }
       }
     );
-
     const fetchEnumerations = async () => {
       let res: any = await eliseEnumeration(props.options.eliseEnumerate);
       const tempArray = ref([] as any);
@@ -606,6 +676,44 @@ export default {
 
       if (props.options.selectedTable) {
         await handleSelectedTableChange(props.options.selectedTable);
+      }
+      console.log("Mounted with modelValue:", props.modelValue);
+      // Handle initial modelValue when component is mounted
+      if (props.modelValue && props.options.returnObject) {
+        // Check if modelValue is just a value that needs to be converted to object
+        if (
+          typeof props.modelValue === "string" ||
+          typeof props.modelValue === "number"
+        ) {
+          // Find the full object from elements or internalItems based on the value
+          let foundElement = props.options.elements.find(
+            (item: any) => item[props.options.value] === props.modelValue
+          );
+
+          // If not found in elements, search in internalItems
+          if (!foundElement && internalItems.value) {
+            foundElement = internalItems.value.find(
+              (item: any) => item[props.options.value] === props.modelValue
+            );
+          }
+
+          if (foundElement) {
+            // Set the itemValue to the key for display
+            itemValue.value = foundElement;
+            console.log(
+              "Setting itemValue to:",
+              foundElement[props.options.key]
+            );
+            // Emit the full object as modelValue
+            emit("update:modelValue", foundElement);
+          }
+        } else if (
+          typeof props.modelValue === "object" &&
+          props.modelValue !== null &&
+          (props.modelValue as any)[props.options.key]
+        ) {
+          itemValue.value = props.modelValue as any;
+        }
       }
 
       isLoading.value = false;
@@ -680,7 +788,52 @@ export default {
       { immediate: true }
     );
 
+    // Watch for modelValue changes after mount to handle delayed assignment
+    watch(
+      () => props.modelValue,
+      async (newModelValue, oldModelValue) => {
+        // Only process if the value actually changed and we have returnObject enabled
+        if (
+          newModelValue !== oldModelValue &&
+          props.options.returnObject &&
+          newModelValue
+        ) {
+          console.log("ModelValue changed:", newModelValue);
+          if (
+            typeof newModelValue === "string" ||
+            typeof newModelValue === "number"
+          ) {
+            let foundElement = props.options.elements.find(
+              (item: any) => item[props.options.value] === newModelValue
+            );
+
+            // If not found in elements, search in internalItems
+            if (!foundElement && internalItems.value) {
+              foundElement = internalItems.value.find(
+                (item: any) => item[props.options.value] === newModelValue
+              );
+            }
+
+            if (foundElement) {
+              // Set the itemValue to the full object for display
+              itemValue.value = foundElement;
+              // Emit the full object as modelValue
+              emit("update:modelValue", foundElement);
+            }
+          } else if (
+            typeof newModelValue === "object" &&
+            newModelValue !== null &&
+            (newModelValue as any)[props.options.key]
+          ) {
+            itemValue.value = newModelValue as any;
+          }
+        }
+      },
+      { deep: true }
+    );
+
     return {
+      // dir,
       isDisabled,
       isHidden,
       isLoading,
@@ -701,6 +854,8 @@ export default {
       setFieldError,
       clearFieldError,
       setElements,
+
+      // setDirAttributeC,
     };
   },
 };

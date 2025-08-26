@@ -9,11 +9,11 @@ import axios from "axios";
 //   objectName: string;
 // };
 
-const logToServer = async (level: any, message: any) => {
+const logToServer = async (level: any, message: any, BlocklyCall?: boolean) => {
   const httpRequest = useHttpRequest();
   try {
-    if (!httpRequest.debugMode) return;
-    const apiUrl = `${httpRequest.externalUrl}/api/logs`; // Adjust endpoint as needed
+    if (!httpRequest.debugMode && !BlocklyCall) return;
+    const apiUrl = `${httpRequest.apiUrl}/api/logs`; // Adjust endpoint as needed
 
     const logPayload = {
       level,
@@ -61,7 +61,11 @@ export const getFileByGuid = async (guid: string) => {
   }
 };
 
-const log = (level: "info" | "warn" | "error", message: any) => {
+const log = (
+  level: "info" | "warn" | "error" | "debug",
+  message: any,
+  BlocklyCall?: boolean
+) => {
   const httpRequest = useHttpRequest();
   // make sure message is a string
   if (typeof message !== "string") {
@@ -69,8 +73,11 @@ const log = (level: "info" | "warn" | "error", message: any) => {
   }
 
   // If server logging is enabled, send log to the server
-  if (httpRequest.debugMode) {
-    logToServer(level, message);
+  if (httpRequest.debugMode || BlocklyCall) {
+    if (BlocklyCall) {
+      console[level](`[Blockly] ${message}`);
+    }
+    logToServer(level, message, BlocklyCall);
   }
 };
 
@@ -78,6 +85,14 @@ export const logger = {
   info: (message: any) => log("info", message),
   warn: (message: any) => log("warn", message),
   error: (message: any) => log("error", message),
+  debug: (message: any) => log("debug", message),
+};
+
+export const logBlockly = {
+  info: (message: any) => log("info", message, true),
+  warn: (message: any) => log("warn", message, true),
+  error: (message: any) => log("error", message, true),
+  debug: (message: any) => log("debug", message, true),
 };
 
 export const getNeoFormVersion = async () => {

@@ -6,12 +6,12 @@
           v-model="internalValue"
           :inputId="label + Math.random().toString(36).slice(2, 12)"
           name="label"
-          :value="label"
+          :value="value"
           :disabled="isDisabled"
         />
       </div>
       <div>
-        <label for="ingredient1">{{ label }}</label>
+        <label>{{ label }}</label>
       </div>
     </div>
   </div>
@@ -23,6 +23,7 @@ import { computed } from "vue";
 export default {
   props: {
     label: String,
+    value: String,
     modelValue: {
       type: String,
       default: "",

@@ -254,26 +254,30 @@ export default {
         // If already an array, assign it directly
         parsedElements = newElements;
       }
-
       // Map the parsed elements based on their type
       const formattedElements = parsedElements.map((item) => {
         if (typeof item === "object" && item !== null) {
           return {
-            value: false,
+            value: item.value,
             label: item.label || item.name,
           };
         } else {
           return {
-            value: false,
+            value: item.value,
             label: item,
           };
         }
       });
 
       props.options.elements = formattedElements;
+
       // Update the options with the formatted elements
       updateOptions({ elements: formattedElements });
-      setValue([] as any);
+
+      const selectedLabels = formattedElements
+        .filter((item) => item.value)
+        .map((item) => item.label);
+      setValue(selectedLabels);
     };
 
     // Create a local copy of options to manage mutability

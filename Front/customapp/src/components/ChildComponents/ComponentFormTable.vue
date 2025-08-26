@@ -444,6 +444,7 @@ import {
   updateNotice,
   fetchDataByTableGuid,
   logger,
+  logBlockly,
 } from "@/api/api";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
@@ -1156,7 +1157,7 @@ const setLocale = () => {
 };
 const HeaderHeight = ref([] as any);
 onMounted(async () => {
-  console.log("onMounted");
+  logBlockly.info("onMounted");
   setLocale();
   // loading.value = true;
   setFields(itemsFormCopy.value, 0);
