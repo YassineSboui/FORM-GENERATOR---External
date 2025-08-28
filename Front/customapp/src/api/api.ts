@@ -1240,3 +1240,53 @@ export const getClientApiKey = async (clientId: string) => {
     throw error;
   }
 };
+
+export const executeWorkflow = async (payload: {
+  identifier: string;
+  documentId: string;
+  mappingName: string;
+  rackCode: string;
+  doNotUpdateDocument: boolean;
+  parameters: Record<string, string>;
+}) => {
+  try {
+    const httpRequest = useHttpRequest();
+    const apiUrl = `${httpRequest.apiUrl}/api/automate/executeWorkflow`;
+    const { data } = await axios.post(apiUrl, payload);
+    return { success: true, ...data };
+  } catch (error: any) {
+    console.error("Workflow execution failed:", error);
+    logger.error(error);
+    return {
+      success: false,
+      error:
+        error.response?.data?.message ||
+        error.message ||
+        "Workflow execution failed",
+    };
+  }
+};
+
+export const executeStandalone = async (payload: {
+  identifier: string;
+  batchId: string;
+  version: number;
+  parameters: Record<string, string>;
+}) => {
+  try {
+    const httpRequest = useHttpRequest();
+    const apiUrl = `${httpRequest.apiUrl}/api/automate/executeStandalone`;
+    const { data } = await axios.post(apiUrl, payload);
+    return { success: true, ...data };
+  } catch (error: any) {
+    console.error("Standard Workflow execution failed:", error);
+    logger.error(error);
+    return {
+      success: false,
+      error:
+        error.response?.data?.message ||
+        error.message ||
+        "Standard Workflow execution failed",
+    };
+  }
+};

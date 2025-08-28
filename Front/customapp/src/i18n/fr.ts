@@ -170,6 +170,7 @@ const frensh = {
     missingOrInvalidInformationsMessage:
       "Veuillez remplir tous les champs obligatoires et vérifier les informations saisies. Certaines données ne sont pas valides.",
     successMessage: "Formulaire soumis avec succès ! | Chrono : ",
+    unknownError: "Une erreur inconnue s'est produite.",
   },
   EmailAuth: {
     accessVerification: "Vérification d'accès",

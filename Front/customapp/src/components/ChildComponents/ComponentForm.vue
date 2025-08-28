@@ -16,7 +16,7 @@
               v-show="showPageNum > 1"
               @click="navigatePrevious(showPageNum)"
             >
-              Précédent
+              {{ $t("FormButtons.previous") }}
             </Button>
           </div>
           <div class="col flex justify-content-end" v-if="isEdit">
@@ -24,7 +24,7 @@
               v-show="showPageNum < stepper.steps"
               @click="navigateNext(showPageNum)"
             >
-              Suivant
+              {{ $t("FormButtons.next") }}
             </Button>
           </div>
         </div>
@@ -48,12 +48,14 @@
             </div>
           </div>
         </div>
+
         <!-- <Button
-            v-if="showPageNum == stepper.steps && !isEdit"
-            @click="submitStepper()"
-            class="ml-2"
-            >Valider</Button
-          > -->
+          v-if="showPageNum == stepper.steps && !isEdit"
+          @click="submitStepper()"
+          class="ml-2"
+        >
+          {{ $t("FormButtons.validate") }}
+        </Button> -->
       </div>
       <div
         v-for="pg in stepper.steps"
@@ -448,10 +450,13 @@ import {
   generateModel,
   fetchNotice,
   fetchMetadata,
+  updateNotice,
   fetchDataByTableGuid,
   logger,
-  callEliseWebService,
   logBlockly,
+  callEliseWebService,
+  executeWorkflow,
+  executeStandalone,
 } from "@/api/api";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
@@ -466,6 +471,7 @@ import { storeToRefs } from "pinia";
 import { localize } from "@vee-validate/i18n";
 import { useI18n } from "vue-i18n";
 import { cloneDeep } from "lodash";
+
 // export default {
 const props = defineProps({
   modelValue: {
@@ -585,7 +591,9 @@ const fiel = ref({} as any);
 const duplicateClick = ref(0);
 const copy = ref({ copy: [] } as any);
 const toast = useToast();
-const internalFormConfig = ref({} as any);
+const internalFormConfig = computed(() => {
+  return props.configForm;
+});
 const systemVariables = computed(() => {
   return props.systemVariables;
 });
@@ -738,6 +746,10 @@ const itemsForm = computed({
 const itemsFormCopy = ref(itemsForm.value);
 const fixedHeadersHeights = ref([] as any);
 
+watch(itemsForm, (newVal) => {
+  itemsFormCopy.value = newVal;
+});
+
 itemsForm.value.forEach((item: any) => {
   fixedHeadersHeights.value.push(0);
 });
@@ -790,252 +802,287 @@ const submitStepper = () => {
 };
 const NoticeFiles = ref();
 const NoticeUploadTable = ref();
-const submitNotice = async () => {
-  Notice.value = [];
-  NoticeAttachements.value = [];
-  NoticeFiles.value = [];
-  NoticeUploadTable.value = [];
-  for (let elem of itemRefs.value) {
-    const key = elem.dataset.key;
-    NoticeData.value[key] = Fields.value[key] ?? "";
-  }
+// Helper function to process field data based on type
+const processFieldData = (element: string, options: any) => {
+  const fieldValue = Fields.value[element];
+  const related = options?.relatedToElise;
+  const fieldType = options?.type;
 
-  console.log("app.refs", app.refs);
-
-  // Field processing strategies
-  const fieldProcessors = {
-    Upload: (element: string, options: any) => {
-      if (options.useAILise) return;
-
-      const files = Fields.value[element];
-      if (Array.isArray(files)) {
-        files.forEach((elem) => {
+  switch (fieldType) {
+    case "Upload":
+      if (!options.useAILise) {
+        const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
+        filesArr.forEach((file) => {
           NoticeAttachements.value.push({
-            guid: elem.guid,
-            fileName: elem.fileName,
+            guid: file.guid,
+            fileName: file.fileName,
           });
         });
-      } else if (files && typeof files === "object") {
-        NoticeAttachements.value.push({
-          guid: files.guid,
-          fileName: files.fileName,
-        });
       }
-    },
+      break;
 
-    PHOTO: (element: string, options: any) => {
-      NoticeFiles.value = mapFileField(Fields.value[element]);
-    },
+    case "PHOTO":
+      NoticeFiles.value = mapFileField(fieldValue);
+      break;
 
-    Editor: (element: string, options: any) => {
-      NoticeHtml.value[element] = Fields.value[element] ?? "";
-    },
+    case "Editor":
+      NoticeHtml.value[element] = fieldValue ?? "";
+      break;
 
-    Table: (element: string, options: any) => {
+    case "Table":
       if (options?.isUploadTable) {
-        NoticeUploadTable.value[element] = Fields.value[element] ?? "";
-        NoticeData.value[element] = Fields.value[element] ?? "";
-      }
-    },
-
-    TREEVIEW: (element: string, options: any) => {
-      const keys = Object.keys(Fields.value[element] || {});
-      if (options.selectedType === "Organigramme") {
-        const firstKey = keys[0] ?? "";
-        NoticeMapping.value[element] = firstKey;
-        NoticeData.value[element] = firstKey;
+        NoticeUploadTable.value[element] = fieldValue ?? "";
+        NoticeData.value[element] = fieldValue ?? "";
       } else {
-        NoticeMapping.value[element] = keys;
-        NoticeData.value[element] = keys;
+        NoticeData.value[element] = fieldValue ?? "";
       }
-    },
+      break;
 
-    DATE: (element: string, options: any) => {
-      const val = Fields.value[element];
-      const related = options?.relatedToElise;
+    case "TREEVIEW":
+      const keys = Object.keys(fieldValue || {});
+      const targetValue =
+        options.selectedType === "Organigramme" ? keys[0] ?? "" : keys;
+      NoticeMapping.value[element] = targetValue;
+      NoticeData.value[element] = targetValue;
+      break;
 
-      if (typeof val === "string" && val.includes("T")) {
-        const dateOnly = val.split("T")[0];
-        NoticeData.value[element] = dateOnly;
-        if (related) {
-          NoticeMapping.value[element] = dateOnly;
-        }
-      } else {
-        NoticeData.value[element] = Fields.value[element];
-        if (related) {
-          NoticeMapping.value[element] = Fields.value[element];
-        }
+    case "DATE":
+      const processedDateValue =
+        typeof fieldValue === "string" && fieldValue.includes("T")
+          ? fieldValue.split("T")[0]
+          : fieldValue;
+      NoticeData.value[element] = processedDateValue;
+      if (related) {
+        NoticeMapping.value[element] = processedDateValue;
       }
-    },
+      break;
 
-    Time: (element: string, options: any) => {
-      const val = Fields.value[element];
-      const related = options?.relatedToElise;
-      let timeOnly = null as any;
-
-      if (val) {
-        const fullDate = new Date(val);
+    case "Time":
+      let timeOnly = "";
+      if (fieldValue) {
+        const fullDate = new Date(fieldValue);
         const hours = fullDate.getHours().toString().padStart(2, "0");
         const minutes = fullDate.getMinutes().toString().padStart(2, "0");
         timeOnly = `${hours}:${minutes}`;
       }
-
-      NoticeData.value[element] = timeOnly ?? "";
+      NoticeData.value[element] = timeOnly;
       if (related) {
-        NoticeMapping.value[element] = timeOnly ?? "";
+        NoticeMapping.value[element] = timeOnly;
       }
-    },
+      break;
 
-    FLOWCHART: (element: string, options: any) => {
-      const related = options?.relatedToElise;
+    case "FLOWCHART":
       if (related) {
-        NoticeMapping.value[element] = Fields.value[element]?.id ?? "";
-        NoticeData.value[element] = Fields.value[element] ?? "";
+        NoticeMapping.value[element] = fieldValue?.id ?? "";
+        NoticeData.value[element] = fieldValue ?? "";
       }
-    },
+      break;
 
-    // Default handler for related fields and general data
-    default: (element: string, options: any) => {
-      const related = options?.relatedToElise;
-      const isVHTML = options?.type === "HTML";
-
-      if (related) {
-        NoticeMapping.value[element] = Fields.value[element] ?? "";
-        NoticeData.value[element] = Fields.value[element] ?? "";
-      } else if (!isVHTML && options !== undefined) {
-        NoticeData.value[element] = Fields.value[element] ?? "";
-      }
-    },
-  };
-
-  // Process each field using the appropriate strategy
-  for (let element in app.refs) {
-    const options = app.refs[element][0]?.options;
-    if (!options) continue;
-
-    const fieldType = options.type;
-    const processor =
-      fieldProcessors[fieldType as keyof typeof fieldProcessors] ||
-      fieldProcessors.default;
-    processor(element, options);
-  }
-  newNotice.Attachements = NoticeAttachements.value;
-  newNotice.data = {
-    ...store.currentNotice?.noticeJson?.data,
-    ...NoticeData.value,
-  };
-  newNotice.html = NoticeHtml.value;
-
-  newNotice.mapping = {
-    ...store.currentNotice?.noticeJson?.mapping,
-    ...NoticeMapping.value,
-  };
-  newNotice.uploadTable = {
-    ...store.currentNotice?.noticeJson?.uploadTable,
-    ...NoticeUploadTable.value,
-  };
-  newNotice.files = NoticeFiles.value;
-  newNotice.mappingName = systemVariables.value.MAPPING_NAME || "";
-  newNotice.rackCode = systemVariables.value.RACK_CODE || "";
-
-  const skipValidation =
-    systemVariables.value.DISPLAY_FORM_VALIDATION === false;
-
-  const acceptLogic = async () => {
-    httpRequest.setLoading(true);
-    const beforeSaveCode = internalFormConfig.value.events.find(
-      (evnt: any) => evnt.rule.code == "beforeSave"
-    )?.code;
-    if (beforeSaveCode) {
-      try {
-        await eval(
-          "(async () => { const store = useAppStore(); " +
-            beforeSaveCode +
-            "})()"
-        );
-      } catch (error) {
-        console.error("error", error);
-        logger.error(error);
-      }
-    }
-    if (props.isGenerateModel) {
-      const ob = await generateXMLModel({
-        Data: newNotice.data,
-        Mapping: newNotice.mapping,
-        Html: newNotice.html,
-        Attachements: newNotice.Attachements,
-      });
-      await generateModel({
-        Data: newNotice.data,
-        Mapping: newNotice.mapping,
-        Html: newNotice.html,
-        Attachements: newNotice.Attachements,
-      });
-      if (ob) {
-        emit("emitXml", ob);
-        emit("done", true);
-      }
-    } else {
-      emit("done", false);
-      let obj;
-      // new document to be created
-      obj = await saveNotice({
-        objectId: props.isFormDisplay.objectId,
-        objectGuid: props.isFormDisplay.objectGuid,
-        noticeJson: newNotice,
-        newDoc: !!route.query.newDoc,
-        disableNotice: Boolean(route.query.disableNotice),
-      });
-      if (obj) {
-        const afterSaveCode = internalFormConfig.value.events.find(
-          (evnt: any) => evnt.rule.code == "afterSave"
-        )?.code;
-        if (afterSaveCode) {
-          store.setNotice(obj);
-          try {
-            await eval(
-              "(async () => { const store = useAppStore(); " +
-                afterSaveCode +
-                "})()"
-            );
-          } catch (error) {
-            console.error("error", error);
-            logger.error(error);
-          }
+    default:
+      if (fieldType !== "HTML" && options !== undefined) {
+        NoticeData.value[element] = fieldValue ?? "";
+        if (related && fieldType !== "FLOWCHART") {
+          NoticeMapping.value[element] = fieldValue ?? "";
         }
-        emit("done", true);
-        // appStore.setLoading(false);
       }
+      break;
+  }
+};
 
-      emit("done", true);
-      // appStore.setLoading(false);
+// Helper function to execute before save code
+const executeBeforeSaveCode = async () => {
+  const beforeSaveCode = internalFormConfig.value?.events.find(
+    (evnt: any) => evnt.rule.code == "beforeSave"
+  )?.code;
+
+  if (beforeSaveCode) {
+    try {
+      await eval(
+        "(async () => { const store = useAppStore(); " + beforeSaveCode + "})()"
+      );
+    } catch (error) {
+      console.error("error", error);
+      logger.error(error);
+    }
+  }
+};
+
+// Helper function to execute after save code
+const executeAfterSaveCode = async (obj: any) => {
+  const afterSaveCode = internalFormConfig.value?.events.find(
+    (evnt: any) => evnt.rule.code == "afterSave"
+  )?.code;
+
+  if (afterSaveCode) {
+    store.setNotice(obj);
+    try {
+      await eval(
+        "(async () => { const store = useAppStore(); " + afterSaveCode + "})()"
+      );
+    } catch (error) {
+      console.error("error", error);
+      logger.error(error);
+    }
+  }
+};
+
+// Helper function to handle navigation after save
+const handlePostSaveNavigation = (obj: any) => {
+  emit("done", true);
+  toast.add({
+    severity: "success",
+    summary: t("ComponentForm.successMessage") + " " + obj.chrono,
+    life: 3000,
+  });
+  parent.location.reload();
+};
+
+// Helper function to prepare notice data
+const prepareNoticeData = async () => {
+  // Reset arrays
+  Notice.value = [];
+  NoticeAttachements.value = [];
+  NoticeFiles.value = [];
+  NoticeUploadTable.value = [];
+
+  // Process item refs
+  itemRefs.value.forEach((elem) => {
+    const key = elem.dataset.key;
+    NoticeData.value[key] = Fields.value[key] ?? "";
+  });
+
+  // Process app refs
+  Object.keys(app.refs).forEach((element) => {
+    const options = app.refs[element][0]?.options;
+    if (options) {
+      processFieldData(element, options);
+    }
+  });
+
+  // Prepare final notice object
+  Object.assign(newNotice, {
+    Attachements: NoticeAttachements.value,
+    data: { ...store.currentNotice?.noticeJson?.data, ...NoticeData.value },
+    html: NoticeHtml.value,
+    mapping: {
+      ...store.currentNotice?.noticeJson?.mapping,
+      ...NoticeMapping.value,
+    },
+    uploadTable: {
+      ...store.currentNotice?.noticeJson?.uploadTable,
+      ...NoticeUploadTable.value,
+    },
+    files: NoticeFiles.value,
+    mappingName: systemVariables.value.MAPPING_NAME || "",
+    rackCode: systemVariables.value.RACK_CODE || "",
+  });
+};
+
+// Helper function to handle model generation
+const handleModelGeneration = async () => {
+  const modelData = {
+    Data: newNotice.data,
+    Mapping: newNotice.mapping,
+    Html: newNotice.html,
+    Attachements: newNotice.Attachements,
+  };
+
+  const ob = await generateXMLModel(modelData);
+  await generateModel(modelData);
+
+  if (ob) {
+    emit("emitXml", ob);
+    emit("done", true);
+  }
+};
+
+// Helper function to handle notice save/update
+const handleNoticeSaveUpdate = async () => {
+  emit("done", false);
+
+  const isNewDocument = !store.currentNotice || route.query.newDoc;
+  const noticePayload = {
+    objectId: props.isFormDisplay.objectId,
+    objectGuid: props.isFormDisplay.objectGuid,
+    noticeJson: newNotice,
+    newDoc: !!route.query.newDoc,
+    disableNotice: Boolean(route.query.disableNotice),
+  };
+
+  console.log("newNotice", newNotice);
+
+  let obj;
+  if (isNewDocument) {
+    // put in in try catch and put taost on error
+    try {
+      obj = await saveNotice(noticePayload as any);
+    } catch (error: any) {
       toast.add({
-        severity: "success",
-        summary: t("ComponentForm.successMessage") + " " + obj.chrono,
+        severity: "error",
+        summary: t("ComponentForm.errorMessage"),
+        detail:
+          error?.response?.data ??
+          error?.message ??
+          t("ComponentForm.unknownError"),
         life: 3000,
       });
-      clearFieldsFunc(itemsFormCopy.value, 0);
-      httpRequest.setLoading(false);
     }
-  };
-
-  if (skipValidation) {
-    await acceptLogic();
   } else {
-    confirm.require({
-      message: t("ComponentForm.confirmMessage"),
-      header: t("ComponentForm.confirmHeader"),
-      rejectLabel: t("ComponentForm.confirmNo"),
-      rejectClass: "p-button-danger",
-      acceptLabel: t("ComponentForm.confirmYes"),
-      accept: acceptLogic,
-      reject: () => {
-        emit("done", false);
-      },
-      onHide: () => {
-        emit("done", false);
-      },
+    obj = await updateNotice({
+      ...noticePayload,
+      noticeId: store.currentNotice.id,
     });
+  }
+
+  if (obj) {
+    await executeAfterSaveCode(obj);
+    handlePostSaveNavigation(obj);
+  }
+};
+
+// Main submit notice function
+const submitNotice = async () => {
+  try {
+    await prepareNoticeData();
+
+    const skipValidation =
+      systemVariables.value.DISPLAY_FORM_VALIDATION === false;
+
+    if (skipValidation) {
+      httpRequest.setLoading(true);
+      await executeBeforeSaveCode();
+
+      if (props.isGenerateModel) {
+        await handleModelGeneration();
+      } else {
+        await handleNoticeSaveUpdate();
+      }
+
+      emit("done", false);
+    } else {
+      confirm.require({
+        message: t("ComponentForm.confirmMessage"),
+        header: t("ComponentForm.confirmHeader"),
+        rejectLabel: t("ComponentForm.confirmNo"),
+        rejectClass: "p-button-danger",
+        acceptLabel: t("ComponentForm.confirmYes"),
+        accept: async () => {
+          httpRequest.setLoading(true);
+          await executeBeforeSaveCode();
+          if (props.isGenerateModel) {
+            await handleModelGeneration();
+          } else {
+            await handleNoticeSaveUpdate();
+          }
+        },
+        reject: () => emit("done", false),
+        onHide: () => emit("done", false),
+      });
+    }
+  } catch (error) {
+    console.error("Error in submitNotice:", error);
+    logger.error(error);
+    emit("done", false);
   }
 };
 const httpRequest = useHttpRequest();
@@ -1094,47 +1141,45 @@ const mapFileField = (field: any) => {
 
 const handleFieldSettingSplitterZone = (pageItem: any) => {
   const columnNames = ["column1", "column2", "column3", "column4"];
-
-  const processOptions = (options: any) => {
-    if (options) {
-      localFields.value[options.name] ??= "";
-    }
-  };
-
-  const processRow = (row: any) => {
-    if (row.zone === "ZR" && row.isSection === false) {
-      localFields.value[row.code] ??= [];
-      handleFieldSettingRepeatableZone(row);
-    } else if (row.zone === "ZR" && row.isSection) {
-      const item = row.rows["column1"];
-      for (let k = 0; k < item.length; k++) {
-        columnNames.forEach((col) => {
-          for (let d = 0; d < item[k].rows[col].length; d++) {
-            processOptions(item[k].rows[col][d]?.options);
-          }
-        });
-      }
-    }
-
-    Object.values(row.rows).forEach((col: any) => {
-      Object.values(col).forEach((field: any) => {
-        processOptions(field.options);
-      });
-    });
-  };
-
   columnNames.forEach((columnName) => {
     for (let z = 0; z < pageItem.rows[columnName].length; z++) {
-      processRow(pageItem.rows[columnName][z]);
+      const row = pageItem.rows[columnName][z];
+      if (row.zone === "ZR" && row.isSection === false) {
+        localFields.value[row.code] ??= [];
+        handleFieldSettingRepeatableZone(row);
+      } else if (row.zone === "ZR" && row.isSection) {
+        const columns = ["column1", "column2", "column3", "column4"];
+        const item = row.rows["column1"];
+        for (let k = 0; k < item.length; k++) {
+          columns.forEach((col) => {
+            for (let d = 0; d < item[k].rows[col].length; d++) {
+              const options = item[k].rows[col][d]?.options;
+              if (options) {
+                localFields.value[options.name] ??= "";
+              }
+            }
+            // const options = item[col][k]?.options;
+            // if (options) {
+            //   localFields.value[options.name] ??= "";
+            // }
+          });
+        }
+      }
+      Object.values(row.rows).forEach((col: any) => {
+        Object.values(col).forEach((field: any) => {
+          const options = field.options;
+          if (options) {
+            localFields.value[options.name] ??= "";
+          }
+        });
+      });
     }
   });
 };
-
 const handleFieldSettingRepeatableZone = (pageItem: any) => {
   const itemCol = pageItem.rows.column1;
-  const columns = ["column1", "column2", "column3", "column4"];
-
   for (let k = 0; k < itemCol.length; k++) {
+    const columns = ["column1", "column2", "column3", "column4"];
     columns.forEach((col) => {
       for (let z = 0; z < itemCol[k].rows[col].length; z++) {
         const options = itemCol[k].rows[col][z]?.options;
@@ -1152,60 +1197,39 @@ const handleFieldSettingRepeatableZone = (pageItem: any) => {
 };
 
 const handleFieldSetting = (pageItem: any, clear = false) => {
-  const fieldSettingStrategies = {
-    ZS: () => handleFieldSettingSplitterZone(pageItem),
-
-    ZR_section: () => {
-      const columnNames = ["column1", "column2", "column3", "column4"];
-      const itemZone = pageItem.rows["column1"];
-
-      for (let k = 0; k < itemZone.length; k++) {
-        columnNames.forEach((columnName) => {
-          for (let z = 0; z < itemZone[k].rows[columnName].length; z++) {
-            const options = itemZone[k].rows[columnName][z]?.options;
-            if (options) {
-              localFields.value[options.name] ??= "";
-            }
-          }
-        });
-      }
-    },
-
-    ZR_repeatable: () => {
-      localFields.value[pageItem.code] ??= [];
-      handleFieldSettingRepeatableZone(pageItem);
-    },
-
-    default: () => {
-      const columnNames = ["column1", "column2", "column3", "column4"];
+  if (pageItem.zone === "ZS") {
+    handleFieldSettingSplitterZone(pageItem);
+  } else if (pageItem.zone === "ZR" && pageItem.isSection === false) {
+    localFields.value[pageItem.code] ??= [];
+    handleFieldSettingRepeatableZone(pageItem);
+  } else if (pageItem.zone === "ZR" && pageItem.isSection) {
+    const columnNames = ["column1", "column2", "column3", "column4"];
+    const itemZone = pageItem.rows["column1"];
+    for (let k = 0; k < itemZone.length; k++) {
       columnNames.forEach((columnName) => {
-        for (let z = 0; z < pageItem.rows[columnName].length; z++) {
-          const options = pageItem.rows[columnName][z]?.options;
+        for (let z = 0; z < itemZone[k].rows[columnName].length; z++) {
+          const options = itemZone[k].rows[columnName][z]?.options;
           if (options) {
-            if (clear) {
-              localFields.value[options.name] = "";
-            } else {
-              localFields.value[options.name] ??= "";
-            }
+            localFields.value[options.name] ??= "";
           }
         }
       });
-    },
-  };
-
-  // Determine strategy based on zone and section type
-  let strategyKey = "default";
-  if (pageItem.zone === "ZS") {
-    strategyKey = "ZS";
-  } else if (pageItem.zone === "ZR" && pageItem.isSection === false) {
-    strategyKey = "ZR_repeatable";
-  } else if (pageItem.zone === "ZR" && pageItem.isSection) {
-    strategyKey = "ZR_section";
+    }
+  } else {
+    const columnNames = ["column1", "column2", "column3", "column4"];
+    columnNames.forEach((columnName) => {
+      for (let z = 0; z < pageItem.rows[columnName].length; z++) {
+        const options = pageItem.rows[columnName][z]?.options;
+        if (options) {
+          if (clear) {
+            localFields.value[options.name] = "";
+          } else {
+            localFields.value[options.name] ??= "";
+          }
+        }
+      }
+    });
   }
-
-  const strategy =
-    fieldSettingStrategies[strategyKey as keyof typeof fieldSettingStrategies];
-  strategy();
 };
 const processPage = (pageItem: any, clear = false) => {
   // const columnNames = ["column1", "column2", "column3", "column4"];
@@ -1265,13 +1289,11 @@ const HeaderHeight = ref([] as any);
 onMounted(async () => {
   logBlockly.info("onMounted");
   GlobalVariables.value = {};
-  console.log("onMounted");
   setLocale();
   if (props.showLoader) {
     useHttpRequest().setLoading(true);
   }
   setFields(itemsFormCopy.value, 0);
-  internalFormConfig.value = props.configForm;
   QueryParameters.value = { ...route.query };
   if (!props.isEdit) {
     isLoadingComponent.value = true;
@@ -1528,9 +1550,20 @@ const handleRefs = (event: any) => {
   app.refs = mergedObject;
 };
 const executeFun = async (event: any) => {
+  console.log("exeeeecccc");
+  if (
+    !app.refs[event.id] ||
+    app.refs[event.id].length === 0 ||
+    event.id === undefined
+  ) {
+    console.log("No reference found for event id:");
+    console.warn(`No reference found for event id:`);
+    return;
+  }
   console.log("event.id", event.id);
   console.log("app.refs", app.refs);
   console.log(" app.refs[event.id]", app.refs[event.id]);
+  console.log(" event.code", event.code);
   app.refs[event.id][0].enableLoading();
   try {
     await eval(
@@ -1631,72 +1664,114 @@ function validatePageFields(page: any) {
   return valid;
 }
 
-const isEmpty = (value: any) => {
-  if (value === null || value === undefined) return true; // Null or undefined
-  if (
-    typeof value === "string" &&
-    (value.trim() === "" || value.trim() === "[]")
-  )
-    return true; // Empty string
-  if (Array.isArray(value) && value.length === 0) return true; // Empty array
-  if (
-    typeof value === "object" &&
-    !Array.isArray(value) &&
-    Object.keys(value).length === 0
-  )
-    return true; // Empty object
-  return false; // Otherwise, not empty
+const isEmpty = (value: any): boolean => {
+  // Handle null and undefined
+  if (value === null || value === undefined) return true;
+
+  // Handle strings (including whitespace-only and JSON array strings)
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "" || trimmed === "[]" || trimmed === "{}";
+  }
+
+  // Handle numbers (0 is not considered empty, but NaN is)
+  if (typeof value === "number") {
+    return Number.isNaN(value);
+  }
+
+  // Handle booleans (both true and false are not considered empty)
+  if (typeof value === "boolean") {
+    return false;
+  }
+
+  // Handle arrays
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+
+  // Handle objects (including Date, but exclude functions)
+  if (typeof value === "object") {
+    // Handle Date objects - empty if invalid date
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime());
+    }
+
+    // Handle regular objects
+    return Object.keys(value).length === 0;
+  }
+
+  // Handle functions (not considered empty)
+  if (typeof value === "function") {
+    return false;
+  }
+
+  // Handle symbols (not considered empty)
+  if (typeof value === "symbol") {
+    return false;
+  }
+
+  // Handle BigInt (0n is not considered empty)
+  if (typeof value === "bigint") {
+    return false;
+  }
+
+  // Default case - not empty
+  return false;
 };
 
 const validateField = (pageItem: any, columnName: string, valid: boolean) => {
-  let allValid = true;
-  const validationStrategies = {
-    ZS: () => validateFieldSplitterZone(pageItem, columnName, valid),
-    ZR: () => {
-      Fields.value[pageItem.code] ??= [];
-      return validateFieldRepeatableZone(pageItem, columnName, valid);
-    },
-    default: () => {
-      for (let z = 0; z < pageItem.rows[columnName].length; z++) {
-        const options = pageItem.rows[columnName][z]?.options;
-        if (!options || options.hidden === true) continue;
-        if (options.type === "HTML") continue;
-        let fieldValid = true;
-        let messages: string[] = [];
-        if (Array.isArray(options.rules)) {
+  let fieldValid = valid;
+  if (pageItem.zone === "ZS") {
+    return validateFieldSplitterZone(pageItem, columnName, fieldValid);
+  } else if (pageItem.zone === "ZR") {
+    Fields.value[pageItem.code] ??= [];
+    return validateFieldRepeatableZone(pageItem, columnName, fieldValid);
+  } else {
+    for (let z = 0; z < pageItem.rows[columnName].length; z++) {
+      const options = pageItem.rows[columnName][z]?.options;
+      if (options && options.type === "HTML") {
+        if (options && options.required && options.hidden !== true) {
+          fieldValid = false;
+        }
+      } else if (options) {
+        // Required check
+        if (
+          options.required &&
+          options.hidden !== true &&
+          isEmpty(Fields.value[options.name])
+        ) {
+          app.refs[options.name]?.[0]?.setFieldError("Ce champ est requis.");
+          fieldValid = false;
+        }
+        // Rules check: use validateByRule for each rule
+        if (
+          Array.isArray(options.rules) &&
+          !isEmpty(Fields.value[options.name])
+        ) {
+          console.log("options.rules", options.rules);
+
           const val = Fields.value[options.name];
-          const result = validateFieldAllRules(
-            val,
-            options.rules,
-            options.label
-          );
-          fieldValid = result.valid;
-          messages = result.messages;
-          if (app.refs[options.name]?.[0]?.setFieldError) {
-            app.refs[options.name][0].setFieldError(messages.join("\n"));
-          }
-        } else if (options.required) {
-          fieldValid = !isEmpty(Fields.value[options.name]);
-          if (!fieldValid && app.refs[options.name]?.[0]?.setFieldError) {
-            app.refs[options.name][0].setFieldError(
-              (options.label || "Ce champ") + " est requis."
+          let messages: string[] = [];
+          for (const rule of options.rules) {
+            const result = validateByRule(
+              val ?? "",
+              rule,
+              options.label || options.name
             );
+            console.log("result", result);
+            if (!result.valid && result.msg) {
+              messages.push(result.msg);
+              fieldValid = false;
+            }
           }
-        } else {
-          if (app.refs[options.name]?.[0]?.setFieldError) {
-            app.refs[options.name][0].setFieldError("");
+          if (messages.length > 0) {
+            app.refs[options.name]?.[0]?.setFieldError(messages.join("\n"));
           }
         }
-        if (!fieldValid) allValid = false;
       }
-      return allValid && valid;
-    },
-  };
-
-  const strategy =
-    validationStrategies[pageItem.zone as keyof typeof validationStrategies] ||
-    validationStrategies.default;
-  return strategy();
+    }
+  }
+  return fieldValid;
 };
 
 const validateFieldRepeatableZone = (
@@ -1705,58 +1780,63 @@ const validateFieldRepeatableZone = (
   valid: boolean
 ) => {
   const itemCol = pageItem.rows.column1;
+  let fieldValid = valid;
   if (pageItem.show === false) {
     return true;
-  }
-
-  const validateFieldOptions = (options: any) => {
-    if (!options || options.hidden === true) return true;
-    let fieldValid = true;
-    let messages: string[] = [];
-    if (Array.isArray(options.rules)) {
-      const val = Fields.value[options.name];
-      const result = validateFieldAllRules(val, options.rules, options.label);
-      fieldValid = result.valid;
-      messages = result.messages;
-      if (app.refs[options.name]?.[0]?.setFieldError) {
-        app.refs[options.name][0].setFieldError(messages.join("\n"));
+  } else {
+    for (let k = 0; k < itemCol.length; k++) {
+      for (let z = 0; z < pageItem.rows[columnName].length; z++) {
+        const columnNames = ["column1", "column2", "column3", "column4"];
+        columnNames.forEach((columnNameZ) => {
+          Object.values(pageItem.rows[columnName][z].rows[columnNameZ]).forEach(
+            (field: any) => {
+              const options = field.options;
+              if (options && options.hidden !== true) {
+                // Required check
+                if (options.required && isEmpty(Fields.value[options.name])) {
+                  app.refs[options.name]?.[0]?.setFieldError(
+                    "Ce champ est requis."
+                  );
+                  fieldValid = false;
+                }
+                // Rules check: use validateByRule for each rule
+                if (
+                  Array.isArray(options.rules) &&
+                  !isEmpty(Fields.value[options.name])
+                ) {
+                  const val = Fields.value[options.name];
+                  let messages: string[] = [];
+                  for (const rule of options.rules) {
+                    const result = validateByRule(
+                      val,
+                      rule,
+                      options.label || options.name
+                    );
+                    if (!result.valid && result.msg) {
+                      messages.push(result.msg);
+                      fieldValid = false;
+                    }
+                  }
+                  if (messages.length > 0) {
+                    app.refs[options.name]?.[0]?.setFieldError(
+                      messages.join("\n")
+                    );
+                  }
+                }
+              }
+            }
+          );
+        });
+        if (!fieldValid) {
+          break;
+        }
       }
-    } else if (options.required) {
-      fieldValid = !isEmpty(Fields.value[options.name]);
-      if (!fieldValid && app.refs[options.name]?.[0]?.setFieldError) {
-        app.refs[options.name][0].setFieldError(
-          (options.label || "Ce champ") + " est requis."
-        );
-      }
-    } else {
-      if (app.refs[options.name]?.[0]?.setFieldError) {
-        app.refs[options.name][0].setFieldError("");
+      if (!fieldValid) {
+        break;
       }
     }
     return fieldValid;
-  };
-
-  let allValid = true;
-  for (let k = 0; k < itemCol.length; k++) {
-    for (let z = 0; z < pageItem.rows[columnName].length; z++) {
-      const columnNames = ["column1", "column2", "column3", "column4"];
-      for (const columnNameZ of columnNames) {
-        const fields = Object.values(
-          pageItem.rows[columnName][z].rows[columnNameZ]
-        );
-        for (const field of fields) {
-          const options = (field as any).options;
-          if (!validateFieldOptions(options)) {
-            allValid = false;
-          }
-        }
-      }
-      if (!valid) {
-        allValid = false;
-      }
-    }
   }
-  return allValid && valid;
 };
 
 const validateFieldSplitterZone = (
@@ -1764,58 +1844,49 @@ const validateFieldSplitterZone = (
   columnName: string,
   valid: boolean
 ) => {
-  const validateFieldOptions = (options: any) => {
-    if (!options || options.hidden === true) return true;
-    let fieldValid = true;
-    let messages: string[] = [];
-    if (Array.isArray(options.rules)) {
-      const val = Fields.value[options.name];
-      const result = validateFieldAllRules(val, options.rules, options.label);
-      fieldValid = result.valid;
-      messages = result.messages;
-      if (app.refs[options.name]?.[0]?.setFieldError) {
-        app.refs[options.name][0].setFieldError(messages.join("\n"));
-      }
-    } else if (options.required) {
-      fieldValid = !isEmpty(Fields.value[options.name]);
-      if (!fieldValid && app.refs[options.name]?.[0]?.setFieldError) {
-        app.refs[options.name][0].setFieldError(
-          (options.label || "Ce champ") + " est requis."
-        );
-      }
-    } else {
-      if (app.refs[options.name]?.[0]?.setFieldError) {
-        app.refs[options.name][0].setFieldError("");
-      }
-    }
-    return fieldValid;
-  };
-
-  let allValid = true;
+  let fieldValid = valid;
   for (let z = 0; z < pageItem.rows[columnName].length; z++) {
     const row = pageItem.rows[columnName][z];
-
     if (row.zone === "ZR") {
       Fields.value[row.code] ??= [];
-      const repeatableValid = validateFieldRepeatableZone(
-        row,
-        columnName,
-        valid
-      );
-      if (!repeatableValid) allValid = false;
+      fieldValid = validateFieldRepeatableZone(row, columnName, fieldValid);
     }
-
-    // Validate all nested fields
     Object.values(row.rows).forEach((col: any) => {
       Object.values(col).forEach((field: any) => {
         const options = field.options;
-        if (!validateFieldOptions(options)) {
-          allValid = false;
+        if (options && options.hidden !== true) {
+          // Required check
+          if (options.required && isEmpty(Fields.value[options.name])) {
+            app.refs[options.name]?.[0]?.setFieldError("Ce champ est requis.");
+            fieldValid = false;
+          }
+          // Rules check: use validateByRule for each rule
+          if (
+            Array.isArray(options.rules) &&
+            !isEmpty(Fields.value[options.name])
+          ) {
+            const val = Fields.value[options.name];
+            let messages: string[] = [];
+            for (const rule of options.rules) {
+              const result = validateByRule(
+                val,
+                rule,
+                options.label || options.name
+              );
+              if (!result.valid && result.msg) {
+                messages.push(result.msg);
+                fieldValid = false;
+              }
+            }
+            if (messages.length > 0) {
+              app.refs[options.name]?.[0]?.setFieldError(messages.join("\n"));
+            }
+          }
         }
       });
     });
   }
-  return allValid && valid;
+  return fieldValid;
 };
 const initFields = () => {
   Object.keys(Fields.value).forEach((key) => {
@@ -1959,6 +2030,7 @@ async function executeWebService(webServiceName: String, parameters: any) {
     return error;
   }
 }
+
 // Universal validation function for rules from ValidationRules.vue
 // Returns { valid: boolean, msg: string } for a single rule
 function validateByRule(
@@ -2426,45 +2498,20 @@ function validateFieldAllRules(
 ) {
   let valid = true;
   let messages: string[] = [];
-
-  // Helper to check if field is empty
-  const isEmpty = (val: any) => {
-    if (val === null || val === undefined) return true;
-    if (typeof val === "string" && val.trim() === "") return true;
-    if (Array.isArray(val) && val.length === 0) return true;
-    if (
-      typeof val === "object" &&
-      !Array.isArray(val) &&
-      Object.keys(val).length === 0
-    )
-      return true;
-    return false;
-  };
-
-  const isFieldEmpty = isEmpty(value);
-  const hasRequiredRule = rules.some((rule) => rule.code === "required");
-
   for (const rule of rules) {
-    // Always validate 'required' rule regardless of field content
-    if (rule.code === "required") {
-      const result = validateByRule(value, rule, fieldLabel);
-      if (!result.valid && result.msg) {
-        valid = false;
-        messages.push(result.msg);
-      }
-    } else {
-      // For all other rules, only validate if the field is not empty
-      // This allows optional fields to be empty but validates them when they have content
-      if (!isFieldEmpty) {
-        const result = validateByRule(value, rule, fieldLabel);
-        if (!result.valid && result.msg) {
-          valid = false;
-          messages.push(result.msg);
-        }
-      }
+    const result = validateByRule(value, rule, fieldLabel);
+    if (!result.valid && result.msg) {
+      valid = false;
+      messages.push(result.msg);
     }
   }
   return { valid, messages };
+}
+async function internalExecuteWorkflow(parameters: any) {
+  return await executeWorkflow(parameters);
+}
+async function internalExecuteStandalone(parameters: any) {
+  return await executeStandalone(parameters);
 }
 defineExpose({
   itemsForm,
@@ -2476,7 +2523,6 @@ defineExpose({
   showPageNum,
   disabledNextButton,
   disabledPreviousButton,
-  validateByRule,
   fetchTableData,
   enablePreviousButtonFunction,
   enableNextButtonFunction,
@@ -2497,6 +2543,8 @@ defineExpose({
   toggleSection,
   initFields,
   executeWebService,
+  internalExecuteWorkflow,
+  internalExecuteStandalone,
 });
 </script>
 <style lang="scss">
@@ -2547,10 +2595,8 @@ defineExpose({
     position: sticky;
     width: 100%;
     top: 0;
+    background-color: #ffffff;
     z-index: 1000;
-    background-color: #f8f9fa !important;
-    margin-left: -50px;
-    padding-left: 50px;
   }
 }
 .zone-page-sticky-header {
@@ -2578,8 +2624,5 @@ defineExpose({
 }
 ::-webkit-scrollbar-track {
   margin-top: var(--scrollbar-margin-top);
-}
-body.dark .pages-headers {
-  background-color: #121212 !important; // Dark mode: solid dark
 }
 </style>
