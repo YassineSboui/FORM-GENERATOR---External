@@ -12,9 +12,19 @@ const getKeycloakConfig = async () => {
 
     const config = await response.json();
 
-    // Extract base URL from API_URL by removing /neoformexternal/
+    // Extract base URL from API_URL by removing the API path
     const apiUrl = config.API_URL;
-    const baseUrl = apiUrl.replace("/neoformexternal/", "");
+    let baseUrl;
+
+    if (apiUrl.includes("/neoformext/neoformexternal/")) {
+      baseUrl = apiUrl.replace("/neoformext/neoformexternal/", "");
+    } else if (apiUrl.includes("/neoformexternal/")) {
+      baseUrl = apiUrl.replace("/neoformexternal/", "");
+    } else {
+      // Fallback: remove everything after the domain
+      const url = new URL(apiUrl);
+      baseUrl = `${url.protocol}//${url.hostname}`;
+    }
 
     // Remove trailing slash if exists
     const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
