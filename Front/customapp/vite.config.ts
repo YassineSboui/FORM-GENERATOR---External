@@ -10,20 +10,14 @@ import { PrimeVueResolver } from "unplugin-vue-components/resolvers";
 export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
-    Components({
-      resolvers: [PrimeVueResolver()],
-    }),
-    svgLoader({
-      svgo: false,
-      defaultImport: "component",
-    }),
+    Components({ resolvers: [PrimeVueResolver()] }),
+    svgLoader({ svgo: false, defaultImport: "component" }),
   ],
   resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
-    },
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   build: {
+    target: "es2022", // ✅ add this
     rollupOptions: {
       output: {
         entryFileNames: `assets/[name].js`,
@@ -32,15 +26,16 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  optimizeDeps: {
+    esbuildOptions: { target: "es2022" }, // ✅ add this
+  },
   base: "/neoformext/front/",
   esbuild: {
     pure: mode === "client" ? ["logger.error"] : [],
   },
   css: {
     preprocessorOptions: {
-      scss: {
-        silenceDeprecations: ["legacy-js-api"],
-      },
+      scss: { silenceDeprecations: ["legacy-js-api"] },
     },
   },
 }));

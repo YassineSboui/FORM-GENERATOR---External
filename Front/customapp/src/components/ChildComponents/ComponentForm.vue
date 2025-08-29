@@ -934,7 +934,11 @@ const handlePostSaveNavigation = (obj: any) => {
     summary: t("ComponentForm.successMessage") + " " + obj.chrono,
     life: 3000,
   });
-  parent.location.reload();
+
+  // Delay the reload to allow toast to be visible for its full duration
+  setTimeout(() => {
+    parent.location.reload();
+  }, 3200); // 200ms extra buffer to ensure toast completes
 };
 
 // Helper function to prepare notice data
@@ -2595,10 +2599,17 @@ defineExpose({
     position: sticky;
     width: 100%;
     top: 0;
-    background-color: #ffffff;
+    background-color: #f8f9fa;
     z-index: 1000;
+    margin-left: -10rem;
+    padding-left: 10rem;
   }
 }
+
+.dark .stepper .pages-headers {
+  background-color: #121212;
+}
+
 .zone-page-sticky-header {
   // position: sticky;
   // top: 0;

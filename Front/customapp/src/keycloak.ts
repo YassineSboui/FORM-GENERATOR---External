@@ -5,6 +5,11 @@ import Keycloak from "keycloak-js";
 const getKeycloakConfig = async () => {
   try {
     const response = await fetch("/config.json");
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const config = await response.json();
 
     // Extract base URL from API_URL by removing /neoformexternal/
@@ -21,8 +26,8 @@ const getKeycloakConfig = async () => {
     return keycloakUrl;
   } catch (error) {
     console.error("Failed to load config, falling back to default URL:", error);
-    // Fallback to default URL if config loading fails
-    return "https://demo-ecm-prep.elisedemo.com:8443/";
+    // Fallback to production URL if config loading fails
+    return "https://neoform01.elisecloud.tn:8443/";
   }
 };
 
