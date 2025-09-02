@@ -842,8 +842,20 @@ const processFieldData = (element: string, options: any) => {
       const keys = Object.keys(fieldValue || {});
       const targetValue =
         options.selectedType === "Organigramme" ? keys[0] ?? "" : keys;
-      NoticeMapping.value[element] = targetValue;
       NoticeData.value[element] = targetValue;
+      if (related) {
+        NoticeMapping.value[element] = targetValue;
+      }
+      break;
+
+    case "CUSTOM_TREEVIEW":
+      const treeKeys = Object.keys(fieldValue || {});
+      const treeValue =
+        options.selectionMode === "single" ? treeKeys[0] ?? "" : treeKeys;
+      NoticeData.value[element] = treeValue;
+      if (related) {
+        NoticeMapping.value[element] = treeValue;
+      }
       break;
 
     case "DATE":
