@@ -227,6 +227,7 @@ const frensh = {
   NeoPhotoProperties: {
     gallery: "Galerie",
     camera: "Caméra",
+    uploading: "Téléchargement...",
   },
   NeoMap: {
     SearchPlaceholder: "Rechercher un lieu...",

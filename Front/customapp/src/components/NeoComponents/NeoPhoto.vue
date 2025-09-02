@@ -90,9 +90,20 @@
       <!-- Photo Previews -->
       <div
         class="grid photo-preview-container pl-2 pr-2"
-        v-if="internalValue.length"
+        v-if="internalValue.length || isUploading"
       >
         <div class="photo-preview-box">
+          <!-- Loading indicator for photo upload -->
+          <div v-if="isUploading" class="photo-preview loading-preview">
+            <div class="loading-spinner">
+              <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+            </div>
+            <small class="loading-text">{{
+              $t("NeoPhotoProperties.uploading") || "Uploading..."
+            }}</small>
+          </div>
+
+          <!-- Existing photos -->
           <div
             class="photo-preview"
             v-for="(photo, index) in internalValue"
@@ -171,8 +182,22 @@
         </div>
       </div>
       <!-- Photo Preview Container -->
-      <div class="photo-preview-container" v-if="internalValue.length">
+      <div
+        class="photo-preview-container"
+        v-if="internalValue.length || isUploading"
+      >
         <div class="photo-preview-box">
+          <!-- Loading indicator for photo upload -->
+          <div v-if="isUploading" class="photo-preview loading-preview">
+            <div class="loading-spinner">
+              <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+            </div>
+            <small class="loading-text">{{
+              $t("NeoPhotoProperties.uploading") || "Uploading..."
+            }}</small>
+          </div>
+
+          <!-- Existing photos -->
           <div
             class="photo-preview"
             v-for="(photo, index) in internalValue"
@@ -349,6 +374,7 @@ export default defineComponent({
     const fileInput = ref<HTMLInputElement | null>(null);
     const devices = ref<MediaDeviceInfo[]>([]);
     const currentDeviceIndex = ref(0);
+    const isUploading = ref(false); // Add loading state for photo upload
 
     // Computed Variables
     const internalValue = computed({
@@ -418,6 +444,8 @@ export default defineComponent({
       try {
         if (camera.value) {
           console.log("Taking snapshot...");
+          isUploading.value = true; // Start loading
+
           const blob = await camera.value.snapshot({
             width: props.options.width,
             height: props.options.height,
@@ -451,9 +479,12 @@ export default defineComponent({
               } catch (uploadError) {
                 console.error("Failed to upload photo:", uploadError);
                 logger.error(uploadError);
+              } finally {
+                isUploading.value = false; // Stop loading
               }
             } else {
               console.error("Failed to read file as FileB64 string.");
+              isUploading.value = false; // Stop loading
             }
           };
 
@@ -463,6 +494,7 @@ export default defineComponent({
         setFieldError("Failed to capture photo. Please try again.");
         console.error("Snapshot error:", error);
         logger.error(error);
+        isUploading.value = false; // Stop loading on error
       }
     };
 
@@ -474,6 +506,8 @@ export default defineComponent({
       const target = event.target as HTMLInputElement;
       const file = target.files?.[0];
       if (file) {
+        isUploading.value = true; // Start loading
+
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = async () => {
@@ -501,9 +535,12 @@ export default defineComponent({
             } catch (uploadError) {
               console.error("Failed to upload photo:", uploadError);
               logger.error(uploadError);
+            } finally {
+              isUploading.value = false; // Stop loading
             }
           } else {
             console.error("Failed to read file as FileB64 string.");
+            isUploading.value = false; // Stop loading
           }
         };
       }
@@ -623,6 +660,7 @@ export default defineComponent({
       fileInput,
       showType,
       readOnly,
+      isUploading,
       t,
       setFieldError,
       clearFieldError,
@@ -696,6 +734,38 @@ export default defineComponent({
   position: relative;
   width: 100px;
   height: 100px;
+}
+
+.loading-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+}
+
+.loading-spinner {
+  margin-bottom: 8px;
+  color: var(--p-primary-color);
+}
+
+.loading-text {
+  font-size: 10px;
+  text-align: center;
+  color: #888;
+}
+
+body.dark .loading-preview {
+  background-color: #333 !important;
+  border-color: #555 !important;
+  color: #ccc !important;
+}
+
+body.dark .loading-text {
+  color: #aaa !important;
 }
 .photo-preview img {
   width: 100%;

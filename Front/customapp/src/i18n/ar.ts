@@ -235,6 +235,7 @@ const arabic = {
   NeoPhotoProperties: {
     gallery: "معرض الصور",
     camera: "الكاميرا",
+    uploading: "جاري التحميل...",
   },
   NeoMap: {
     SearchPlaceholder: "البحث عن موقع...",
