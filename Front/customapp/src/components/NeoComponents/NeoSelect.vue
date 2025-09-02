@@ -117,6 +117,7 @@ interface OptionConfig {
   selectedSource: string;
   selectedTable: string;
   selectedColumn: string;
+  showClear: boolean;
   eliseEnumerate: string;
   selectedVariable: string;
   elements: any[];
@@ -170,6 +171,7 @@ export default {
         selectedColumn: "",
         eliseEnumerate: "",
         selectedVariable: "",
+        showClear: false,
         elements: [{ code: "", name: "" }],
         rules: [],
         events: [],

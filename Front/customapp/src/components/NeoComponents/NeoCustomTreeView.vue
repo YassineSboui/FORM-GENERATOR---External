@@ -73,6 +73,7 @@
           @mouseleave="$emit('mouseleave', $event)"
           :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
           :filter="filter"
+          :showClear="options.showClear"
         >
         </TreeSelect>
         <small
@@ -116,6 +117,7 @@ interface OptionConfig {
   disabled: boolean | null;
   hidden: boolean | null;
   relatedToElise: boolean | null;
+  showClear: boolean | null;
   rules: { expression: string }[];
   events: any[];
 }
@@ -156,6 +158,7 @@ export default {
         relatedToElise: false,
         selectionMode: "single",
         filter: false,
+        showClear: false,
         elements: [],
         rules: [],
         events: [],
@@ -325,6 +328,7 @@ export default {
       () => props.modelValue,
       (newValue: any) => {
         if (
+          newValue &&
           newValue.length > 0 &&
           props.modelValue != "" &&
           props.modelValue != null &&

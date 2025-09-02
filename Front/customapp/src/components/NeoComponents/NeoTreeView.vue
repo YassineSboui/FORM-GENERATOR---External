@@ -72,6 +72,7 @@
             @blur="$emit('blur', $event)"
             @mouseenter="$emit('mouseenter', $event)"
             @mouseleave="$emit('mouseleave', $event)"
+            :showClear="options.showClear"
           >
             <template #header v-if="!loading">
               <div class="p-2">
@@ -107,6 +108,7 @@
             @mouseenter="$emit('mouseenter', $event)"
             @mouseleave="$emit('mouseleave', $event)"
             :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
+            :showClear="options.showClear"
           >
           </TreeSelect>
 
@@ -145,6 +147,7 @@
             @mouseenter="$emit('mouseenter', $event)"
             @mouseleave="$emit('mouseleave', $event)"
             :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
+            :showClear="options.showClear"
             ><template #header v-if="!loading">
               <div class="p-2">
                 <input
@@ -203,6 +206,7 @@ interface OptionConfig {
   readonly: boolean | null;
   disabled: boolean | null;
   hidden: boolean | null;
+  showClear: boolean | null;
   relatedToElise: boolean | null;
   rules: { expression: string }[];
   events: any[];
@@ -248,6 +252,7 @@ export default {
         thesaurusId: "",
         termLimit: 3,
         returnLabel: false,
+        showClear: false,
         elements: [],
         rules: [],
         events: [],
@@ -842,6 +847,7 @@ export default {
       () => props.modelValue,
       (newValue: any) => {
         if (
+          newValue &&
           newValue.length > 0 &&
           props.modelValue != "" &&
           props.modelValue != null &&
