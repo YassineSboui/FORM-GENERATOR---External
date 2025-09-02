@@ -397,7 +397,7 @@ export const getNoticesCountByFormId = async (id: number) => {
 export const createData = async ({ dataJson }: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas`;
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas`;
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, {
       dataJson,
     });
@@ -416,7 +416,7 @@ export const importData = async ({
 }) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/import`; // Updated endpoint
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/import`; // Updated endpoint
     const { data }: { data: ObjectModel[] } = await axios.post(
       apiUrl,
       dataJsonArray // Send the array in the request body
@@ -432,7 +432,7 @@ export const importData = async ({
 export const fetchDataByObjectID = async (id: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/form/${id}`;
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/form/${id}`;
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -445,7 +445,7 @@ export const fetchDataByObjectID = async (id: string) => {
 export const fetchDataByTableGuid = async (guid: string) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/table/${guid}`;
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/table/${guid}`;
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
@@ -470,7 +470,7 @@ export const fetchObjectByGuid = async (guid: string) => {
 export const updateData = async ({ id, dataJson }: any) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/${id}`;
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/${id}`;
     const { data }: { data: ObjectModel } = await axios.put(apiUrl, {
       dataJson,
     });
@@ -484,7 +484,7 @@ export const updateData = async ({ id, dataJson }: any) => {
 export const deleteData = async (id: number) => {
   try {
     const httpRequest = useHttpRequest();
-    const apiUrl = `${httpRequest.externalUrl}/NeoForm/Datas/${id}`;
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Datas/${id}`;
     const response = await axios.delete(apiUrl);
     return response.data;
   } catch (error) {
