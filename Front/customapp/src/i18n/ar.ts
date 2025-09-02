@@ -183,6 +183,8 @@ const arabic = {
     missingOrInvalidInformationsMessage:
       "يرجى ملء جميع الحقول الإلزامية والتحقق من المعلومات المدخلة. بعض البيانات غير صالحة.",
     successMessage: "تم إرسال النموذج بنجاح! | معرف: ",
+    errorMessage: "فشل في إرسال النموذج.",
+    unknownError: "حدث خطأ غير معروف.",
   },
   EmailAuth: {
     accessVerification: "التحقق من الوصول",
