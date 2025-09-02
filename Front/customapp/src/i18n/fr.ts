@@ -214,6 +214,7 @@ const frensh = {
     serverError: "Erreur serveur. Veuillez réessayer plus tard.",
     networkError: "Erreur de connexion. Vérifiez votre connexion internet.",
     unexpectedError: "Une erreur inattendue s'est produite.",
+    invalidOrExpiredCode: "Code invalide ou expiré.",
   },
   AuthCallback: {
     processingAuthentication: "Traitement de l'authentification...",

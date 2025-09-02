@@ -225,6 +225,7 @@ const arabic = {
     serverError: "خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.",
     networkError: "خطأ في الاتصال. تحقق من اتصالك بالإنترنت.",
     unexpectedError: "حدث خطأ غير متوقع.",
+    invalidOrExpiredCode: "رمز غير صالح أو منتهي الصلاحية.",
   },
   AuthCallback: {
     processingAuthentication: "معالجة المصادقة...",
