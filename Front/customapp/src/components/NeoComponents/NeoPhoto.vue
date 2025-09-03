@@ -279,7 +279,7 @@ import {
   onMounted,
 } from "vue";
 import { logger } from "@/api/api";
-import { uploadFile, getFileByGuid } from "@/api/api";
+import { fileUpload, getFileByGuid } from "@/api/api";
 import { useI18n } from "vue-i18n";
 interface OptionConfig {
   label_AR: string;
@@ -296,6 +296,7 @@ interface OptionConfig {
   width: number;
   height: number;
   altText: string;
+  returnBase64: boolean;
   rules: { expression: string }[];
   events: any[];
 }
@@ -327,6 +328,7 @@ export default defineComponent({
         width: 375, // Default width
         height: 375, // Default height
         altText: "", // Default alt text
+        returnBase64: false, // Default returnBase64
       }),
     },
     showLabel: {
@@ -457,19 +459,30 @@ export default defineComponent({
             if (reader.result) {
               const base64String = reader.result as string;
 
-              // Call the new uploadFile API
+              // Convert blob to File object for fileUpload API
+              const file = new File(
+                [blob],
+                `NeoForm_Photo_${new Date().getTime()}.png`,
+                {
+                  type: "image/png",
+                }
+              );
+
               try {
-                let fileName = "NeoForm_Photo_" + new Date().getTime();
-                const response = await uploadFile(base64String, fileName);
+                const response = await fileUpload(file);
                 if (response) {
-                  const newValue = [
-                    ...internalValue.value,
-                    {
-                      fileName: fileName,
-                      fileB64: base64String.split(",")[1],
-                      guid: response,
-                    },
-                  ];
+                  const fileData: any = {
+                    fileName: file.name,
+                    fileB64: base64String.split(",")[1],
+                    guid: response,
+                  };
+
+                  // Add base64 data if returnBase64 option is true
+                  if (props.options.returnBase64) {
+                    fileData.base64 = base64String.split(",")[1];
+                  }
+
+                  const newValue = [...internalValue.value, fileData];
                   internalValue.value = newValue; // This will trigger the setter and emit the event
                 } else {
                   console.error(
@@ -514,18 +527,22 @@ export default defineComponent({
           if (reader.result) {
             const base64String = reader.result as string;
 
-            // Call the new uploadFile API
+            // Call the fileUpload API
             try {
-              const response = await uploadFile(base64String, file.name);
+              const response = await fileUpload(file);
               if (response) {
-                const newValue = [
-                  ...internalValue.value,
-                  {
-                    fileName: file.name,
-                    fileB64: base64String.split(",")[1],
-                    guid: response,
-                  },
-                ];
+                const fileData: any = {
+                  fileName: file.name,
+                  fileB64: base64String.split(",")[1],
+                  guid: response,
+                };
+
+                // Add base64 data if returnBase64 option is true
+                if (props.options.returnBase64) {
+                  fileData.base64 = base64String.split(",")[1];
+                }
+
+                const newValue = [...internalValue.value, fileData];
                 internalValue.value = newValue; // This will trigger the setter and emit the event
               } else {
                 console.error(

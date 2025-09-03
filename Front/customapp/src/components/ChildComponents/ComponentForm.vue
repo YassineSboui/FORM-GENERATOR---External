@@ -810,7 +810,8 @@ const processFieldData = (element: string, options: any) => {
 
   switch (fieldType) {
     case "Upload":
-      if (!options.useAILise) {
+      console.log("Processing Upload field");
+      if (!options.useAILise && !options.returnBase64) {
         const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
         filesArr.forEach((file) => {
           NoticeAttachements.value.push({
@@ -819,10 +820,25 @@ const processFieldData = (element: string, options: any) => {
           });
         });
       }
+
+      if (options.returnBase64) {
+        NoticeData.value[element] = mapFileField(fieldValue);
+      }
       break;
 
     case "PHOTO":
-      NoticeFiles.value = mapFileField(fieldValue);
+      console.log("Processing PHOTO field");
+      if (!options.returnBase64) {
+        const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
+        filesArr.forEach((file) => {
+          NoticeAttachements.value.push({
+            guid: file.guid,
+            fileName: file.fileName,
+          });
+        });
+      } else {
+        NoticeData.value[element] = mapFileField(fieldValue);
+      }
       break;
 
     case "Editor":
@@ -1146,7 +1162,7 @@ const mapFileField = (field: any) => {
   for (let i = 0; i < field.length; i++) {
     const file = field[i];
     mappedFiles.push({
-      FileB64: "",
+      FileB64: file.base64,
       Guid: file.guid,
       fileName: file.fileName,
     });

@@ -1,5 +1,9 @@
 <template>
-  <div class="neoUploadFile" v-show="!isHidden">
+  <div
+    class="neoUploadFile"
+    :class="{ 'mb-3': !isParentNeoTable }"
+    v-show="!isHidden"
+  >
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         <span>{{
@@ -38,99 +42,76 @@
       }"
     >
       <!-- rest of the template -->
-      <FileUpload
-        v-if="!isParentNeoTable"
-        mode="basic"
-        name="demo[]"
-        @uploader="onAdvancedUpload($event)"
-        customUpload
-        :multiple="options.multiple ? true : false"
-        :maxFileSize="options.size"
-        :accept="options.accept"
-        :disabled="isDisabled"
-      >
-        <template #empty>
-          <div
-            class="flex align-items-center justify-content-center flex-column"
+      <div class="con" v-if="options.isLinear">
+        <div class="basic flex flex-row flex-wrap justify-content-between">
+          <label
+            style="width: 100%"
+            class="custom-file-input flex flex-row flex-wrap justify-content-between neo-upload-field"
           >
-            <i
-              class="pi pi-cloud-upload border-2 border-circle p-5 text-8xl text-400 border-400"
+            <input
+              type="file"
+              @change="onFileChange"
+              :multiple="options.multiple ? true : false"
+              ref="fileInput"
+              :accept="options.accept"
+              style="display: none"
+              :disabled="isDisabled || loading"
             />
-            <p class="mt-4 mb-0">Drag and drop files to here to upload.</p>
-          </div>
-        </template>
-        <template
-          #header="{ chooseCallback, uploadCallback, clearCallback, files }"
-        >
-          <div
-            class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2"
-          >
-            <div class="flex gap-2">
-              <Button
-                @click="chooseCallback()"
-                icon="pi pi-images"
-                rounded
-                outlined
-              ></Button>
-              <Button
-                @click="uploadEvent(files)"
-                icon="pi pi-cloud-upload"
-                rounded
-                outlined
-                severity="success"
-                :disabled="!files || files.length === 0"
-              ></Button>
-              <Button
-                @click="clear(clearCallback)"
-                icon="pi pi-times"
-                rounded
-                outlined
-                severity="danger"
-                :disabled="!files || files.length === 0"
-              ></Button>
-            </div>
-          </div>
-        </template>
-        <template #content="{ removeUploadedFileCallback, removeFileCallback }">
-          <div v-if="uploadedFiles.length > 0">
-            <div class="">
+            <div class="names flex flex-row" v-if="files.length > 0">
               <div
-                v-for="(file, index) of uploadedFiles"
-                :key="file.fileName + file.type + file.size"
-                class="card m-1 p-3 flex border-1 surface-border align-items-center justify-content-between flex-wrap"
+                class="file-name mr-2 flex flex-row flex-wrap"
+                v-for="file in files"
+                :key="file.fileName"
               >
-                <div class="flex align-items-center">
-                  <Avatar
-                    class="p-overlay-badge mr-3"
-                    :image="file.objectURL"
-                    size="xlarge"
-                  />
-                  <div class="flex flex-column">
-                    <span>{{ file.fileName }}</span>
-                    <Badge
-                      value="Completed"
-                      class="mt-1"
-                      severity="success"
-                      style="max-width: 6rem"
-                    />
-                  </div>
-                </div>
-
+                <span style="display: flex; align-items: center">{{
+                  file.fileName ||
+                  file.name ||
+                  file.elise?.fileName ||
+                  file.ecsAi?.fileName
+                }}</span>
                 <Button
-                  icon="pi pi-times"
-                  @click="remove(index)"
-                  rounded
-                  text
+                  class="ml-1"
                   severity="danger"
-                />
+                  text
+                  style="height: 20; width: 20"
+                  icon="pi pi-times-circle"
+                  @click.stop.prevent="files.splice(files.indexOf(file), 1)"
+                ></Button>
               </div>
             </div>
-          </div>
-        </template>
-      </FileUpload>
+
+            <div
+              v-else
+              style="
+                max-width: 50%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-height: 1.2rem;
+              "
+            >
+              {{ options.placeholder || "Sélectionnez un fichier" }}
+            </div>
+            <div
+              v-if="loading"
+              class="loader-overlay flex align-items-center justify-content-between"
+            >
+              <i
+                class="pi pi-spin pi-spinner text-xl"
+                style="color: #0a6e89"
+              ></i>
+            </div>
+            <span
+              v-else
+              class="flex justify-content-between align-items-center"
+            >
+              <i class="pi pi-upload mr-3"></i>
+            </span>
+          </label>
+        </div>
+      </div>
       <FileUpload
         v-else
-        mode="basic"
         name="demo[]"
         @uploader="onAdvancedUpload($event)"
         customUpload
@@ -138,8 +119,6 @@
         :maxFileSize="options.size"
         :accept="options.accept"
         :disabled="isDisabled"
-        class="table-outlined-button"
-        auto
       >
         <template #empty>
           <div
@@ -246,6 +225,7 @@ interface OptionConfig {
   accept: string;
   size: number;
   isLinear: boolean | null;
+  returnBase64: boolean | null;
   rules: { expression: string }[];
   events: any[];
 }
@@ -274,6 +254,7 @@ export default {
         accept: "",
         size: 1000000,
         isLinear: false,
+        returnBase64: false,
         rules: [],
         events: [],
       }),
@@ -315,12 +296,20 @@ export default {
         };
         await reader.readAsDataURL(file);
         reader.onload = () => {
-          files.value.push({
+          const fileData: any = {
             fileName: file.name,
             size: file.size,
             type: file.type,
             data: reader.result,
-          });
+          };
+
+          // Add base64 data if returnBase64 option is true
+          if (props.options.returnBase64 && reader.result) {
+            const result = reader.result as string;
+            fileData.base64 = result.split(",")[1];
+          }
+
+          files.value.push(fileData);
           // emit("update:modelValue", files.value);
         };
       }
@@ -361,17 +350,68 @@ export default {
           files.value.splice(existingFileIndex, 1);
         }
 
+        // Helper function to convert file to base64
+        const convertToBase64 = (file: File): Promise<string> => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              // Remove the data URL prefix (e.g., "data:image/png;base64,")
+              const base64 = result.split(",")[1];
+              resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        };
+
+        // Get base64 if returnBase64 option is true
+        const base64Data = props.options.returnBase64
+          ? await convertToBase64(file)
+          : null;
+
+        // Case where the file is related to Elise (handle both API calls)
+        if (props.options.relatedToElise && props.options.useAILise) {
+          const ecsAiResult = await AifileUpload(file);
+          const eliseResult = await fileUpload(file);
+
+          const fileData: any = {
+            ecsAi: ecsAiResult,
+            elise: {
+              guid: eliseResult,
+              isLinked: false,
+              fileName: file.name,
+            },
+          };
+
+          if (props.options.returnBase64) {
+            fileData.base64 = base64Data;
+          }
+
+          files.value.push(fileData);
+        }
         // Case where the file is related to Elise (handle upload via fileUpload API)
-        if (props.options.useAILise) {
+        else if (props.options.useAILise && !props.options.relatedToElise) {
           const result = await AifileUpload(file);
-          files.value.push(result);
+          const fileData: any = result;
+
+          if (props.options.returnBase64) {
+            fileData.base64 = base64Data;
+          }
+
+          files.value.push(fileData);
         } else {
-          const result = await fileUpload(file);
-          files.value.push({
-            guid: result,
+          const fileData: any = {
+            guid: await fileUpload(file),
             isLinked: false,
             fileName: file.name,
-          });
+          };
+
+          if (props.options.returnBase64) {
+            fileData.base64 = base64Data;
+          }
+
+          files.value.push(fileData);
         }
       }
 
@@ -382,7 +422,6 @@ export default {
 
       loading.value = false;
     }
-
     // Function to get current value
     const getValue = () => {
       return props.modelValue;
@@ -515,5 +554,30 @@ export default {
   background: transparent;
   border-color: var(--p-surface-color);
   color: var(--p-surface-color);
+}
+
+.neo-upload-field {
+  border: 1px solid var(--p-inputtext-border-color);
+  border-radius: var(--p-border-radius);
+  padding: 0.75rem;
+  background: var(--p-inputtext-background);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  min-height: 2.5rem;
+
+  &:hover {
+    border-color: var(--p-primary-color);
+  }
+
+  &:focus-within {
+    border-color: var(--p-primary-color);
+    box-shadow: 0 0 0 0.2rem var(--p-primary-color-20);
+  }
+
+  &:disabled {
+    background: var(--p-inputtext-disabled-background);
+    color: var(--p-inputtext-disabled-color);
+    cursor: not-allowed;
+  }
 }
 </style>
