@@ -822,7 +822,7 @@ const processFieldData = (element: string, options: any) => {
       }
 
       if (options.returnBase64) {
-        NoticeData.value[element] = mapFileField(fieldValue);
+        NoticeData.value[element] = mapFileField(fieldValue, true);
       }
       break;
 
@@ -837,7 +837,7 @@ const processFieldData = (element: string, options: any) => {
           });
         });
       } else {
-        NoticeData.value[element] = mapFileField(fieldValue);
+        NoticeData.value[element] = mapFileField(fieldValue, true);
       }
       break;
 
@@ -1153,12 +1153,20 @@ watch(submitNow, (newVal) => {
   }
 });
 // function to map the file field to the notice object
-const mapFileField = (field: any) => {
+const mapFileField = (field: any, base64Only?: boolean) => {
   if (!field) {
     return [];
   }
   const mappedFiles = [];
   console.log("field", field);
+  if (base64Only) {
+    const files = [];
+    for (let i = 0; i < field.length; i++) {
+      const file = field[i];
+      files.push(file.base64);
+    }
+    return { File: files };
+  }
   for (let i = 0; i < field.length; i++) {
     const file = field[i];
     mappedFiles.push({
