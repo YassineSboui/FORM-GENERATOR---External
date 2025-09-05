@@ -67,7 +67,7 @@ namespace NeoForm_Externe.Services
 
                 // Check if email is in the whitelist
                 var isWhitelisted = config.Emails?.Any(e =>
-                    string.Equals(e, email, StringComparison.OrdinalIgnoreCase)) ?? false;
+                    string.Equals(e, email, StringComparison.OrdinalIgnoreCase)) ?? config.allEmailsAllowed ?? false;
 
                 if (!isWhitelisted)
                 {
@@ -246,6 +246,15 @@ namespace NeoForm_Externe.Services
                     };
                 }
 
+                if (authResponse?.Valid == true && authResponse.AuthType == "otp")
+                {
+                    return new InvitationConfig
+                    {
+                        allEmailsAllowed = true,
+                        VerifyEmail = true
+                    };
+                }
+
                 return null;
             }
             catch (Exception ex)
@@ -320,5 +329,6 @@ namespace NeoForm_Externe.Services
     {
         public string[] Emails { get; set; }
         public bool VerifyEmail { get; set; }
+        public bool? allEmailsAllowed { get; set; }
     }
 }

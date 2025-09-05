@@ -211,6 +211,8 @@ const frensh = {
       "Ressource non trouvée. Le formulaire ou l'invitation n'existe pas.",
     tooManyRequests:
       "Trop de tentatives. Veuillez attendre avant de réessayer.",
+    invalidEmailFormat: "Format d'email invalide.",
+    formNotFound: "Formulaire non trouvé ou n'existe pas.",
     serverError: "Erreur serveur. Veuillez réessayer plus tard.",
     networkError: "Erreur de connexion. Vérifiez votre connexion internet.",
     unexpectedError: "Une erreur inattendue s'est produite.",

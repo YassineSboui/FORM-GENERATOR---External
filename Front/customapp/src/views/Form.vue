@@ -583,6 +583,7 @@ export default defineComponent({
         console.error("Error validating stored auth token:", error);
         // Clear potentially compromised session data
         sessionStorage.removeItem("email_authenticated");
+        sessionStorage.removeItem("otp_authenticated");
         sessionStorage.removeItem("authenticated_email");
         sessionStorage.removeItem("email_auth_token");
         return false;
@@ -605,28 +606,25 @@ export default defineComponent({
 
       try {
         userEmail.value = emailInput.value;
-        const result = await validateEmailInvitationAPI(emailInput.value);
 
-        if (result.valid) {
+        if (authConfig.value?.authtype === "otp") {
+          // For OTP auth type, send OTP directly without validating email invitation
+          await sendOTP(emailInput.value);
           showEmailDialog.value = false;
+          showOTPDialog.value = true;
+        } else {
+          // For invitation auth type, validate email first
+          const result = await validateEmailInvitationAPI(emailInput.value);
 
-          if (authConfig.value.VerifyEmail) {
+          if (result.valid) {
+            showEmailDialog.value = false;
+            console.log("authConfig:", authConfig.value);
             // Need OTP verification
             await sendOTP(emailInput.value);
             showOTPDialog.value = true;
           } else {
-            // Email is valid, no OTP needed
-            // For non-OTP verification, we can proceed without a secure token for now
-            // but we should generate a simple session identifier for basic security
-            authToken.value =
-              result.token ||
-              `email_session_${Date.now()}_${Math.random()
-                .toString(36)
-                .substr(2, 9)}`;
-            completeEmailAuthentication();
+            emailValidationError.value = t("EmailAuth.emailNotAuthorized");
           }
-        } else {
-          emailValidationError.value = t("EmailAuth.emailNotAuthorized");
         }
       } catch (error: any) {
         console.error("Email validation error:", error);
@@ -653,7 +651,7 @@ export default defineComponent({
           emailValidationError.value = t("EmailAuth.formNotFound");
         } else {
           emailValidationError.value =
-            error.message || t("EmailAuth.validationFailed");
+            error.message || t("EmailAuth.failedToValidateEmail");
         }
       }
     };
@@ -679,7 +677,13 @@ export default defineComponent({
       }
 
       try {
-        const result = await verifyOTP(userEmail.value, otpInput.value);
+        const result = await verifyEmailOTP(
+          userEmail.value,
+          otpInput.value,
+          route.params.guid as string,
+          route.query.code as string,
+          route.params.client as string
+        );
 
         if (result.valid) {
           if (result.token) {
@@ -777,6 +781,7 @@ export default defineComponent({
     // Clear authentication data (for logout or security purposes)
     const clearAuthenticationData = () => {
       sessionStorage.removeItem("email_authenticated");
+      sessionStorage.removeItem("otp_authenticated");
       sessionStorage.removeItem("authenticated_email");
       sessionStorage.removeItem("email_auth_token");
       authToken.value = "";
@@ -785,8 +790,13 @@ export default defineComponent({
     };
 
     const completeEmailAuthentication = async () => {
-      // Store secure authentication data
-      sessionStorage.setItem("email_authenticated", "true");
+      // Store secure authentication data based on auth type
+      if (authConfig.value?.authtype === "otp") {
+        sessionStorage.setItem("otp_authenticated", "true");
+      } else {
+        sessionStorage.setItem("email_authenticated", "true");
+      }
+
       sessionStorage.setItem("authenticated_email", userEmail.value);
       sessionStorage.setItem("email_auth_token", authToken.value); // Store secure token
       isAuthenticated.value = true;
@@ -813,7 +823,11 @@ export default defineComponent({
     const loadFormData = async () => {
       try {
         // For email authentication, validate token before loading sensitive data
-        if (authRequired.value && authConfig.value?.authtype === "invitation") {
+        if (
+          authRequired.value &&
+          (authConfig.value?.authtype === "invitation" ||
+            authConfig.value?.authtype === "otp")
+        ) {
           if (!authToken.value) {
             console.error("No authentication token available");
             clearAuthenticationData();
@@ -1073,6 +1087,54 @@ export default defineComponent({
             } else {
               // Need to authenticate with email
               console.log("Opening email authentication dialog...");
+              // Don't load form data yet, wait for authentication
+              // Delay the dialog to ensure the component is fully mounted
+              setTimeout(() => {
+                openEmailDialog();
+              }, 500);
+              return; // Exit early, don't load form data
+            }
+          } else if (authInfo.authtype === "otp") {
+            authRequired.value = true;
+            authConfig.value = authInfo.authconfig;
+
+            // Check if already authenticated with OTP
+            const otpAuthFlag = sessionStorage.getItem("otp_authenticated");
+            const authenticatedEmail = sessionStorage.getItem(
+              "authenticated_email"
+            );
+
+            console.log("Checking OTP authentication flag:", otpAuthFlag);
+
+            if (otpAuthFlag === "true" && authenticatedEmail) {
+              // Validate stored authentication with server for security
+              console.log(
+                "Validating stored OTP authentication with server..."
+              );
+              const isTokenValid = await validateStoredAuth();
+
+              if (isTokenValid) {
+                // Authentication is valid
+                isAuthenticated.value = true;
+                console.log(
+                  "Server confirmed OTP authentication is valid for email:",
+                  authenticatedEmail
+                );
+                // Load form data since we're already authenticated
+                await loadFormData();
+              } else {
+                // Token/email validation failed, require re-authentication
+                console.log(
+                  "Server validation failed - stored OTP authentication is invalid, requiring re-authentication"
+                );
+                setTimeout(() => {
+                  openEmailDialog();
+                }, 500);
+                return;
+              }
+            } else {
+              // Need to authenticate with OTP
+              console.log("Opening OTP authentication dialog...");
               // Don't load form data yet, wait for authentication
               // Delay the dialog to ensure the component is fully mounted
               setTimeout(() => {
