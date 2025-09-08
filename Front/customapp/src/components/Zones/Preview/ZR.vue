@@ -246,7 +246,7 @@ const deleteDuplicated = (elem: any, index: any) => {
 .zone-page-header {
   position: fixed;
   top: 0;
-  width: 100%;
+  width: calc(100% - 15px);
   z-index: 1000;
   background-color: white;
   left: 0;

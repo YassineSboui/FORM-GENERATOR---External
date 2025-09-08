@@ -2591,7 +2591,6 @@ defineExpose({
 .componentForm {
   width: 99%;
   height: 100%;
-  min-height: 76vh;
 }
 .head {
   padding: 2px !important;
@@ -2633,7 +2632,7 @@ defineExpose({
   position: relative;
   .pages-headers {
     position: sticky;
-    width: 100%;
+    width: calc(100% - 35px);
     top: 0;
     background-color: #f8f9fa;
     z-index: 1000;
@@ -2656,7 +2655,7 @@ defineExpose({
   .zone-page-header {
     position: sticky;
     top: 0;
-    width: 100%;
+    width: calc(100% - 15px);
     z-index: 1000;
     background-color: white;
     left: 0;

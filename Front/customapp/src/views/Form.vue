@@ -1519,7 +1519,7 @@ body.dark .footer-content {
   position: relative;
   .pages-headers {
     position: fixed;
-    width: 100%;
+    width: calc(100% - 35px);
     top: 0;
     z-index: 1000;
   }
@@ -1528,7 +1528,7 @@ body.dark .footer-content {
   .zone-page-header {
     position: fixed;
     top: 0;
-    width: 100%;
+    width: calc(100% - 15px);
     z-index: 1000;
     background-color: white;
     left: 0;
