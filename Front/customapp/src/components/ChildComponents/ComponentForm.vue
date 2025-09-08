@@ -4,6 +4,28 @@
     :dir="isRTL ? 'rtl' : 'ltr'"
     :style="{ '--scrollbar-margin-top': marginTop }"
   >
+    <!-- Custom Toast with Copy Button -->
+    <Toast group="custom">
+      <template #message="slotProps">
+        <div class="flex flex-col items-start flex-auto">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="pi pi-check-circle text-xl"></i>
+            <span class="font-bold">{{ slotProps.message.summary }}</span>
+          </div>
+          <div class="flex items-center justify-between w-full gap-3">
+            <span class="font-medium">{{ slotProps.message.detail }}</span>
+            <button
+              @click="copyToClipboard(slotProps.message.detail, $event)"
+              class="copy-button"
+              title="Copy chrono"
+            >
+              📋 Copy
+            </button>
+          </div>
+        </div>
+      </template>
+    </Toast>
+
     <div class="stepper" v-if="stepper.isStepper">
       <div
         class="ZSTNavigation mb-3"
@@ -460,6 +482,7 @@ import {
 } from "@/api/api";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
 import { useAppStore } from "@/store/app.store";
 import ZoneComponent from "./ZoneComponent.vue";
 import { useRoute, useRouter } from "vue-router";
@@ -959,14 +982,36 @@ const handlePostSaveNavigation = (obj: any) => {
   emit("done", true);
   toast.add({
     severity: "success",
-    summary: t("ComponentForm.successMessage") + " " + obj.chrono,
-    life: 3000,
+    summary: t("ComponentForm.successMessage"),
+    detail: obj.chrono,
+    group: "custom",
+    life: 5000,
   });
 
   // Delay the reload to allow toast to be visible for its full duration
   setTimeout(() => {
     parent.location.reload();
   }, 3200); // 200ms extra buffer to ensure toast completes
+};
+
+// Function to copy chrono to clipboard
+const copyToClipboard = async (text: string, event: Event) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    const button = event.target as HTMLButtonElement;
+    const originalText = button.innerHTML;
+    button.innerHTML = "✓ Copied!";
+    button.style.background = "#22c55e";
+    button.style.color = "#fff";
+
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.style.background = "";
+      button.style.color = "";
+    }, 2000);
+  } catch (err) {
+    console.error("Failed to copy text: ", err);
+  }
 };
 
 // Helper function to prepare notice data
@@ -2668,6 +2713,24 @@ defineExpose({
 .visibility-hidden {
   visibility: hidden;
 }
+
+.copy-button {
+  background: #fff;
+  border: 1px solid #22c55e;
+  color: #22c55e;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.copy-button:hover {
+  background: #22c55e;
+  color: #fff;
+}
+
 ::-webkit-scrollbar-track {
   margin-top: var(--scrollbar-margin-top);
 }
