@@ -268,7 +268,7 @@ export default {
       if (
         !props.options.elements.find(
           (item: any) =>
-            item[props.options.key] === temporary.value[props.options.key]
+            item[props.options.value] === temporary.value[props.options.value]
         )
       ) {
         props.options.elements.push(temporary.value);
@@ -342,7 +342,7 @@ export default {
       if (
         !props.options.elements.find(
           (item: any) =>
-            item[props.options.key] === temporary.value[props.options.key]
+            item[props.options.value] === temporary.value[props.options.value]
         )
       ) {
         props.options.elements.push(temporary.value);
