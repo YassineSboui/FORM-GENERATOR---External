@@ -5,27 +5,46 @@
     :style="{ '--scrollbar-margin-top': marginTop }"
   >
     <!-- Custom Toast with Copy Button -->
-    <Toast group="custom">
+    <Toast position="center" group="custom" class="custom-toast-overlay">
       <template #message="slotProps">
-        <div class="flex flex-col items-start flex-auto">
-          <div class="flex items-center gap-2 mb-2">
-            <i class="pi pi-check-circle text-xl"></i>
-            <span class="font-bold">{{ slotProps.message.summary }}</span>
-          </div>
-          <div class="flex items-center justify-between w-full gap-3">
-            <span class="font-medium">{{ slotProps.message.detail }}</span>
+        <div class="custom-toast-content">
+          <div class="toast-header">
+            <i class="pi pi-check-circle success-icon"></i>
+            <span class="toast-title">{{ slotProps.message.summary }}</span>
             <button
-              @click="copyToClipboard(slotProps.message.detail, $event)"
-              class="copy-button"
-              title="Copy chrono"
+              @click="closeToast(slotProps)"
+              class="close-button"
+              title="Close"
             >
-              📋 Copy
+              <i class="pi pi-times"></i>
             </button>
+          </div>
+          <div class="toast-body">
+            <div class="chrono-container">
+              <span class="chrono-label">Chrono:</span>
+              <span class="chrono-value">{{ slotProps.message.detail }}</span>
+            </div>
+            <div class="toast-actions">
+              <button
+                @click="copyAndClose(slotProps.message.detail, slotProps)"
+                class="action-button copy-btn"
+                title="Copy chrono and close"
+              >
+                <i class="pi pi-copy"></i>
+                Copy
+              </button>
+            </div>
           </div>
         </div>
       </template>
     </Toast>
 
+    <!-- Backdrop blur overlay -->
+    <div
+      v-if="showToastBackdrop"
+      class="toast-backdrop"
+      @click="closeAllToasts"
+    ></div>
     <div class="stepper" v-if="stepper.isStepper">
       <div
         class="ZSTNavigation mb-3"
@@ -614,6 +633,7 @@ const fiel = ref({} as any);
 const duplicateClick = ref(0);
 const copy = ref({ copy: [] } as any);
 const toast = useToast();
+const showToastBackdrop = ref(false);
 const internalFormConfig = computed(() => {
   return props.configForm;
 });
@@ -980,38 +1000,48 @@ const executeAfterSaveCode = async (obj: any) => {
 // Helper function to handle navigation after save
 const handlePostSaveNavigation = (obj: any) => {
   emit("done", true);
+  showToastBackdrop.value = true;
   toast.add({
     severity: "success",
     summary: t("ComponentForm.successMessage"),
     detail: obj.chrono,
     group: "custom",
-    life: 5000,
+    life: 0, // Make it sticky until user interacts
   });
-
-  // Delay the reload to allow toast to be visible for its full duration
-  setTimeout(() => {
-    parent.location.reload();
-  }, 3200); // 200ms extra buffer to ensure toast completes
 };
 
-// Function to copy chrono to clipboard
-const copyToClipboard = async (text: string, event: Event) => {
+// Function to copy chrono and close toast
+const copyAndClose = async (text: string, slotProps: any) => {
   try {
     await navigator.clipboard.writeText(text);
-    const button = event.target as HTMLButtonElement;
-    const originalText = button.innerHTML;
-    button.innerHTML = "✓ Copied!";
-    button.style.background = "#22c55e";
-    button.style.color = "#fff";
-
+    closeToast(slotProps);
+    // Reload after successful copy
     setTimeout(() => {
-      button.innerHTML = originalText;
-      button.style.background = "";
-      button.style.color = "";
-    }, 2000);
+      parent.location.reload();
+    }, 500);
   } catch (err) {
     console.error("Failed to copy text: ", err);
+    closeToast(slotProps);
   }
+};
+
+// Function to close specific toast
+const closeToast = (slotProps: any) => {
+  showToastBackdrop.value = false;
+  toast.removeGroup("custom");
+  // Reload after close
+  setTimeout(() => {
+    parent.location.reload();
+  }, 500);
+};
+
+// Function to close all toasts
+const closeAllToasts = () => {
+  showToastBackdrop.value = false;
+  toast.removeAllGroups();
+  setTimeout(() => {
+    parent.location.reload();
+  }, 500);
 };
 
 // Helper function to prepare notice data
@@ -2714,21 +2744,141 @@ defineExpose({
   visibility: hidden;
 }
 
-.copy-button {
-  background: #fff;
-  border: 1px solid #22c55e;
-  color: #22c55e;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
-  white-space: nowrap;
+/* Toast backdrop blur */
+.toast-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+  z-index: 9998;
 }
 
-.copy-button:hover {
+/* Custom toast overlay */
+.custom-toast-overlay {
+  z-index: 9999 !important;
+}
+
+/* Custom toast content */
+.custom-toast-content {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e5e5;
+  min-width: 400px;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+/* Toast header */
+.toast-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.success-icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.toast-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Toast body */
+.toast-body {
+  padding: 20px;
+}
+
+.chrono-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #22c55e;
+}
+
+.chrono-label {
+  font-weight: 600;
+  color: #374151;
+  margin-right: 8px;
+}
+
+.chrono-value {
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  color: #22c55e;
+  font-size: 16px;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e5e5;
+}
+
+/* Toast actions */
+.toast-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.copy-btn {
   background: #22c55e;
-  color: #fff;
+  color: white;
+}
+
+.copy-btn:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.copy-btn i {
+  font-size: 14px;
 }
 
 ::-webkit-scrollbar-track {

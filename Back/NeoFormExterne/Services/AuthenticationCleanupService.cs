@@ -25,6 +25,12 @@ namespace NeoForm_Externe.Services
 
                     await Task.Delay(TimeSpan.FromHours(1), stoppingToken); // Run every hour
                 }
+                catch (TaskCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    // Arrêt normal du service, ne pas logger comme une erreur
+                    _logger.LogInformation("Authentication cleanup service is stopping.");
+                    break;
+                }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error in authentication cleanup service");
@@ -32,5 +38,6 @@ namespace NeoForm_Externe.Services
                 }
             }
         }
+
     }
 }
