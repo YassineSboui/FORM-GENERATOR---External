@@ -2880,7 +2880,14 @@ defineExpose({
 .copy-btn i {
   font-size: 14px;
 }
-
+.p-toast-center {
+  min-width: 20vw;
+  transform: translate(-50%, -50%);
+  width: fit-content !important;
+}
+.p-toast-close-button {
+  display: none !important;
+}
 ::-webkit-scrollbar-track {
   margin-top: var(--scrollbar-margin-top);
 }
