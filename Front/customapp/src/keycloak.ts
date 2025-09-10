@@ -4,10 +4,35 @@ import Keycloak from "keycloak-js";
 // Function to get config and construct dynamic URL
 const getKeycloakConfig = async () => {
   try {
-    const response = await fetch("/config.json");
+    // Try multiple paths for config.json
+    const viteBaseUrl = import.meta.env.BASE_URL || "/";
+    const configPaths = [
+      `${viteBaseUrl}config.json`, // Vite base URL (should be /neoformext/front/config.json)
+      "./config.json", // Relative to current path
+      "/config.json", // Root path
+      `${window.location.pathname}config.json`, // Relative to app path
+    ];
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    let response;
+    let lastError;
+
+    for (const path of configPaths) {
+      try {
+        response = await fetch(path);
+        if (response.ok) {
+          console.log(`Config loaded from: ${path}`);
+          break;
+        }
+      } catch (error) {
+        lastError = error;
+        continue;
+      }
+    }
+
+    if (!response || !response.ok) {
+      throw new Error(
+        `Failed to load config from any path. Last error: ${lastError}`
+      );
     }
 
     const config = await response.json();
