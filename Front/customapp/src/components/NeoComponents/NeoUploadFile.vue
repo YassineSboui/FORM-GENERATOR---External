@@ -57,9 +57,12 @@
               style="display: none"
               :disabled="isDisabled || loading"
             />
-            <div class="names flex flex-row" v-if="files.length > 0">
+            <div
+              class="names flex flex-row neo-upload-files-container"
+              v-if="files.length > 0"
+            >
               <div
-                class="file-name mr-2 flex flex-row flex-wrap"
+                class="file-name mr-2 flex flex-row flex-nowrap"
                 v-for="file in files"
                 :key="file.fileName"
               >
@@ -550,6 +553,9 @@ export default {
 </script>
 
 <style lang="scss">
+.neoUploadFile {
+  margin-bottom: 5px;
+}
 .table-outlined-button {
   background: transparent;
   border-color: var(--p-surface-color);
@@ -558,12 +564,15 @@ export default {
 
 .neo-upload-field {
   border: 1px solid var(--p-inputtext-border-color);
-  border-radius: var(--p-border-radius);
+  border-radius: 5px;
   padding: 0.75rem;
   background: var(--p-inputtext-background);
   transition: border-color 0.2s, box-shadow 0.2s;
   cursor: pointer;
-  min-height: 2.5rem;
+  height: 100%; // Take full height of parent container
+  max-height: 100%; // Don't exceed parent height
+  min-height: auto; // Remove minimum height constraint
+  overflow: hidden; // Hide overflow to maintain consistent height
 
   &:hover {
     border-color: var(--p-primary-color);
@@ -578,6 +587,63 @@ export default {
     background: var(--p-inputtext-disabled-background);
     color: var(--p-inputtext-disabled-color);
     cursor: not-allowed;
+  }
+}
+
+.neo-upload-files-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: calc(100% - 40px); // Leave space for the upload icon
+  scrollbar-width: thin;
+  scrollbar-color: var(--p-primary-color) transparent;
+  height: auto; // Auto height but constrained by parent
+  max-height: 100%; // Don't exceed parent container
+  align-items: center; // Center align items vertically
+
+  // Custom scrollbar for WebKit browsers
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--p-primary-color);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--p-primary-color-dark);
+  }
+
+  .file-name {
+    flex-shrink: 0; // Prevent files from shrinking
+    white-space: nowrap; // Prevent text wrapping
+    background: var(--p-surface-100);
+    border: 1px solid var(--p-surface-border);
+    border-radius: 15px; // 15px border radius as requested
+    padding: 0.2rem 0.4rem; // Reduced padding to make it more compact
+    margin-right: 0.5rem;
+    display: flex;
+    align-items: center;
+    max-width: 200px; // Limit individual file name width
+    height: 24px; // Fixed smaller height
+    font-size: 0.875rem; // Slightly smaller font size
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: calc(100% - 25px); // Leave space for the delete button
+      line-height: 1.2; // Compact line height
+    }
+
+    .p-button {
+      height: 18px !important;
+      min-width: 18px !important;
+      font-size: 0.75rem !important;
+    }
   }
 }
 </style>

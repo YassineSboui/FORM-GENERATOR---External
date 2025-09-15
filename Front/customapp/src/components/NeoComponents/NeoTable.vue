@@ -43,7 +43,13 @@
             <span class="pi pi-trash"></span>
           </Button>
           <Button
-            v-if="type === 'DIALOG'"
+            v-if="
+              type === 'DIALOG' &&
+              (!config.objectConfig.formConfig.allowedActions ||
+                config.objectConfig.formConfig.allowedActions.includes(
+                  'create'
+                ))
+            "
             size="small"
             @click="openNew"
             class="iconStyle"
@@ -219,7 +225,11 @@
               v-if="
                 slotProps.data.id !== undefined &&
                 deletable &&
-                !slotProps.data.blockedRow
+                !slotProps.data.blockedRow &&
+                (!config.objectConfig.formConfig.allowedActions ||
+                  config.objectConfig.formConfig.allowedActions.includes(
+                    'delete'
+                  ))
               "
               style="margin-right: 10px"
               icon="pi pi-trash"
@@ -229,7 +239,14 @@
               @click="() => Delete(slotProps.data)"
             />
             <Button
-              v-if="slotProps.data.id !== undefined && type === 'DIALOG'"
+              v-if="
+                slotProps.data.id !== undefined &&
+                type === 'DIALOG' &&
+                (!config.objectConfig.formConfig.allowedActions ||
+                  config.objectConfig.formConfig.allowedActions.includes(
+                    'update'
+                  ))
+              "
               icon="pi pi-pencil"
               class="grid-icon-edit"
               text
@@ -286,7 +303,13 @@
             <span class="pi pi-trash"></span>
           </Button>
           <Button
-            v-if="type === 'DIALOG'"
+            v-if="
+              type === 'DIALOG' &&
+              (!config.objectConfig.formConfig.allowedActions ||
+                config.objectConfig.formConfig.allowedActions.includes(
+                  'create'
+                ))
+            "
             size="small"
             @click="openNew"
             class="iconStyle"
@@ -438,7 +461,7 @@
         </template>
       </Column>
 
-      <!-- <Column
+      <Column
         v-if="type !== 'DIALOG'"
         :rowEditor="true"
         style="width: 2%; min-width: 2rem"
@@ -449,7 +472,7 @@
         alignFrozen="right"
         :dir="isRTL ? 'rtl' : 'ltr'"
         class="p-cell-editing"
-      /> -->
+      />
 
       <Column
         v-if="config.objectConfig.formConfig.withActions"
@@ -466,7 +489,14 @@
         <template #body="slotProps">
           <div class="flex justify-content-end">
             <Button
-              v-if="slotProps.data.id !== undefined && type === 'DIALOG'"
+              v-if="
+                slotProps.data.id !== undefined &&
+                type === 'DIALOG' &&
+                (!config.objectConfig.formConfig.allowedActions ||
+                  config.objectConfig.formConfig.allowedActions.includes(
+                    'update'
+                  ))
+              "
               icon="pi pi-pencil"
               class="grid-icon-edit"
               text
@@ -478,7 +508,11 @@
                 slotProps.data.id !== undefined &&
                 deletable &&
                 !slotProps.data.blockedRow &&
-                slotProps.data.id != editingRows[0]?.id
+                slotProps.data.id != editingRows[0]?.id &&
+                (!config.objectConfig.formConfig.allowedActions ||
+                  config.objectConfig.formConfig.allowedActions.includes(
+                    'delete'
+                  ))
               "
               style="margin-right: 10px"
               icon="pi pi-trash"
@@ -539,6 +573,7 @@
       dataKey="id"
       :ref="isTableCreation ? 'dt' : ''"
       v-model:expandedRows="expandedRows"
+      v-model:selection="selectedObjects"
     >
       <template #empty>Aucun objet trouvé.</template>
       <template #loading>Chargement des objets...</template>
@@ -1008,6 +1043,11 @@ watch(
 );
 // Methods
 const changeIcon = () => {
+  if (
+    props.config.objectConfig.formConfig.allowedActions &&
+    !props.config.objectConfig.formConfig.allowedActions.includes("create")
+  )
+    return;
   try {
     const container = document.getElementById(myCurrentComponent.value);
     nextTick(() => {
@@ -1026,6 +1066,11 @@ const changeIcon = () => {
 };
 
 const forceChangeIcon = () => {
+  if (
+    props.config.objectConfig.formConfig.allowedActions &&
+    !props.config.objectConfig.formConfig.allowedActions.includes("create")
+  )
+    return;
   try {
     const container = document.getElementById(myCurrentComponent.value);
 
@@ -1137,7 +1182,12 @@ const setMyWatchedVariable = () => {
 
 // Functions to handle row actions
 const handleRowClick = (event: any) => {
-  if (type.value === "DIALOG") return; // Early return for 'DIALOG' type
+  if (
+    type.value === "DIALOG" ||
+    (props.config.objectConfig.formConfig.allowedActions &&
+      !props.config.objectConfig.formConfig.allowedActions.includes("update"))
+  )
+    return;
   onRowEditInit(event); // Proceed if type is not 'DIALOG'
 };
 
@@ -1376,6 +1426,13 @@ const onRowEditSave = async (event: any) => {
     ) {
       // If the type is not 'DIALOG', reset the form and editing states
       if (type.value != "DIALOG") {
+        if (
+          props.config.objectConfig.formConfig.allowedActions &&
+          !props.config.objectConfig.formConfig.allowedActions.includes(
+            "create"
+          )
+        )
+          return;
         const emptyObj = createEmptyObject(columns.value); // Create an empty object template based on the columns
         lockedRows.value = event.data?.id == undefined ? [{ ...newData }] : []; // Reset locked rows
         editingRows.value = [{ ...newData }]; // Reset editing rows
@@ -1403,6 +1460,13 @@ const onRowEditSave = async (event: any) => {
       ) {
         // If the type is not 'DIALOG', reset the form and editing states
         if (type.value != "DIALOG") {
+          if (
+            props.config.objectConfig.formConfig.allowedActions &&
+            !props.config.objectConfig.formConfig.allowedActions.includes(
+              "create"
+            )
+          )
+            return;
           const emptyObj = createEmptyObject(columns.value); // Create an empty object template based on the columns
           lockedRows.value =
             event.data?.id == undefined ? [{ ...newData }] : []; // Reset locked rows
@@ -1510,6 +1574,11 @@ const onRowEditSave = async (event: any) => {
 
   // If the type is not 'DIALOG', reset the form and editing states
   if (type.value != "DIALOG") {
+    if (
+      props.config.objectConfig.formConfig.allowedActions &&
+      !props.config.objectConfig.formConfig.allowedActions.includes("create")
+    )
+      return;
     const emptyObj = createEmptyObject(columns.value); // Create an empty object template based on the columns
     lockedRows.value = fillRow ? [{ ...newData }] : [{ ...emptyObj }]; // Reset locked rows
     editingRows.value = fillRow ? [{ ...newData }] : [{ ...emptyObj }]; // Reset editing rows
@@ -1543,6 +1612,11 @@ const onRowEditCancel = (event?: unknown) => {
   }
 
   if (lockedRows.value.length === 0) {
+    if (
+      props.config.objectConfig.formConfig.allowedActions &&
+      !props.config.objectConfig.formConfig.allowedActions.includes("create")
+    )
+      return;
     const emptyObj = createEmptyObject(columns.value);
     lockedRows.value = [{ ...emptyObj }];
     editingRows.value = [{ ...emptyObj }];
@@ -1904,6 +1978,11 @@ onMounted(async () => {
 
   // Set up empty objects for locked and editing rows if not in dialog mode
   if (type.value !== "DIALOG") {
+    if (
+      props.config.objectConfig.formConfig.allowedActions &&
+      !props.config.objectConfig.formConfig.allowedActions.includes("create")
+    )
+      return;
     const emptyObj = createEmptyObject(columns.value);
     lockedRows.value = [{ ...emptyObj }];
     editingRows.value = [{ ...emptyObj }];

@@ -169,7 +169,7 @@ const frensh = {
     missingOrInvalidInformationsHeader: "Informations manquantes ou invalides",
     missingOrInvalidInformationsMessage:
       "Veuillez remplir tous les champs obligatoires et vérifier les informations saisies. Certaines données ne sont pas valides.",
-    successMessage: "Formulaire soumis avec succès ! | Chrono : ",
+    successMessage: "Formulaire soumis avec succès ! | Référence : ",
     errorMessage: "Échec de la soumission du formulaire.",
     unknownError: "Une erreur inconnue s'est produite.",
   },

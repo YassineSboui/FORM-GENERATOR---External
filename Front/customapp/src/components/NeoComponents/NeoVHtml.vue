@@ -23,7 +23,7 @@
       ></label>
     </div> -->
     <div class="input-container" :class="{ 'disabled-wrapper': isDisabled }">
-      <div v-html="content" class="vhtml"></div>
+      <div v-html="internalValue" class="vhtml-wrapper"></div>
     </div>
     <small class="p-error" id="text-error" v-if="errorState.errorMessage">
       {{ errorState.errorMessage || "&nbsp;" }}
@@ -80,9 +80,46 @@ export default defineComponent({
     "mouseenter",
   ],
   setup(props, { emit }) {
+    // Function to process HTML and extract safe content
+    const processHtmlContent = (htmlContent: string): string => {
+      if (!htmlContent) return "";
+
+      // Create a temporary DOM element to parse the HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
+
+      // Extract styles from head
+      const styles = Array.from(doc.querySelectorAll("style"))
+        .map((style) => style.textContent)
+        .join("\n");
+
+      // Extract body content
+      const bodyContent = doc.body ? doc.body.innerHTML : htmlContent;
+
+      // Create scoped styles by prefixing with .vhtml-content
+      const scopedStyles = styles.replace(/([^{}]+){/g, (match, selector) => {
+        // Skip @media, @keyframes, etc.
+        if (selector.trim().startsWith("@")) return match;
+
+        // Replace body selector with .vhtml-content
+        if (selector.includes("body")) {
+          return selector.replace(/body/g, ".vhtml-content") + "{";
+        }
+
+        // Scope other selectors
+        return ".vhtml-content " + selector.trim() + "{";
+      });
+
+      // Return processed content
+      return `<style scoped>${scopedStyles}</style><div class="vhtml-content">${bodyContent}</div>`;
+    };
+
     const internalValue = computed({
       get(): string {
-        return props.options.content ? props.options.content : props.modelValue;
+        const rawContent = props.options.content
+          ? props.options.content
+          : props.modelValue;
+        return processHtmlContent(rawContent);
       },
       set(value: string) {
         props.options.content = value;
@@ -138,6 +175,8 @@ export default defineComponent({
     };
     const updateField = (value: string) => {
       internalValue.value = value;
+      props.options.content = value;
+      emit("update:options", props.options);
       emit("update:modelValue", value);
     };
 
@@ -152,6 +191,21 @@ export default defineComponent({
       (newValue) => {
         internalValue.value = newValue;
       }
+    );
+
+    // Check if options.content is not empty and modelValue is empty, then set content to modelValue
+    watch(
+      [() => props.options.content, () => props.modelValue],
+      ([optionsContent, modelValue]) => {
+        console.log("Watcher triggered:", {
+          optionsContent,
+          modelValue,
+        });
+        if (optionsContent && (!modelValue || modelValue.trim() === "")) {
+          emit("update:modelValue", optionsContent);
+        }
+      },
+      { immediate: true }
     );
 
     // Watcher for options changes
@@ -236,6 +290,37 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+.vhtml-wrapper {
+  // Create isolation boundary
+  contain: layout style;
+  isolation: isolate;
+  overflow: auto;
+  position: relative;
+
+  // Default styling for content
+  :deep(.vhtml-content) {
+    max-width: 100%;
+    word-break: break-word;
+    overflow-wrap: break-word;
+
+    // Reset any inherited styles that might interfere
+    margin: 0;
+    padding: 0;
+
+    // Ensure images behave properly
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+  }
+
+  // Hide any style tags that might be injected
+  :deep(style) {
+    display: none !important;
+  }
+}
+
 .vhtml {
   max-width: 100%;
   word-break: break-word;

@@ -1,6 +1,10 @@
 <template>
-  <div class="neoSwitch" v-show="!isHidden" :dir="isRTL ? 'rtl' : 'ltr'">
-    <div class="input-container flex pt-5">
+  <div
+    class="neoSwitch flex flex-wrap align-items-center pt-2"
+    v-show="!isHidden"
+    :dir="isRTL ? 'rtl' : 'ltr'"
+  >
+    <div class="input-container flex">
       <div class="flex align-items-center">
         <!-- :inputId="label" -->
         <ToggleSwitch
@@ -231,3 +235,9 @@ export default {
   },
 };
 </script>
+<style lang="scss">
+.neoSwitch {
+  width: 100%;
+  height: 100%;
+}
+</style>
