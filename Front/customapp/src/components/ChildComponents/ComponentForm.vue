@@ -21,7 +21,7 @@
           </div>
           <div class="toast-body">
             <div class="chrono-container">
-              <span class="chrono-label">Chrono:</span>
+              <span class="chrono-label">Référence:</span>
               <span class="chrono-value">{{ slotProps.message.detail }}</span>
             </div>
             <div class="toast-actions">
