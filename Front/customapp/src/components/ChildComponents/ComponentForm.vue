@@ -514,6 +514,78 @@ import { localize } from "@vee-validate/i18n";
 import { useI18n } from "vue-i18n";
 import { cloneDeep } from "lodash";
 
+// Utility class for query parameter decryption
+class QueryParameterDecryptor {
+  private static readonly SECRET_KEY = "neoform-query-secret-2025";
+
+  static async decryptQueryParams(encryptedData: string): Promise<string> {
+    try {
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      // Convert from base64
+      const combined = new Uint8Array(
+        atob(encryptedData)
+          .split("")
+          .map((c) => c.charCodeAt(0))
+      );
+
+      // Extract IV and encrypted data
+      const iv = combined.slice(0, 12);
+      const encrypted = combined.slice(12);
+
+      // Import the key
+      const key = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(this.SECRET_KEY.padEnd(32, "0").substring(0, 32)),
+        { name: "AES-GCM" },
+        false,
+        ["decrypt"]
+      );
+
+      // Decrypt the data
+      const decrypted = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        key,
+        encrypted
+      );
+
+      return decoder.decode(decrypted);
+    } catch (error) {
+      console.error("Decryption failed:", error);
+      throw error;
+    }
+  }
+
+  static async decryptQueryParameters(queryParams: any): Promise<any> {
+    const decryptedParams: any = {};
+
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (key === "code") {
+        // Don't decrypt the 'code' parameter
+        decryptedParams[key] = value;
+      } else if (typeof value === "string" && value) {
+        try {
+          // Try to decrypt the parameter
+          decryptedParams[key] = await this.decryptQueryParams(value);
+        } catch (error) {
+          console.warn(
+            `Failed to decrypt parameter ${key}, using original value:`,
+            error
+          );
+          // If decryption fails, use the original value
+          decryptedParams[key] = value;
+        }
+      } else {
+        // Handle non-string values or empty values
+        decryptedParams[key] = value;
+      }
+    }
+
+    return decryptedParams;
+  }
+}
+
 // export default {
 const props = defineProps({
   modelValue: {
@@ -1409,7 +1481,17 @@ onMounted(async () => {
     useHttpRequest().setLoading(true);
   }
   setFields(itemsFormCopy.value, 0);
-  QueryParameters.value = { ...route.query };
+
+  // Decrypt query parameters except 'code'
+  try {
+    QueryParameters.value =
+      await QueryParameterDecryptor.decryptQueryParameters(route.query);
+  } catch (error) {
+    console.error("Failed to decrypt query parameters:", error);
+    // Fallback to original query parameters if decryption fails
+    QueryParameters.value = { ...route.query };
+  }
+
   if (!props.isEdit) {
     isLoadingComponent.value = true;
     try {
