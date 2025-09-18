@@ -51,6 +51,8 @@
           :readonly="options.readonly"
           :options="internalItems"
           :optionLabel="options.key ?? 'name'"
+          :filter="options.searchable"
+          :filterBy="options.searchable ? options.value ?? 'name' : undefined"
           class="w-full neoSelectDropdown"
           :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
           :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
@@ -70,6 +72,8 @@
           :options="internalItems"
           :optionLabel="options.key ?? 'name'"
           :optionValue="options.value ?? 'code'"
+          :filter="options.searchable"
+          :filterBy="options.searchable ? options.value ?? 'name' : undefined"
           class="w-full neoSelectDropdown"
           :panelStyle="{ direction: isRTL ? 'rtl' : 'ltr' }"
           @click.stop
@@ -118,6 +122,7 @@ interface OptionConfig {
   selectedTable: string;
   selectedColumn: string;
   showClear: boolean;
+  search: boolean;
   eliseEnumerate: string;
   selectedVariable: string;
   elements: any[];
@@ -172,6 +177,7 @@ export default {
         eliseEnumerate: "",
         selectedVariable: "",
         showClear: false,
+        search: false,
         elements: [{ code: "", name: "" }],
         rules: [],
         events: [],
