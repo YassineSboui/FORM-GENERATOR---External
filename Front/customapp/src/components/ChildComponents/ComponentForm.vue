@@ -1630,6 +1630,7 @@ onMounted(async () => {
   internalFormConfig.value?.events?.forEach(async (evnt: any) => {
     if (evnt.code != "" && evnt.rule.code == "beforeLoad") {
       try {
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await eval(
           "(async () => { const store = useAppStore(); " + evnt.code + "})()"
         );
