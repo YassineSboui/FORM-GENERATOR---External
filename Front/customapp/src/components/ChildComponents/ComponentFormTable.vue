@@ -282,7 +282,7 @@
         :style="
           item.code == 'FIXED_HEADER'
             ? {
-                margin: '0 0 ' + HeaderHeight + 'px ' + ' 0 ',
+                padding: '0 0 ' + (HeaderHeight - 50) + 'px ' + ' 0 ',
               }
             : null
         "
@@ -1761,12 +1761,18 @@ defineExpose({
   // background-color: white;
   // left: 0;F
   .zone-page-header {
-    position: sticky;
-    top: 0;
-    width: calc(100% - 15px);
-    z-index: 1000;
+    position: fixed;
+    width: calc(100% - 100px);
+    max-width: 1200px;
+    left: 50%;
+    transform: translateX(-50.5%);
+    justify-content: space-between;
+    box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    border-radius: 20px;
     background-color: white;
-    left: 0;
+    z-index: 1000;
+    margin: 0;
   }
 }
 .zone-page-header-parent {

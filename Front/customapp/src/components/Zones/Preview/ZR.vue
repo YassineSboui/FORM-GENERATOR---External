@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 
 const props = defineProps({
   modelValue: {
@@ -187,6 +187,18 @@ const emit = defineEmits([
   "mouseleave",
   "mouseenter",
 ]);
+onMounted(() => {
+  const panelElement = document.querySelector(".p-panel-header");
+  if (panelElement) {
+    panelElement.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement;
+      const isActionsClick = target?.closest(".p-panel-header-actions");
+      if (!isActionsClick) {
+        panelCollapsed.value = !panelCollapsed.value;
+      }
+    });
+  }
+});
 const internalValue = computed({
   get: () => props.modelValue,
   set: (val) => emit("update:modelValue", val),

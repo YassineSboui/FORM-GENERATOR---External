@@ -1290,3 +1290,97 @@ export const executeStandalone = async (payload: {
     };
   }
 };
+export const executeAsyncWorkflow = (payload: {
+  identifier: string;
+  documentId: string;
+  mappingName: string;
+  rackCode: string;
+  doNotUpdateDocument: boolean;
+  parameters: Record<string, string>;
+}) => {
+  try {
+    const httpRequest = useHttpRequest();
+    const apiUrl = `${httpRequest.apiUrl}/api/automate/QueueWorkflow`;
+    axios.post(apiUrl, payload);
+    return { success: true, message: "Workflow execution started" };
+  } catch (error: any) {
+    console.error("Workflow execution failed:", error);
+    logger.error(error);
+    return {
+      success: false,
+      error:
+        error.response?.data?.message ||
+        error.message ||
+        "Workflow execution failed",
+    };
+  }
+};
+
+export const executeAsyncStandalone = (payload: {
+  identifier: string;
+  batchId: string;
+  version: number;
+  parameters: Record<string, string>;
+}) => {
+  try {
+    const httpRequest = useHttpRequest();
+    const apiUrl = `${httpRequest.apiUrl}/api/automate/QueueStandalone`;
+    axios.post(apiUrl, payload);
+    return { success: true, message: "Script execution started" };
+  } catch (error: any) {
+    console.error("Standard Workflow execution failed:", error);
+    logger.error(error);
+    return {
+      success: false,
+      error:
+        error.response?.data?.message ||
+        error.message ||
+        "Standard Workflow execution failed",
+    };
+  }
+};
+
+export const generateModelWithoutNotice = async (payload: {
+  courrierId: string;
+  modelGuid: string;
+  chrono: number;
+  data: Record<string, string>;
+  htmls: Record<string, string>;
+}) => {
+  try {
+    const httpRequest = useHttpRequest();
+    const apiUrl = `${httpRequest.apiUrl}/NeoForm/Model`;
+    const { data } = await axios.post(apiUrl, payload);
+    return { success: true, ...data };
+  } catch (error: any) {
+    console.error("Document generation failed:", error);
+    logger.error(error);
+    return {
+      success: false,
+      error:
+        error.response?.data?.message ||
+        error.message ||
+        "Document generation failed",
+    };
+  }
+};
+export const publishFiles = async (payload: {
+  attachments: Array<{ name: string; content: string }>;
+}) => {
+  try {
+    const httpRequest = useHttpRequest();
+    const apiUrl = `${httpRequest.apiUrl}/api/project/PublishFiles`;
+    const { data } = await axios.post(apiUrl, payload);
+    return { success: true, ...data };
+  } catch (error: any) {
+    console.error("File publishing failed:", error);
+    logger.error(error);
+    return {
+      success: false,
+      error:
+        error.response?.data?.message ||
+        error.message ||
+        "File publishing failed",
+    };
+  }
+};

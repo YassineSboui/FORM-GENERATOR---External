@@ -327,7 +327,7 @@
         :style="
           item.code == 'FIXED_HEADER'
             ? {
-                margin: '0 0 ' + HeaderHeight + 'px ' + ' 0 ',
+                padding: '0 0 ' + (HeaderHeight - 50) + 'px ' + ' 0 ',
               }
             : null
         "
@@ -498,6 +498,10 @@ import {
   callEliseWebService,
   executeWorkflow,
   executeStandalone,
+  publishFiles,
+  executeAsyncWorkflow,
+  executeAsyncStandalone,
+  generateModelWithoutNotice,
 } from "@/api/api";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
@@ -740,22 +744,13 @@ watch(executeNavigateNext, (newVal) => {
 watch(showPageNum, (newVal) => {
   calculatePagesStyle();
 });
-const router = useRouter();
-
-const cancel = () => {
-  if (window.self === window.top) {
-    router.go(-1);
-  } else {
-    window.parent.postMessage("EliseCustomActionDone", "*");
-    parent.location.reload();
-  }
-};
 const User = ref({ displayName: "" } as any);
 const Version = ref({} as any);
 const GlobalVariables = ref({} as any);
 const QueryParameters = ref({} as any);
 const disabledNextButton = ref(false);
 const disabledPreviousButton = ref(false);
+
 const newNotice = {
   Lang: "fr",
   mapping: {},
@@ -772,6 +767,63 @@ const newNotice = {
   uploadTable: {},
   mappingName: "",
   rackCode: "",
+};
+
+// Watch for changes in systemVariables MAPPING_NAME and RACK_CODE
+watch(
+  () => systemVariables.value.MAPPING_NAME,
+  (newMappingName) => {
+    if (newMappingName !== undefined) {
+      console.log("newMappingName", newMappingName);
+      newNotice.mappingName = newMappingName;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => systemVariables.value.RACK_CODE,
+  (newRackCode) => {
+    if (newRackCode !== undefined) {
+      console.log("newRackCode", newRackCode);
+      newNotice.rackCode = newRackCode;
+    }
+  },
+  { immediate: true }
+);
+
+// Remove the duplicate watch statements that appear later
+watch(
+  () => systemVariables.value.MAPPING_NAME,
+  (newMappingName) => {
+    if (newMappingName !== undefined) {
+      console.log("newMappingName", newMappingName);
+      newNotice.mappingName = newMappingName;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => systemVariables.value.RACK_CODE,
+  (newRackCode) => {
+    if (newRackCode !== undefined) {
+      console.log("newRackCode", newRackCode);
+      newNotice.rackCode = newRackCode;
+    }
+  },
+  { immediate: true }
+);
+
+const router = useRouter();
+
+const cancel = () => {
+  if (window.self === window.top) {
+    router.go(-1);
+  } else {
+    window.parent.postMessage("EliseCustomActionDone", "*");
+    parent.location.reload();
+  }
 };
 
 function useModel(modelGuid: string) {
@@ -2710,6 +2762,35 @@ async function internalExecuteWorkflow(parameters: any) {
 async function internalExecuteStandalone(parameters: any) {
   return await executeStandalone(parameters);
 }
+function internalExecuteAsyncWorkflow(parameters: any) {
+  executeAsyncWorkflow(parameters);
+}
+function internalExecuteAsyncStandalone(parameters: any) {
+  executeAsyncStandalone(parameters);
+}
+async function internalGenerateModel(parameters: any) {
+  return await generateModelWithoutNotice(parameters);
+}
+async function showConfirmationDialog(
+  message: string,
+  header: string,
+  acceptLabel: string,
+  rejectLabel: string,
+  acceptFn: Function,
+  rejectFn: Function
+) {
+  confirm.require({
+    message: message,
+    header: header,
+    rejectLabel: rejectLabel,
+    acceptLabel: acceptLabel,
+    accept: () => acceptFn(),
+    reject: () => rejectFn(),
+  });
+}
+async function internalPublishFiles(parameters: any) {
+  return await publishFiles(parameters);
+}
 defineExpose({
   itemsForm,
   Fields,
@@ -2742,6 +2823,11 @@ defineExpose({
   executeWebService,
   internalExecuteWorkflow,
   internalExecuteStandalone,
+  internalExecuteAsyncWorkflow,
+  internalExecuteAsyncStandalone,
+  internalGenerateModel,
+  showConfirmationDialog,
+  internalPublishFiles,
 });
 </script>
 <style lang="scss">
@@ -2810,12 +2896,18 @@ defineExpose({
   // background-color: white;
   // left: 0;
   .zone-page-header {
-    position: sticky;
-    top: 0;
-    width: calc(100% - 15px);
-    z-index: 1000;
+    position: fixed;
+    width: calc(100% - 100px);
+    max-width: 1200px;
+    left: 50%;
+    transform: translateX(-50.5%);
+    justify-content: space-between;
+    box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    border-radius: 20px;
     background-color: white;
-    left: 0;
+    z-index: 1000;
+    margin: 0;
   }
 }
 .zone-page-header-parent {

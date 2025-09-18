@@ -311,7 +311,9 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
+  callEliseWebService,
   fetchOneObject,
+  logger,
   GetAuthInfo,
   validateEmailInvitation,
   sendEmailOTP,
@@ -349,9 +351,9 @@ export default defineComponent({
     const names = ref({} as any);
     const formName = ref();
     const language = ref("FR");
-    const paramValue = ref({ ...route.query });
-    const showFormHeader = ref(paramValue.value.showFormHeader === "true");
-    const newDoc = ref(paramValue.value.newDoc === "true");
+    const QueryParameters = ref({ ...route.query });
+    const showFormHeader = ref(QueryParameters.value.showFormHeader === "true");
+    const newDoc = ref(QueryParameters.value.newDoc === "true");
     const showPageNumF = ref(1);
     const languages: Ref<any[]> = ref([]);
     const languagesList: Ref<any[]> = ref([]);
@@ -1243,7 +1245,21 @@ export default defineComponent({
     const submitButtonText = computed(
       () => systemVariables.value.BUTTON_OK || t("FormButtons.validate")
     );
-
+    async function executeWebService(webServiceName: String, parameters: any) {
+      const obj = {
+        eliseWsInputType: webServiceName,
+        objet: parameters,
+      };
+      console.log("obj", obj);
+      try {
+        const result = await callEliseWebService(obj);
+        return result;
+      } catch (error) {
+        console.error("error", error);
+        logger.error(error);
+        return error;
+      }
+    }
     const isDarkMode = ref(false);
 
     // Watch for dark mode toggle and update PrimeVue theme
@@ -1340,6 +1356,16 @@ export default defineComponent({
       }
     });
 
+    function uuidv4() {
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+        /[xy]/g,
+        function (c) {
+          const r = (Math.random() * 16) | 0,
+            v = c == "x" ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        }
+      );
+    }
     return {
       form,
       formID,
@@ -1401,6 +1427,7 @@ export default defineComponent({
       submit,
       cancel,
       t,
+      executeWebService,
     };
   },
 });
@@ -1527,11 +1554,17 @@ body.dark .footer-content {
 .zone-page-sticky-header {
   .zone-page-header {
     position: fixed;
-    top: 0;
-    width: calc(100% - 15px);
-    z-index: 1000;
+    width: calc(100% - 100px);
+    max-width: 1200px;
+    left: 50%;
+    transform: translateX(-50.5%);
+    justify-content: space-between;
+    box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    border-radius: 20px;
     background-color: white;
-    left: 0;
+    z-index: 1000;
+    margin: 0;
   }
 }
 .main-container {
@@ -1582,6 +1615,14 @@ body.dark .form-card {
 /* Dark mode footer improvements */
 body.dark .form-viewer-container-footer {
   background-color: unset !important;
+}
+
+/* Dark mode for sticky header */
+body.dark .zone-page-sticky-header .zone-page-header {
+  background-color: #1e1e1e !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  color: #fff !important;
 } /* Error message styling */
 .p-errorCustom {
   color: #ef4444 !important;

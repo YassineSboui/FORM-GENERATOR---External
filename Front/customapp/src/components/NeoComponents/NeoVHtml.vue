@@ -296,7 +296,7 @@ export default defineComponent({
   isolation: isolate;
   overflow: auto;
   position: relative;
-
+  border-radius: 15px;
   // Default styling for content
   :deep(.vhtml-content) {
     max-width: 100%;
