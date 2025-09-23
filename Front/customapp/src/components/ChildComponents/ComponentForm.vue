@@ -936,14 +936,13 @@ watch(myWatchedVariable, (newVal) => {
   }
 });
 
-const uuidv4 = () => {
+function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0,
       v = c == "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
-};
-
+}
 const requiredFieldsNotEmpty = () => {
   for (let element in app.refs) {
     const isRequired = app.refs[element][0]?.options?.required === true;
@@ -2876,7 +2875,7 @@ defineExpose({
   position: relative;
   .pages-headers {
     position: sticky;
-    width: calc(100% - 35px);
+    width: 200vw;
     top: 0;
     background-color: #f8f9fa;
     z-index: 1000;
@@ -2901,7 +2900,7 @@ defineExpose({
     width: calc(100% - 100px);
     max-width: 1200px;
     left: 50%;
-    transform: translateX(-50.5%);
+    transform: translateX(-50%);
     justify-content: space-between;
     box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
     padding: 15px;
@@ -2943,7 +2942,7 @@ defineExpose({
   padding: 0;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   border: 1px solid #e5e5e5;
-  min-width: 400px;
+  min-width: 300px;
   max-width: 500px;
   overflow: hidden;
 }

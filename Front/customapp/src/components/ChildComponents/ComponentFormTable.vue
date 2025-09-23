@@ -1747,7 +1747,7 @@ defineExpose({
   position: relative;
   .pages-headers {
     position: sticky;
-    width: calc(100% - 35px);
+    width: 200vw;
     top: 0;
     background-color: #ffffff;
     z-index: 1000;
@@ -1765,7 +1765,7 @@ defineExpose({
     width: calc(100% - 100px);
     max-width: 1200px;
     left: 50%;
-    transform: translateX(-50.5%);
+    transform: translateX(-50%);
     justify-content: space-between;
     box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
     padding: 15px;

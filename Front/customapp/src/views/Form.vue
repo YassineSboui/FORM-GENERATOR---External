@@ -305,9 +305,11 @@ import {
   defineComponent,
   onBeforeMount,
   onBeforeUnmount,
+  onMounted,
   ref,
   type Ref,
   watch,
+  nextTick,
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -1356,6 +1358,129 @@ export default defineComponent({
       }
     });
 
+    // Sticky header alignment: adjust translateX when vertical overflow exists
+    const hasVerticalOverflow = ref(false);
+    const scrollbarWidth = ref(0);
+    let contentResizeObserver: ResizeObserver | null = null;
+
+    const updateOverflowClass = () => {
+      if (hasVerticalOverflow.value) {
+        document.body.classList.add("has-vertical-overflow");
+        // Set CSS custom property for scrollbar width
+        document.documentElement.style.setProperty(
+          "--scrollbar-width",
+          `${scrollbarWidth.value}px`
+        );
+        // Set half scrollbar width for translation
+        document.documentElement.style.setProperty(
+          "--scrollbar-width-half",
+          `${scrollbarWidth.value / 2}px`
+        );
+      } else {
+        document.body.classList.remove("has-vertical-overflow");
+        document.documentElement.style.setProperty("--scrollbar-width", "0px");
+        document.documentElement.style.setProperty(
+          "--scrollbar-width-half",
+          "0px"
+        );
+      }
+    };
+
+    const getScrollbarWidth = () => {
+      // Create a temporary div to measure scrollbar width
+      const outer = document.createElement("div");
+      outer.style.visibility = "hidden";
+      outer.style.overflow = "scroll";
+      (outer.style as any).msOverflowStyle = "scrollbar"; // For IE
+      document.body.appendChild(outer);
+
+      const inner = document.createElement("div");
+      outer.appendChild(inner);
+
+      let scrollbarWidthValue = outer.offsetWidth - inner.offsetWidth;
+      outer.parentNode?.removeChild(outer);
+
+      // Add 5px when screen width is under 1200px
+      if (window.innerWidth < 1200) {
+        scrollbarWidthValue += 5;
+      }
+
+      return scrollbarWidthValue;
+    };
+
+    const checkContentOverflow = () => {
+      const el = document.querySelector(
+        ".form-viewer-container-content"
+      ) as HTMLElement | null;
+      if (!el) return;
+
+      // Add a small delay to ensure content is fully rendered
+      setTimeout(() => {
+        const hasOverflow = el.scrollHeight > el.clientHeight;
+        hasVerticalOverflow.value = hasOverflow;
+
+        if (hasOverflow) {
+          scrollbarWidth.value = getScrollbarWidth();
+        } else {
+          scrollbarWidth.value = 0;
+        }
+
+        updateOverflowClass();
+        console.log("Overflow check:", {
+          scrollHeight: el.scrollHeight,
+          clientHeight: el.clientHeight,
+          hasOverflow,
+          scrollbarWidth: scrollbarWidth.value,
+        });
+      }, 100);
+    };
+
+    const onWindowResize = () => checkContentOverflow();
+
+    onMounted(async () => {
+      await nextTick();
+      checkContentOverflow();
+      const el = document.querySelector(
+        ".form-viewer-container-content"
+      ) as HTMLElement | null;
+      if (el && typeof ResizeObserver !== "undefined") {
+        contentResizeObserver = new ResizeObserver(() => {
+          checkContentOverflow();
+        });
+        contentResizeObserver.observe(el);
+      }
+      window.addEventListener("resize", onWindowResize);
+    });
+
+    // Watch for form data changes to recheck overflow
+    watch(
+      form,
+      () => {
+        nextTick(() => {
+          setTimeout(() => checkContentOverflow(), 200);
+        });
+      },
+      { deep: true }
+    );
+
+    // Watch for authentication changes to recheck overflow
+    watch(isAuthenticated, (newValue) => {
+      if (newValue) {
+        nextTick(() => {
+          setTimeout(() => checkContentOverflow(), 300);
+        });
+      }
+    });
+
+    onBeforeUnmount(() => {
+      if (contentResizeObserver) {
+        contentResizeObserver.disconnect();
+        contentResizeObserver = null;
+      }
+      window.removeEventListener("resize", onWindowResize);
+      document.body.classList.remove("has-vertical-overflow");
+    });
+
     function uuidv4() {
       return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
         /[xy]/g,
@@ -1447,11 +1572,9 @@ export default defineComponent({
     background-color: white;
   }
   &-content {
-    padding: 20px;
     margin-top: var(--dynamic-header-height);
     margin-bottom: 50px;
     overflow-y: auto;
-    // height: calc(100% - 100px);
     background-color: #f8f9fa; /* Soft light gray background */
 
     height: calc(
@@ -1473,7 +1596,6 @@ export default defineComponent({
       background-color: white;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       padding: 30px;
-      margin: 0 20px;
       width: 100%;
       max-width: 1200px; /* Limit maximum width for better readability */
       border: 1px solid rgba(0, 0, 0, 0.05);
@@ -1517,15 +1639,16 @@ export default defineComponent({
   align-items: center;
 
   .footer-content {
-    width: 100%;
+    width: calc(100% - var(--scrollbar-width, 0px));
     max-width: 1200px;
-    margin: 0 20px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(calc(-50.5% - var(--scrollbar-width-half, 0px)));
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: white;
     box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
-    margin-left: -5px;
     padding: 15px;
     border-radius: 20px;
   }
@@ -1546,7 +1669,7 @@ body.dark .footer-content {
   position: relative;
   .pages-headers {
     position: fixed;
-    width: calc(100% - 35px);
+    width: 200vw;
     top: 0;
     z-index: 1000;
   }
@@ -1554,10 +1677,10 @@ body.dark .footer-content {
 .zone-page-sticky-header {
   .zone-page-header {
     position: fixed;
-    width: calc(100% - 100px);
+    width: calc(100% - var(--scrollbar-width, 0px));
     max-width: 1200px;
     left: 50%;
-    transform: translateX(-50.5%);
+    transform: translateX(calc(-50% - var(--scrollbar-width-half, 0px)));
     justify-content: space-between;
     box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
     padding: 15px;
@@ -1567,6 +1690,8 @@ body.dark .footer-content {
     margin: 0;
   }
 }
+
+/* Dynamic scrollbar width compensation is now handled via CSS custom properties */
 .main-container {
   display: flex;
   overflow-y: auto;

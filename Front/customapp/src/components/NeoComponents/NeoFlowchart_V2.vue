@@ -519,3 +519,55 @@ export default {
   },
 };
 </script>
+<style lang="scss">
+.p-treeselect .p-treeselect-label {
+  padding: 0 0.5rem !important;
+}
+/* Styles pour NeoFlowchart AutoComplete */
+.autocomplete-wrapper {
+  position: relative;
+
+  .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 1;
+    font-size: 1.1rem;
+  }
+
+  .search-icon-rtl {
+    left: auto;
+    right: 0.75rem;
+  }
+}
+.neoAutoCompleteC {
+  position: relative;
+
+  .p-autocomplete-input {
+    padding-left: 2.5rem !important;
+  }
+
+  /* RTL support for search icon */
+  &.rtl-loader .p-autocomplete-input {
+    padding-left: 0.75rem !important;
+    padding-right: 2.5rem !important;
+  }
+
+  .p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item {
+    padding: 0.5rem 0.75rem;
+
+    .flex.items-center {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        font-size: 1rem;
+        min-width: 1rem;
+      }
+    }
+  }
+}
+</style>
