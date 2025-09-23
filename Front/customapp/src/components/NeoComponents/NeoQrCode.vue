@@ -52,6 +52,7 @@
           :background="options.background"
           :foreground="options.foreground"
           :margin="options.margin"
+          style="max-width: 100% !important"
         />
       </div>
     </div>

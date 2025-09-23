@@ -45,6 +45,7 @@
       :size="options.size"
       :severity="options.severity"
       @click="executeCode"
+      style="max-width: 100%"
     >
       <div
         class="right flex align-content-center"

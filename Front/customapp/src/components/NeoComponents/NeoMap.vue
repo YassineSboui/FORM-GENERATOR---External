@@ -56,6 +56,7 @@
         :style="{
           width: options.width + 'px',
           height: options.height + 'px',
+          maxWidth: '100%',
         }"
       >
         <div class="map-container">
@@ -68,6 +69,7 @@
             :style="{
               width: options.width + 'px',
               height: options.height + 'px',
+              maxWidth: '100%',
             }"
             @ready="onMapReady"
           >

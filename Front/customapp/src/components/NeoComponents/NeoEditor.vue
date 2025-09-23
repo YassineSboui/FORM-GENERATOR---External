@@ -133,15 +133,15 @@ export default defineComponent({
     const editorStyle = computed(() => {
       const height = props.options.height || props.height;
       return `
-    min-height: ${height};
-    max-height: 300px;
-    width: 100%;
-    font-size: 14.7px;
-    line-height: 18.2px;
-    font-weight: 400;
-    font-family: Trebuchet MS;
-    overflow-y: auto;
-  `;
+        min-height: ${height};
+        max-height: 300px;
+        width: 100%;
+        font-size: 14.7px;
+        line-height: 18.2px;
+        font-weight: 400;
+        font-family: Trebuchet MS;
+        overflow-y: auto;
+      `;
     });
     const neoEditorStyle = computed(() => ({
       minHeight: props.options.height || props.height || "150px",

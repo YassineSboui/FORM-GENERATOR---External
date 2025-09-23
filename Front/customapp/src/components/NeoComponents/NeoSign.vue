@@ -53,6 +53,7 @@
           'disabled-wrapper': isDisabled,
           'readOnly-wrapper': readOnly,
         }"
+        style="max-width: 100%"
       >
         <div>
           <Vue3Signature
@@ -359,8 +360,7 @@ function toPx(value: string | number, axis: "w" | "h" = "w"): number {
     .signature-canvas {
       border: 1px solid #ccc;
       border-radius: 4px;
-      width: 100%;
-      height: 200px; /* Adjust height as needed */
+      width: 100% !important;
     }
   }
   .button-container {

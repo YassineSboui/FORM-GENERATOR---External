@@ -57,6 +57,7 @@
         icon="pi pi-images"
         class="single-button"
         @click="openFileDialog"
+        style="max-width: 100%"
       />
       <Button
         v-if="showType == 'Camera' && !readOnly"
@@ -64,19 +65,25 @@
         icon="pi pi-camera"
         class="single-button"
         @click="openCameraDialog"
+        style="max-width: 100%"
       />
-      <ButtonGroup v-if="showType == 'Both' && !readOnly">
+      <ButtonGroup
+        v-if="showType == 'Both' && !readOnly"
+        style="max-width: 100%"
+      >
         <Button
           :label="$t('NeoPhotoProperties.gallery')"
           icon="pi pi-images"
           class="gallery-button"
           @click="openFileDialog"
+          style="max-width: 100%"
         />
         <Button
           :label="$t('NeoPhotoProperties.camera')"
           icon="pi pi-camera"
           @click="openCameraDialog"
           class="gallery-button"
+          style="max-width: 100%"
         />
       </ButtonGroup>
 
