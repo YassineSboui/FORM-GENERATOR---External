@@ -64,6 +64,7 @@
             :disabled="isDisabled"
             class="signature-canvas"
             @mouseup="save('image/jpeg')"
+            @touchend="save('image/jpeg')"
           />
         </div>
         <div v-if="!readOnly" class="pt-4">
