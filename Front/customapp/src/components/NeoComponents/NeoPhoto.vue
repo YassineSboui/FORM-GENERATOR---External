@@ -93,6 +93,7 @@
         @change="handleFileChange"
         style="display: none"
         accept="image/*"
+        capture="environment"
       />
       <!-- Photo Previews -->
       <div
@@ -612,6 +613,13 @@ export default defineComponent({
       { deep: true }
     );
 
+    // Watch for camera dialog visibility to load devices
+    watch(visible, async (newVisible) => {
+      if (newVisible) {
+        await loadDevices();
+      }
+    });
+
     const errorState = reactive({
       errorMessage: "",
     });
@@ -628,10 +636,62 @@ export default defineComponent({
       fileInput.value?.click();
     };
 
-    const openCameraDialog = () => {
+    const openCameraDialog = async () => {
       console.log("Opening camera dialog, visible:", visible.value);
-      visible.value = true;
-      console.log("After setting visible:", visible.value);
+
+      // Check if we're on iOS and use fallback for better compatibility
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isIOS) {
+        // For iOS, try to use the native camera through file input with capture attribute
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.capture = "environment"; // Use rear camera by default
+
+        input.onchange = (event: any) => {
+          const file = event.target.files[0];
+          if (file) {
+            handleFileChange({ target: { files: [file] } } as any);
+          }
+        };
+
+        input.click();
+        return;
+      }
+
+      // For Android and other devices, use the camera component
+      try {
+        // Request camera permissions first
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "environment", // Start with rear camera
+          },
+        });
+
+        // If we got permissions, stop the stream and show the camera dialog
+        stream.getTracks().forEach((track) => track.stop());
+
+        visible.value = true;
+        console.log("After setting visible:", visible.value);
+      } catch (error) {
+        console.error("Camera permission denied or not available:", error);
+
+        // Fallback to file input if camera access fails
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.capture = "environment";
+
+        input.onchange = (event: any) => {
+          const file = event.target.files[0];
+          if (file) {
+            handleFileChange({ target: { files: [file] } } as any);
+          }
+        };
+
+        input.click();
+      }
     };
 
     const loadDevices = async () => {
