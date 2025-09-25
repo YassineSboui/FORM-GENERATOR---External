@@ -872,4 +872,7 @@ export default {
 .input-select .p-select {
   padding: 0.1rem !important;
 }
+.p-select {
+  background-color: unset !important;
+}
 </style>

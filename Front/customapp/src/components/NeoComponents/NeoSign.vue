@@ -11,21 +11,11 @@
             ? options.label_ENG
             : options.label
         }}
-        <span
-          v-show="options.required"
-          style="color: red; margin-left: 5px; margin-right: 5px"
-          >*</span
-        >
+        <span v-show="options.required" class="required-asterisk">*</span>
         <i
           v-if="options.tooltip"
-          class="pi pi-info-circle"
+          class="pi pi-info-circle tooltip-icon"
           v-tooltip.top="options.tooltip"
-          style="
-            cursor: pointer;
-            font-size: 12px;
-            margin-left: 5px;
-            margin-right: 5px;
-          "
         ></i>
       </label>
     </div>
@@ -48,14 +38,14 @@
       }"
     >
       <div
-        class="flex gap-2"
+        class="signature-container"
         :class="{
           'disabled-wrapper': isDisabled,
           'readOnly-wrapper': readOnly,
         }"
         style="max-width: 100%"
       >
-        <div>
+        <div class="signature-field-wrapper">
           <Vue3Signature
             :w="toPx(options.width, 'w') + 'px'"
             :h="toPx(options.height, 'h') + 'px'"
@@ -67,17 +57,25 @@
             @touchend="save('image/jpeg')"
           />
         </div>
-        <div v-if="!readOnly" class="pt-4">
-          <div class="col-12">
-            <Button style="margin-left: 10px; margin-top: 20px" @click="clear"
-              ><i class="pi pi-eraser"></i
-            ></Button>
-          </div>
-          <div class="col-12">
-            <Button style="margin-left: 10px; margin-top: 5px" @click="undo"
-              ><i class="pi pi-undo"></i
-            ></Button>
-          </div>
+        <div v-if="!readOnly" class="signature-actions">
+          <Button
+            severity="secondary"
+            outlined
+            size="small"
+            class="action-button"
+            @click="clear"
+          >
+            <i class="pi pi-eraser"></i>
+          </Button>
+          <Button
+            severity="secondary"
+            outlined
+            size="small"
+            class="action-button"
+            @click="undo"
+          >
+            <i class="pi pi-undo"></i>
+          </Button>
         </div>
       </div>
       <small class="p-error" v-if="errorState.errorMessage">{{
@@ -344,86 +342,249 @@ function toPx(value: string | number, axis: "w" | "h" = "w"): number {
 <style scoped>
 .neoSignField {
   width: 100%;
+
   .label {
     display: flex;
     flex-direction: row;
+    margin-bottom: 0.5rem;
+
     .label-container {
-      color: #165c77;
+      color: #495057;
       min-width: 150px;
       align-items: center;
-      padding-bottom: 5px;
-      font-family: Trebuchet MS, sans-serif;
-      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .required-asterisk {
+        color: var(--p-primary-color);
+        font-weight: 600;
+      }
+
+      .tooltip-icon {
+        cursor: pointer;
+        font-size: 12px;
+        color: #6c757d;
+        transition: color 0.2s ease-in-out;
+
+        &:hover {
+          color: var(--p-primary-color);
+        }
+      }
     }
   }
+
   .input-container {
     width: 100%;
-    .signature-canvas {
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      width: 100% !important;
+
+    .signature-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      .signature-field-wrapper {
+        position: relative;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+          0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease-in-out;
+        border: 1px solid #d1d5db;
+
+        &:hover {
+          border-color: var(--p-primary-color);
+          box-shadow: 0 0 0 0.2rem var(--p-primary-color-20);
+        }
+
+        &:focus-within {
+          border-color: var(--p-primary-color);
+          box-shadow: 0 0 0 0.2rem var(--p-primary-color-20);
+        }
+
+        .signature-canvas {
+          border: none !important;
+          border-radius: 0 !important;
+          width: 100% !important;
+          display: block;
+          background-color: #ffffff;
+        }
+      }
+
+      .signature-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+
+        .action-button {
+          border-radius: 6px;
+          padding: 0.5rem 1rem;
+          font-size: 14px;
+          font-weight: 500;
+          transition: all 0.2s ease-in-out;
+          border: 1px solid #d1d5db;
+          background: #ffffff;
+          color: #374151;
+
+          &:hover {
+            border-color: var(--p-primary-color);
+            background-color: #f8fafc;
+            color: var(--p-primary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+          }
+
+          &:focus {
+            outline: none;
+            border-color: var(--p-primary-color);
+            box-shadow: 0 0 0 0.2rem var(--p-primary-color-20);
+          }
+
+          &:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+          }
+
+          i {
+            font-size: 16px;
+          }
+        }
+      }
     }
   }
-  .button-container {
-    margin-top: 10px;
+
+  .p-error {
+    color: var(--p-primary-color);
+    font-size: 12px;
+    margin-top: 0.25rem;
+    font-weight: 400;
   }
 }
+
 .photo-preview-container {
   display: flex;
   gap: 10px;
   margin-top: 10px;
   flex-wrap: wrap;
 }
-.photo-preview {
-  position: relative; /* For positioning the remove button */
-  margin-right: 10px; /* Space between photos */
-}
+
 .photo-preview {
   position: relative;
   width: 100px;
   height: 100px;
-}
-.photo-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-/* Make the cursor a pointer on hover */
-.photo-preview img:hover {
-  cursor: pointer; /* Change cursor to pointer on hover */
-  transform: scale(1.05); /* Slightly enlarge the image on hover */
-}
 
-.photo-preview .ml-1 {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-}
-.photo-preview-box {
-  display: flex; /* Align images in a row */
-  overflow-x: auto; /* Enable horizontal scrolling */
-  background-color: #f8f8f8; /* Light background color */
-  border: 2px solid #165c77; /* Border color */
-  border-radius: 10px; /* Rounded corners */
-  padding: 10px; /* Padding inside the box */
-  margin-top: 10px; /* Space above the preview box */
-  width: 100%; /* Full width of the dialog */
-  max-height: 150px; /* Set a max height for the preview box */
-}
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
 
-/* Media query for screens wider than 450px */
-@media (min-width: 450px) {
-  .photo-preview-box {
-    max-width: 450px; /* Set max width if screen is wider than 450px */
+    &:hover {
+      cursor: pointer;
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  .ml-1 {
+    position: absolute;
+    top: 5px;
+    right: 5px;
   }
 }
-.disabled-wrapper {
-  pointer-events: none; /* Disable all interactions */
-  opacity: 0.5; /* Optional: Make it look visually disabled */
+
+.photo-preview-box {
+  display: flex;
+  overflow-x: auto;
+  background-color: #f8fafc;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.75rem;
+  width: 100%;
+  max-height: 150px;
+  transition: border-color 0.2s ease-in-out;
+
+  &:hover {
+    border-color: var(--p-primary-color);
+  }
+
+  @media (min-width: 450px) {
+    max-width: 450px;
+  }
 }
+
+.disabled-wrapper {
+  pointer-events: none;
+  opacity: 0.6;
+  filter: grayscale(0.3);
+
+  .signature-field-wrapper {
+    background-color: #f9fafb;
+    border-color: #e5e7eb !important;
+
+    &:hover {
+      border-color: #e5e7eb !important;
+      box-shadow: none !important;
+    }
+  }
+}
+
 .readOnly-wrapper {
-  pointer-events: none; /* Disable all interactions */
+  pointer-events: none;
+
+  .signature-field-wrapper {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        45deg,
+        transparent 40%,
+        rgba(0, 0, 0, 0.05) 50%,
+        transparent 60%
+      );
+      pointer-events: none;
+    }
+  }
+
+  .signature-actions {
+    display: none;
+  }
+}
+
+/* Animation for button interactions */
+@keyframes buttonPress {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.action-button:active {
+  animation: buttonPress 0.1s ease-in-out;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
 }
 </style>

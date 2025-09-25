@@ -520,7 +520,7 @@ export default {
 };
 </script>
 <style lang="scss">
-.p-treeselect .p-treeselect-label {
+.p-autocomplete .p-autocomplete-label {
   padding: 0 0.5rem !important;
 }
 /* Styles pour NeoFlowchart AutoComplete */
