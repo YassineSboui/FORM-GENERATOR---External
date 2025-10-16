@@ -55,6 +55,8 @@
             class="signature-canvas"
             @mouseup="save('image/jpeg')"
             @touchend="save('image/jpeg')"
+            @touchmove="onTouchMove"
+            @mousemove="onMouseMove"
           />
         </div>
         <div v-if="!readOnly" class="signature-actions">
@@ -225,12 +227,39 @@ export default {
       }
     };
 
+    // Add debounced save for better mobile performance
+    let saveTimeout: any = null;
+    const debouncedSave = (format: any) => {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+      saveTimeout = setTimeout(() => {
+        save(format);
+      }, 100); // 100ms debounce
+    };
+
+    const onTouchMove = () => {
+      // Save on touch move to ensure signature is captured during drawing
+      debouncedSave("image/jpeg");
+    };
+
+    const onMouseMove = () => {
+      // Save on mouse move for desktop consistency
+      debouncedSave("image/jpeg");
+    };
+
     const clear = () => {
       signatureCanvas.value?.clear();
+      internalValue.value = "";
+      emit("update:modelValue", "");
     };
 
     const undo = () => {
       signatureCanvas.value?.undo();
+      // Save after undo to update the model value
+      setTimeout(() => {
+        save("image/jpeg");
+      }, 50);
     };
 
     const addWaterMark = () => {
@@ -311,6 +340,8 @@ export default {
       formattedSigOption,
       signatures,
       showEliseSignatures,
+      onTouchMove,
+      onMouseMove,
       toPx,
     };
   },
