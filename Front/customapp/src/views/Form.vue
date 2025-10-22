@@ -47,7 +47,6 @@
     </div>
     <div
       class="form-viewer-container-footer"
-      :class="{ 'custom-padding-rtl': isRTL }"
       v-if="isFormDisplay.value && form.length !== 0"
     >
       <div class="footer-content">
@@ -83,7 +82,7 @@
                 "
                 v-show="showPageNumF === 1 || showPageNames"
                 @click="cancel"
-                class="mr-2"
+                :class="isRTL ? 'ml-2' : 'mr-2'"
               >
                 {{ cancelButtonText }}
               </Button>
@@ -92,7 +91,7 @@
               <Button
                 v-show="showPageNumF > 1 && !showPageNames"
                 @click="showPageNumF > 1 ? showPageNumF-- : showPageNumF"
-                class="mr-2"
+                :class="isRTL ? 'ml-2' : 'mr-2'"
               >
                 {{ previousButtonText }}
               </Button>
@@ -115,7 +114,7 @@
                   systemVariables.DISPLAY_BUTTON_OK !== 'false'
                 "
                 @click="submit()"
-                class="ml-2"
+                :class="isRTL ? 'mr-2' : 'ml-2'"
               >
                 {{ submitButtonText }}
               </Button>
@@ -1653,6 +1652,11 @@ export default defineComponent({
     border-radius: 20px;
   }
 }
+
+/* RTL adjustment for footer */
+[dir="rtl"] .form-viewer-container-footer .footer-content {
+  transform: translateX(calc(-49.5% + var(--scrollbar-width-half, 0px)));
+}
 body.dark .footer-content {
   background-color: #1e1e1e !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
@@ -1662,9 +1666,7 @@ body.dark .footer-content {
 .form-viewer-container-content {
   scroll-behavior: smooth; /* Smooth scrolling */
 }
-.custom-padding-rtl {
-  padding-left: 60px;
-}
+
 .stepper {
   position: relative;
   .pages-headers {
@@ -1689,6 +1691,11 @@ body.dark .footer-content {
     z-index: 1000;
     margin: 0;
   }
+}
+
+/* RTL adjustment for zone-page-header */
+[dir="rtl"] .zone-page-sticky-header .zone-page-header {
+  transform: translateX(calc(-50% + var(--scrollbar-width-half, 0px)));
 }
 
 /* Dynamic scrollbar width compensation is now handled via CSS custom properties */

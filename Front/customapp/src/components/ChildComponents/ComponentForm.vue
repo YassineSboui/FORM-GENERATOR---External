@@ -2879,9 +2879,17 @@ defineExpose({
     top: 0;
     background-color: #f8f9fa;
     z-index: 1000;
-    margin-left: -10rem;
-    padding-left: 10rem;
+    margin-left: -50rem;
+    padding-left: 50rem;
   }
+}
+
+/* RTL adjustment for stepper headers */
+[dir="rtl"] .stepper .pages-headers {
+  margin-left: 0;
+  padding-left: 0;
+  padding-right: 50rem;
+  margin-right: -50rem;
 }
 
 .dark .stepper .pages-headers {
