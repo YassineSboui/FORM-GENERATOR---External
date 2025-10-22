@@ -23,37 +23,72 @@ namespace NeoForm_Externe.Services
 
         public async Task<List<ObjectModels>> GetObjectsByTypeAsync(string objectType)
         {
-            return await _context.Objects
+            var objects = await _context.Objects
                 .Where(o => o.ObjectType == objectType)
                 .ToListAsync();
+
+            foreach (var o in objects)
+            {
+                if (o.IsEncrypted)
+                {
+                    o.ObjectJson = decyptObject(o.ObjectJson);
+                }
+            }
+
+            return objects;
         }
 
-        public async Task<ObjectModels?> GetObjectByGuidAsync(string guid)
+        public async Task<ObjectModels?> GetObjectByGuidAsync(string guid, bool nullifySensitiveFields = true)
         {
-            return await _context.Objects
-                .FirstOrDefaultAsync(o => o.Guid == guid);
+            var o = await _context.Objects
+                .FirstOrDefaultAsync(obj => obj.Guid == guid);
+
+            if (o != null && o.IsEncrypted)
+            {
+                o.ObjectJson = decyptObject(o.ObjectJson, nullifySensitiveFields);
+            }
+
+            return o;
         }
 
-   
-        public async Task<ObjectModels> GetObjectByObjectName(string name)
+
+
+        public async Task<ObjectModels> GetObjectByObjectName(string name, bool nullifySensitiveFields = true)
         {
             ObjectModels? o = await _context.Objects.FirstOrDefaultAsync(s => s.ObjectName == name);
             if (o == null) throw new RecordNotFoundException("Object not found");
 
             if (o.IsEncrypted)
             {
-                o.ObjectJson = decyptObject(o.ObjectJson);
+                o.ObjectJson = decyptObject(o.ObjectJson, nullifySensitiveFields);
             }
 
             return o;
         }
-        private string decyptObject(string objectJson)
+        private string decyptObject(string objectJson, bool nullifySensitiveFields = true)
         {
             EncryptedObjectJsonDto? encryptedObject = JsonConvert.DeserializeObject<EncryptedObjectJsonDto>(objectJson);
             if (encryptedObject == null) { throw new InvalidOperationException(); }
             string objectConfigJSON = _encryption.Decrypt(encryptedObject.ObjectConfig);
             JObject objectConfig = JObject.Parse(objectJson);
             objectConfig["objectConfig"] = JObject.Parse(objectConfigJSON);
+
+            // Only nullify sensitive fields if requested (for API responses)
+            if (nullifySensitiveFields)
+            {
+                // Set sensitive SMTP fields to null
+                if (objectConfig["objectConfig"]?["SMTPConfig"] != null)
+                {
+                    objectConfig["objectConfig"]["SMTPConfig"]["username"] = null;
+                    objectConfig["objectConfig"]["SMTPConfig"]["password"] = null;
+                }
+                // Set sensitive CollectionDatabaseConfig fields to null
+                if (objectConfig["objectConfig"]?["CollectionDatabaseConfig"] != null)
+                {
+                    objectConfig["objectConfig"]["CollectionDatabaseConfig"]["connectionString"] = null;
+                }
+            }
+
             return JsonConvert.SerializeObject(objectConfig, Formatting.None);
         }
 

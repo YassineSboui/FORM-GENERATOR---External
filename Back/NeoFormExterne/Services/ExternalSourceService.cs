@@ -32,7 +32,7 @@ namespace NeoForm_Externe.Services
             {
                 _logger.LogInformation($"Executing database query for object: {req.ObjectName}");
 
-                var queryObjectResult = await _objectService.GetObjectByObjectName(req.ObjectName);
+                var queryObjectResult = await _objectService.GetObjectByObjectName(req.ObjectName ,false);
                 if (queryObjectResult == null)
                 {
                     throw new KeyNotFoundException($"Query object not found: {req.ObjectName}");
@@ -51,7 +51,7 @@ namespace NeoForm_Externe.Services
                     throw new InvalidOperationException($"Query configuration is missing for object: {req.ObjectName}");
                 }
 
-                var databaseObjectResult = await _objectService.GetObjectByGuidAsync(queryConfig.DatabaseConfigGuid);
+                var databaseObjectResult = await _objectService.GetObjectByGuidAsync(queryConfig.DatabaseConfigGuid ,false);
                 if (databaseObjectResult == null)
                 {
                     throw new KeyNotFoundException($"Database object not found for GUID: {queryConfig.DatabaseConfigGuid}");
