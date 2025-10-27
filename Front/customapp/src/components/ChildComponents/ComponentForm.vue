@@ -1066,9 +1066,9 @@ const processFieldData = (element: string, options: any) => {
       break;
 
     case "FLOWCHART":
+      NoticeData.value[element] = fieldValue ?? "";
       if (related) {
         NoticeMapping.value[element] = fieldValue?.id ?? "";
-        NoticeData.value[element] = fieldValue ?? "";
       }
       break;
 
