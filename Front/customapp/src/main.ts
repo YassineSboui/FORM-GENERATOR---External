@@ -16,7 +16,6 @@ import * as DraggableZones from "@/components/Zones/Draggable";
 import * as PreviewZones from "@/components/Zones/Preview";
 import * as DraggableZonesT from "@/components/ZonesTable/Draggable";
 import * as ChildComponents from "@/components/ChildComponents";
-import keycloak from "./keycloak";
 import { Field, ErrorMessage, defineRule, configure } from "vee-validate";
 import { localize } from "@vee-validate/i18n";
 import * as rules from "@vee-validate/rules";
@@ -224,9 +223,6 @@ app.component("D-Z1111T", DraggableZonesT.Z1111T);
 app.directive("tooltip", Tooltip);
 app.directive("badge", BadgeDirective);
 
-// Provide keycloak globally
-app.provide("keycloak", keycloak);
-
 // Mount function
 function mountApp() {
   app.use(pinia);
@@ -252,32 +248,8 @@ function mountApp() {
   app.mount("#app");
 }
 
-// Auth logic for /neoformext/front/
-const currentPath = window.location.pathname;
-if (
-  currentPath === "/neoformext/front/" ||
-  currentPath === "/neoformext/front"
-) {
-  keycloak
-    .init({ onLoad: "login-required", checkLoginIframe: false })
-    .then((authenticated) => {
-      if (!authenticated) {
-        window.location.reload();
-      } else {
-        console.log("✅ Authenticated");
-        mountApp();
-        // Token refresh
-        setInterval(() => {
-          keycloak.updateToken(60).catch(() => keycloak.login());
-        }, 30000);
-      }
-    })
-    .catch((error) => {
-      console.error("❌ Keycloak init failed", error);
-    });
-} else {
-  // No auth for other routes
-  mountApp();
-}
+// Mount the app directly without authentication
+mountApp();
+
 export { i18n };
 export default app;

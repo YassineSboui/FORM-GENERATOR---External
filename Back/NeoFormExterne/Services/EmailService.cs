@@ -11,11 +11,13 @@ namespace NeoForm_Externe.Services
     {
         private readonly ILogger<EmailService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly ConfigurationEncryptionService _configEncryptionService;
 
-        public EmailService(ILogger<EmailService> logger, IConfiguration configuration)
+        public EmailService(ILogger<EmailService> logger, IConfiguration configuration, ConfigurationEncryptionService configEncryptionService)
         {
             _logger = logger;
             _configuration = configuration;
+            _configEncryptionService = configEncryptionService;
         }
 
         public async Task<bool> SendOTPEmailAsync(string toEmail, string otp)
@@ -24,8 +26,9 @@ namespace NeoForm_Externe.Services
             {
                 var smtpHost = _configuration["Email:SmtpHost"];
                 var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? "587");
-                var smtpUsername = _configuration["Email:Username"];
-                var smtpPassword = _configuration["Email:Password"];
+                // Use ConfigurationEncryptionService to decrypt encrypted values
+                var smtpUsername = _configEncryptionService.GetDecryptedValue("Email:Username");
+                var smtpPassword = _configEncryptionService.GetDecryptedValue("Email:Password");
                 var fromEmail = _configuration["Email:FromAddress"];
                 var fromName = _configuration["Email:FromName"] ?? "Form Access";
 

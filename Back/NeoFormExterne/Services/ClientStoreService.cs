@@ -152,31 +152,57 @@ namespace NeoForm_Externe.Services
         {
             _logger.LogDebug("🔍 Looking for client with URL: '{Url}'", url);
 
-            var client = _context.Clients.FirstOrDefault(c => c.BaseUrl == (url + "/neoform"));
-
-            if (client == null)
+            // Normalize the input URL to lowercase
+            var normalizedUrl = url.Trim().ToLowerInvariant();
+            
+            // Get all clients and normalize their URLs for comparison
+            var allClients = _context.Clients.ToList();
+            
+            foreach (var client in allClients)
             {
-                _logger.LogWarning("❌ No client found with exact URL match: '{Url}'", url);
-
-                // Log all existing client URLs for debugging
-                var allClients = _context.Clients.ToList();
-                _logger.LogDebug("📋 Available client URLs in database:");
-                foreach (var c in allClients)
+                var clientBaseUrl = client.BaseUrl.Trim().ToLowerInvariant();
+                
+                // Try exact match first
+                if (clientBaseUrl == normalizedUrl)
                 {
-                    _logger.LogDebug("   - Client '{ClientId}': '{BaseUrl}'", c.ClientId, c.BaseUrl);
+                    _logger.LogInformation("✅ Found client '{ClientId}' with exact URL match: '{Url}'", client.ClientId, url);
+                    var frontUrl = _configuration["FrontFormUrl"]?.TrimEnd('/');
+                    var result = $"{frontUrl}/form/{client.ClientId}";
+                    _logger.LogDebug("� Returning form URL: '{FormUrl}'", result);
+                    return result;
                 }
-
-                return null;
+                
+                // Try matching input URL + "/neoform" with stored URL
+                if (clientBaseUrl == normalizedUrl + "/neoform")
+                {
+                    _logger.LogInformation("✅ Found client '{ClientId}' by adding /neoform to input URL: '{Url}'", client.ClientId, url);
+                    var frontUrl = _configuration["FrontFormUrl"]?.TrimEnd('/');
+                    var result = $"{frontUrl}/form/{client.ClientId}";
+                    _logger.LogDebug("🔗 Returning form URL: '{FormUrl}'", result);
+                    return result;
+                }
+                
+                // Try matching stored URL with input URL (if input has /neoform)
+                if (normalizedUrl.EndsWith("/neoform") && clientBaseUrl == normalizedUrl[..^9]) // Remove "/neoform" from input
+                {
+                    _logger.LogInformation("✅ Found client '{ClientId}' by removing /neoform from input URL: '{Url}'", client.ClientId, url);
+                    var frontUrl = _configuration["FrontFormUrl"]?.TrimEnd('/');
+                    var result = $"{frontUrl}/form/{client.ClientId}";
+                    _logger.LogDebug("🔗 Returning form URL: '{FormUrl}'", result);
+                    return result;
+                }
+            }
+            
+            // No match found - log all available clients for debugging
+            _logger.LogWarning("❌ No client found matching URL: '{Url}'", url);
+            _logger.LogDebug("📋 Available client URLs in database (normalized):");
+            foreach (var c in allClients)
+            {
+                _logger.LogDebug("   - Client '{ClientId}': '{BaseUrl}' (normalized: '{NormalizedUrl}')", 
+                    c.ClientId, c.BaseUrl, c.BaseUrl.Trim().ToLowerInvariant());
             }
 
-            _logger.LogInformation("✅ Found client '{ClientId}' for URL '{Url}'", client.ClientId, url);
-
-            var frontUrl = _configuration["FrontFormUrl"]?.TrimEnd('/');
-            var result = $"{frontUrl}/form/{client.ClientId}";
-
-            _logger.LogDebug("🔗 Returning form URL: '{FormUrl}'", result);
-
-            return result;
+            return null;
         }
 
         private string GenerateApiKey()

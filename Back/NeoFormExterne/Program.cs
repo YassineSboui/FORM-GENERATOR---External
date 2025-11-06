@@ -7,12 +7,9 @@ using NeoForm_Externe.Proxy;
 using NeoForm_Externe.Services;
 using Serilog;
 using Yarp.ReverseProxy.Configuration;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using NeoForm_Externe.Filters;
-using Newtonsoft.Json.Linq;
-using System.Security.Claims;
 using NeoForm_Externe.Repositories;
+using NeoForm_Externe.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,16 +22,35 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Database
-builder.Services.AddDbContext<ExternalNeoFormContext>(options =>
+// Register encryption service first
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+builder.Services.AddSingleton<ConfigurationHelper>();
+builder.Services.AddSingleton<ConfigurationEncryptionService>();
+builder.Services.AddSingleton<ApiKeyMigrationService>();
+
+// Auto-encrypt sensitive values on startup if not already encrypted
+var encryptionService = new EncryptionService();
+var configEncryptionService = new ConfigurationEncryptionService(
+    builder.Configuration,
+    encryptionService,
+    LoggerFactory.Create(b => b.AddConsole()).CreateLogger<ConfigurationEncryptionService>(),
+    builder.Environment
+);
+
+// Encrypt configuration values if needed (this will modify appsettings.json on first run)
+configEncryptionService.EncryptSensitiveValuesIfNeeded();
+
+// Database - Use decrypted connection string
+var connectionString = configEncryptionService.GetDecryptedConnectionString("ExternalNeoFormContext");
+
+builder.Services.AddDbContext<ExternalNeoFormContext>((serviceProvider, options) =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("ExternalNeoFormContext");
     options.UseSqlServer(connectionString);
+    // Note: The DbContext will get IEncryptionService from DI automatically
 });
 
 // Services
 builder.Services.AddScoped<TokenService>();
-builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IObjectService, ObjectService>();
 builder.Services.AddScoped<IExternalSourceService, ExternalSourceService>();
 builder.Services.AddScoped<IClientStoreService, ClientStoreService>();
@@ -74,49 +90,15 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
-// ✅ Authentification via JWT (Keycloak)
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = builder.Configuration["Jwt:Authority"];
-        options.Audience = builder.Configuration["Jwt:Audience"];
-        options.RequireHttpsMetadata = false;
-
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            NameClaimType = "preferred_username",
-            RoleClaimType = ClaimTypes.Role // Use ClaimTypes.Role here
-        };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = context =>
-            {
-                var identity = context.Principal?.Identity as ClaimsIdentity;
-                var resourceAccessClaim = context.Principal?.FindFirst("resource_access");
-
-                if (resourceAccessClaim != null)
-                {
-                    var resourceAccess = JObject.Parse(resourceAccessClaim.Value);
-                    var roles = resourceAccess?["NeoFormExt"]?["roles"]?.ToObject<List<string>>();
-
-                    if (roles != null)
-                    {
-                        foreach (var role in roles)
-                        {
-                            identity?.AddClaim(new Claim(ClaimTypes.Role, role));
-                        }
-                    }
-                }
-
-                return Task.CompletedTask;
-            }
-        };
-    });
 
 var app = builder.Build();
+
+// Migrate existing API keys to encrypted format on startup
+using (var scope = app.Services.CreateScope())
+{
+    var apiKeyMigrationService = scope.ServiceProvider.GetRequiredService<ApiKeyMigrationService>();
+    await apiKeyMigrationService.MigrateApiKeysAsync();
+}
 
 app.UseHttpLogging();
 // ✅ Supprimer le header X-Frame-Options injecté par défaut
@@ -141,8 +123,6 @@ if (app.Environment.IsDevelopment())
 }
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.MapControllers();
 

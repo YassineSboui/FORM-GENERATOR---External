@@ -14,7 +14,7 @@ namespace NeoForm_Externe.Services
         private readonly IEncryptionService _encryption;
         private readonly ILogger<ObjectService> _logger;
 
-        public ObjectService(ExternalNeoFormContext context, IEncryptionService encryption , ILogger<ObjectService> logger)
+        public ObjectService(ExternalNeoFormContext context, IEncryptionService encryption, ILogger<ObjectService> logger)
         {
             _context = context;
             _encryption = encryption;
@@ -87,6 +87,22 @@ namespace NeoForm_Externe.Services
                 {
                     objectConfig["objectConfig"]["CollectionDatabaseConfig"]["connectionString"] = null;
                 }
+                // Set sensitive ExternalApiConfig Authorization fields to null
+                if (objectConfig["objectConfig"]?["externalApiConfig"]?["authorization"] != null)
+                {
+                    var auth = objectConfig["objectConfig"]["externalApiConfig"]["authorization"];
+                    auth["apiType"] = null;
+                    auth["api_type"] = null;
+                    auth["key"] = null;
+                    auth["value"] = null;
+                    auth["bearerToken"] = null;
+                    auth["algorithm"] = null;
+                    auth["secret"] = null;
+                    auth["secret_encoded"] = null;
+                    auth["payload"] = null;
+                    auth["username"] = null;
+                    auth["password"] = null;
+                }
             }
 
             return JsonConvert.SerializeObject(objectConfig, Formatting.None);
@@ -94,24 +110,42 @@ namespace NeoForm_Externe.Services
 
         public async Task<ObjectModels> PublishObject(JObject obj)
         {
+            _logger.LogInformation("PublishObject called with object: {Object}", obj.ToString(Formatting.None));
+
             var guid = obj["guid"]?.ToString();
 
             if (string.IsNullOrWhiteSpace(guid) || !Guid.TryParse(guid, out Guid parsedGuid))
+            {
+                _logger.LogError("Invalid or missing GUID in object: {Object}", obj.ToString(Formatting.None));
                 throw new ArgumentException("Invalid or missing GUID in object");
+            }
 
-            var existing = await _context.Objects.FirstOrDefaultAsync(o => o.Guid == guid);
+            _logger.LogInformation("Processing object with GUID: {Guid}", guid);
+
+            // Handle encryption if isEncrypted flag is true
+            if (obj.TryGetValue("isEncrypted", out var isEncrypted) && isEncrypted.Value<bool>())
+            {
+                _logger.LogInformation("Encrypting object configuration for GUID: {Guid}", guid);
+                var objectConfig = JsonConvert.SerializeObject(obj.GetValue("objectConfig"), Formatting.None);
+                obj["objectConfig"] = _encryption.Encrypt(objectConfig);
+            }
 
             var objectJson = obj.ToString(Formatting.None);
 
+            var existing = await _context.Objects.FirstOrDefaultAsync(o => o.Guid == guid);
+
             if (existing != null)
             {
+                _logger.LogInformation("Updating existing object with GUID: {Guid}", guid);
                 existing.ObjectJson = objectJson;
                 _context.Objects.Update(existing);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Successfully updated object with GUID: {Guid}", guid);
                 return existing;
             }
             else
             {
+                _logger.LogInformation("Creating new object with GUID: {Guid}", guid);
                 var model = new ObjectModels
                 {
                     Guid = guid,
@@ -119,6 +153,7 @@ namespace NeoForm_Externe.Services
                 };
                 _context.Objects.Add(model);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Successfully created new object with GUID: {Guid}", guid);
                 return model;
             }
         }

@@ -495,13 +495,6 @@ import {
   fetchDataByTableGuid,
   logger,
   logBlockly,
-  callEliseWebService,
-  executeWorkflow,
-  executeStandalone,
-  publishFiles,
-  executeAsyncWorkflow,
-  executeAsyncStandalone,
-  generateModelWithoutNotice,
 } from "@/api/api";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
@@ -517,6 +510,18 @@ import { storeToRefs } from "pinia";
 import { localize } from "@vee-validate/i18n";
 import { useI18n } from "vue-i18n";
 import { cloneDeep } from "lodash";
+import { executeCodeAsync } from "@/utils/codeExecutor";
+
+// Import Blockly utilities for code execution context
+import {
+  fieldUtility,
+  stringUtility,
+  mathUtility,
+  arrayUtility,
+  eliseUtility,
+  sectionUtility,
+  initializeBlocklyUtilities,
+} from "@/utils/blocklyUtilities";
 
 // Utility class for query parameter decryption
 class QueryParameterDecryptor {
@@ -943,6 +948,7 @@ function uuidv4() {
     return v.toString(16);
   });
 }
+
 const requiredFieldsNotEmpty = () => {
   for (let element in app.refs) {
     const isRequired = app.refs[element][0]?.options?.required === true;
@@ -1091,12 +1097,10 @@ const executeBeforeSaveCode = async () => {
 
   if (beforeSaveCode) {
     try {
-      await eval(
-        "(async () => { const store = useAppStore(); " + beforeSaveCode + "})()"
-      );
+      await executeCodeAsync(beforeSaveCode, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in beforeSave code: ${error}`);
     }
   }
 };
@@ -1110,12 +1114,10 @@ const executeAfterSaveCode = async (obj: any) => {
   if (afterSaveCode) {
     store.setNotice(obj);
     try {
-      await eval(
-        "(async () => { const store = useAppStore(); " + afterSaveCode + "})()"
-      );
+      await executeCodeAsync(afterSaveCode, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in afterSave code: ${error}`);
     }
   }
 };
@@ -1528,6 +1530,18 @@ onMounted(async () => {
   logBlockly.info("onMounted");
   GlobalVariables.value = {};
   setLocale();
+
+  // Initialize Blockly utilities with the component context
+  try {
+    initializeBlocklyUtilities({
+      app: app,
+      store: store,
+    });
+  } catch (error) {
+    console.error("Failed to initialize Blockly utilities:", error);
+    logger.error(`Failed to initialize Blockly utilities: ${error}`);
+  }
+
   if (props.showLoader) {
     useHttpRequest().setLoading(true);
   }
@@ -1630,12 +1644,10 @@ onMounted(async () => {
     if (evnt.code != "" && evnt.rule.code == "beforeLoad") {
       try {
         await new Promise((resolve) => setTimeout(resolve, 100));
-        await eval(
-          "(async () => { const store = useAppStore(); " + evnt.code + "})()"
-        );
+        await executeCodeAsync(evnt.code, createExecutionContext());
       } catch (error) {
         console.error("error", error);
-        logger.error(error);
+        logger.error(`Error in beforeLoad code: ${error}`);
       }
     }
     if (evnt.code != "" && evnt.rule.code == "afterLoad") {
@@ -1646,14 +1658,10 @@ onMounted(async () => {
   useHttpRequest().setLoading(false);
   if (afterLoad.value) {
     try {
-      await eval(
-        "(async () => { const store = useAppStore();" +
-          afterLoad.value.code +
-          "})()"
-      );
+      await executeCodeAsync(afterLoad.value.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in afterLoad code: ${error}`);
     }
   }
   const headerElement = document.querySelector(
@@ -1693,14 +1701,10 @@ const handleInputChange = async (item: any) => {
   if (selectedEvent) {
     try {
       const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in change event: ${error}`);
     }
   }
 };
@@ -1711,14 +1715,10 @@ const handleFocus = async (item: any) => {
   if (selectedEvent) {
     try {
       const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in focus event: ${error}`);
     }
   }
 };
@@ -1729,14 +1729,10 @@ const handleBlur = async (item: any) => {
   if (selectedEvent) {
     try {
       const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in blur event: ${error}`);
     }
   }
 };
@@ -1749,14 +1745,10 @@ const handleMouseenter = async (item: any) => {
   if (selectedEvent) {
     try {
       const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in mouseenter event: ${error}`);
     }
   }
 };
@@ -1769,14 +1761,10 @@ const handleMouseleave = async (item: any) => {
   if (selectedEvent) {
     try {
       const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in mouseleave event: ${error}`);
     }
   }
 };
@@ -1827,18 +1815,18 @@ const executeFun = async (event: any) => {
 };
 const handleCodeselected = async (code: string) => {
   try {
-    await eval("(async () => { const store = useAppStore(); " + code + "})()");
+    await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
     console.error("error", error);
-    logger.error(error);
+    logger.error(`Error in handleCodeselected: ${error}`);
   }
 };
 const searchItemFunc = async (code: string) => {
   try {
-    await eval("(async () => { const store = useAppStore(); " + code + "})()");
+    await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
     console.error("error", error);
-    logger.error(error);
+    logger.error(`Error in searchItemFunc: ${error}`);
   }
 };
 const repeatableZoneChildrens = ref({} as any);
@@ -1870,12 +1858,10 @@ const navigateNext = (page: any) => {
   calculatePagesStyle();
   if (codeBefore) {
     try {
-      eval(
-        "(async () => { const store = useAppStore(); " + codeBefore + "})()"
-      );
+      executeCodeAsync(codeBefore, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in beforeFollowing code: ${error}`);
     }
   } else {
     showPageNum.value < props.stepper.steps
@@ -1967,6 +1953,102 @@ const isEmpty = (value: any): boolean => {
   // Default case - not empty
   return false;
 };
+
+function redirectTo(url: string) {
+  try {
+    const redirectUrl = url;
+    if (redirectUrl && redirectUrl.trim() !== "") {
+      window.open(redirectUrl, "_blank");
+    } else {
+      console.warn("Redirect URL is empty or invalid");
+      logger.warn("Redirect URL is empty or invalid");
+    }
+  } catch (error) {
+    console.error("Error opening URL in new tab:", error);
+    logger.error(`Error opening URL in new tab: ${error}`);
+  }
+}
+
+// Create a comprehensive context object for dynamic code execution
+// This bundles all component functions and state that need to be accessible to executeCodeAsync
+const createExecutionContext = () => ({
+  // Utility functions
+  uuidv4,
+  isEmpty,
+
+  // Navigation functions
+  navigatePrevious,
+  navigateNext,
+  navigate,
+
+  // Section control functions
+  showSection,
+  hideSection,
+  toggleSection,
+  disableNextButtonFunction,
+  enableNextButtonFunction,
+
+  // Validation functions
+  requiredFieldsNotEmpty,
+  notValidFieldsExists,
+
+  // Submit functions
+  submit,
+  submitNotice,
+  redirectTo,
+
+  // State and refs (reactive values)
+  Fields,
+  User,
+  Version,
+  Variables,
+  GlobalVariables,
+  QueryParameters,
+  newNotice,
+
+  // App instance for refs access
+  app,
+
+  // Store access
+  store,
+
+  // Toast for notifications
+  toast,
+
+  // Translation function
+  t,
+
+  disabledNextButton,
+  disabledPreviousButton,
+  fetchTableData,
+  enablePreviousButtonFunction,
+  disablePreviousButtonFunction,
+  handleInputChange,
+  executeFun,
+  handleCollapsed,
+  handleRefs,
+  duplicate,
+  deleteDuplicated,
+  useModel,
+  validatePageFields,
+  initFields,
+
+  // Blockly utility modules (sandboxed API) - with prefixes
+  field: fieldUtility,
+  string: stringUtility,
+  math: mathUtility,
+  array: arrayUtility,
+  elise: eliseUtility,
+  section: sectionUtility,
+
+  // Blockly utility modules (sandboxed API) - direct access for Blockly-generated code
+  fieldUtility,
+  stringUtility,
+  mathUtility,
+  arrayUtility,
+  eliseUtility,
+  sectionUtility,
+});
 
 const validateField = (pageItem: any, columnName: string, valid: boolean) => {
   let fieldValid = valid;
@@ -2265,17 +2347,15 @@ const stickyHeaderClass = computed(() => {
   };
 });
 async function executeWebService(webServiceName: String, parameters: any) {
-  const obj = {
-    eliseWsInputType: webServiceName,
-    objet: parameters,
-  };
-  console.log("obj", obj);
   try {
-    const result = await callEliseWebService(obj);
+    const result = await eliseUtility.executeWebService(
+      webServiceName as string,
+      parameters
+    );
     return result;
   } catch (error) {
     console.error("error", error);
-    logger.error(error);
+    logger.error(`Error in executeWebService: ${error}`);
     return error;
   }
 }
@@ -2565,24 +2645,58 @@ function validateByRule(
       return { valid: true, msg: "" };
     }
     case "regex": {
-      let pattern = rule.expression;
+      let pattern: any = rule.expression;
       let flags = "";
-      const regexParts = pattern.match(/^\/([^/]+)\/(\w*)$/);
-      if (regexParts) {
-        pattern = regexParts[1];
-        flags = regexParts[2];
-      } else if (pattern.startsWith("/") && pattern.endsWith("/")) {
-        pattern = pattern.slice(1, -1);
+
+      // If expression is an object with a regex property, extract it
+      if (typeof pattern === "object" && pattern !== null && pattern.regex) {
+        pattern = pattern.regex;
+
+        // If the extracted regex is a RegExp object, get its source and flags
+        if (pattern instanceof RegExp) {
+          flags = pattern.flags;
+          pattern = pattern.source;
+        }
       }
+
+      // Convert to string if needed
+      if (typeof pattern !== "string") {
+        pattern = String(pattern);
+      }
+
+      // Handle string representation of object: "{ regex: /pattern/ }"
+      const objectMatch = pattern.match(
+        /\{\s*regex:\s*(\/.*?\/[gimsuvy]*)\s*\}/
+      );
+      if (objectMatch) {
+        pattern = objectMatch[1];
+      }
+
+      // Strip "regex:" prefix if present and trim whitespace
+      if (pattern.startsWith("regex:")) {
+        pattern = pattern.substring(6).trim();
+      }
+
+      // Handle /pattern/flags format (only if we didn't already extract from RegExp)
+      if (!flags) {
+        const regexParts = pattern.match(/^\/([^/]+)\/(\w*)$/);
+        if (regexParts) {
+          pattern = regexParts[1];
+          flags = regexParts[2];
+        } else if (pattern.startsWith("/") && pattern.endsWith("/")) {
+          pattern = pattern.slice(1, -1);
+        }
+      }
+
       try {
         const regex = new RegExp(pattern, flags);
+        const valid = regex.test(String(value));
         return {
-          valid: regex.test(String(value)),
-          msg: regex.test(String(value))
-            ? ""
-            : `${label} a un format invalide.`,
+          valid: valid,
+          msg: valid ? "" : `${label} a un format invalide.`,
         };
       } catch (e) {
+        console.error("Regex validation error:", e, "Pattern:", pattern);
         return { valid: false, msg: `${label} a un format invalide.` };
       }
     }
@@ -2756,21 +2870,7 @@ function validateFieldAllRules(
   }
   return { valid, messages };
 }
-async function internalExecuteWorkflow(parameters: any) {
-  return await executeWorkflow(parameters);
-}
-async function internalExecuteStandalone(parameters: any) {
-  return await executeStandalone(parameters);
-}
-function internalExecuteAsyncWorkflow(parameters: any) {
-  executeAsyncWorkflow(parameters);
-}
-function internalExecuteAsyncStandalone(parameters: any) {
-  executeAsyncStandalone(parameters);
-}
-async function internalGenerateModel(parameters: any) {
-  return await generateModelWithoutNotice(parameters);
-}
+
 async function showConfirmationDialog(
   message: string,
   header: string,
@@ -2788,9 +2888,7 @@ async function showConfirmationDialog(
     reject: () => rejectFn(),
   });
 }
-async function internalPublishFiles(parameters: any) {
-  return await publishFiles(parameters);
-}
+
 defineExpose({
   itemsForm,
   Fields,
@@ -2821,13 +2919,7 @@ defineExpose({
   toggleSection,
   initFields,
   executeWebService,
-  internalExecuteWorkflow,
-  internalExecuteStandalone,
-  internalExecuteAsyncWorkflow,
-  internalExecuteAsyncStandalone,
-  internalGenerateModel,
   showConfirmationDialog,
-  internalPublishFiles,
 });
 </script>
 <style lang="scss">

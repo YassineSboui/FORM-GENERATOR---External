@@ -212,7 +212,7 @@ namespace NeoForm_Externe.Controllers
         {
             try
             {
-                var jwtKey = _configuration["Jwt:SecretKey"] ?? "your-256-bit-secret-key-here-make-it-secure-and-long-enough-for-production";
+                var jwtKey = _configuration["EmailAuth:JwtSecretKey"] ?? "your-256-bit-secret-key-here-make-it-secure-and-long-enough-for-production";
                 var key = Encoding.ASCII.GetBytes(jwtKey);
 
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -255,7 +255,7 @@ namespace NeoForm_Externe.Controllers
         {
             try
             {
-                var jwtKey = _configuration["Jwt:SecretKey"] ?? "your-256-bit-secret-key-here-make-it-secure-and-long-enough-for-production";
+                var jwtKey = _configuration["EmailAuth:JwtSecretKey"] ?? "your-256-bit-secret-key-here-make-it-secure-and-long-enough-for-production";
                 var key = Encoding.ASCII.GetBytes(jwtKey);
 
                 var tokenDescriptor = new SecurityTokenDescriptor

@@ -458,6 +458,18 @@ import { AifileUpload } from "@/api/api";
 import { storeToRefs } from "pinia";
 import { localize } from "@vee-validate/i18n";
 import { useI18n } from "vue-i18n";
+import { executeCodeAsync } from "@/utils/codeExecutor";
+
+// Import Blockly utilities for code execution context
+import {
+  fieldUtility,
+  stringUtility,
+  mathUtility,
+  arrayUtility,
+  eliseUtility,
+  sectionUtility,
+} from "@/utils/blocklyUtilities";
+
 // export default {
 const props = defineProps({
   modelValue: {
@@ -601,6 +613,7 @@ const cancel = () => {
 const User = ref({ displayName: "" } as any);
 const Version = ref({} as any);
 const QueryParameters = ref({} as any);
+const GlobalVariables = ref({} as any);
 const disabledNextButton = ref(false);
 const disabledPreviousButton = ref(false);
 const newNotice = {
@@ -755,6 +768,52 @@ const notValidFieldsExists = () => {
   return false;
 };
 
+// Create execution context with all necessary variables and functions
+const createExecutionContext = () => ({
+  uuidv4,
+  navigatePrevious,
+  navigateNext,
+  navigate,
+  isEmpty,
+  showSection,
+  hideSection,
+  toggleSection,
+  disableNextButtonFunction,
+  disablePreviousButtonFunction,
+  enableNextButtonFunction,
+  enablePreviousButtonFunction,
+  requiredFieldsNotEmpty,
+  notValidFieldsExists,
+  submit,
+  submitNotice,
+  Fields,
+  User,
+  Version,
+  Variables,
+  GlobalVariables,
+  QueryParameters,
+  app,
+  store,
+  toast,
+  t,
+
+  // Blockly utility modules (sandboxed API) - with prefixes
+  field: fieldUtility,
+  string: stringUtility,
+  math: mathUtility,
+  array: arrayUtility,
+  elise: eliseUtility,
+  section: sectionUtility,
+
+  // Blockly utility modules (sandboxed API) - direct access for Blockly-generated code
+  fieldUtility,
+  stringUtility,
+  mathUtility,
+  arrayUtility,
+  eliseUtility,
+  sectionUtility,
+});
+
 const submitStepper = () => {
   submitNow.value = true;
 };
@@ -841,14 +900,10 @@ const submitNotice = async () => {
       )?.code;
       if (beforeSaveCode) {
         try {
-          await eval(
-            "(async () => { const store = useAppStore(); " +
-              beforeSaveCode +
-              "})()"
-          );
+          await executeCodeAsync(beforeSaveCode, createExecutionContext());
         } catch (error) {
           console.error("error", error);
-          logger.error(error);
+          logger.error(`Error in beforeSave code: ${error}`);
         }
       }
       if (props.isGenerateModel) {
@@ -884,14 +939,10 @@ const submitNotice = async () => {
             if (afterSaveCode) {
               store.setNotice(obj);
               try {
-                await eval(
-                  "(async () => { const store = useAppStore(); " +
-                    afterSaveCode +
-                    "})()"
-                );
+                await executeCodeAsync(afterSaveCode, createExecutionContext());
               } catch (error) {
                 console.error("error", error);
-                logger.error(error);
+                logger.error(`Error in afterSave code: ${error}`);
               }
             }
 
@@ -922,14 +973,10 @@ const submitNotice = async () => {
             if (afterSaveCode) {
               store.setNotice(obj);
               try {
-                await eval(
-                  "(async () => { const store = useAppStore(); " +
-                    afterSaveCode +
-                    "})()"
-                );
+                await executeCodeAsync(afterSaveCode, createExecutionContext());
               } catch (error) {
                 console.error("error", error);
-                logger.error(error);
+                logger.error(`Error in afterSave code: ${error}`);
               }
             }
             emit("done", true);
@@ -1170,12 +1217,10 @@ onMounted(async () => {
   internalFormConfig.value?.events?.forEach(async (evnt: any) => {
     if (evnt.code != "" && evnt.rule.code == "beforeLoad") {
       try {
-        await eval(
-          "(async () => { const store = useAppStore(); " + evnt.code + "})()"
-        );
+        await executeCodeAsync(evnt.code, createExecutionContext());
       } catch (error) {
         console.error("error", error);
-        logger.error(error);
+        logger.error(`Error in beforeLoad code: ${error}`);
       }
     }
     if (evnt.code != "" && evnt.rule.code == "afterLoad") {
@@ -1186,14 +1231,10 @@ onMounted(async () => {
   loading.value = false;
   if (afterLoad.value) {
     try {
-      await eval(
-        "(async () => { const store = useAppStore();" +
-          afterLoad.value.code +
-          "})()"
-      );
+      await executeCodeAsync(afterLoad.value.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in afterLoad code: ${error}`);
     }
   }
   const headerElement = document.querySelector(
@@ -1238,15 +1279,10 @@ const handleInputChange = async (item: any) => {
   const selectedEvent = item.find((event: any) => event.rule.code === "change");
   if (selectedEvent) {
     try {
-      const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in change event: ${error}`);
     }
   }
 };
@@ -1256,15 +1292,10 @@ const handleFocus = async (item: any) => {
   const selectedEvent = item.find((event: any) => event.rule.code === "focus");
   if (selectedEvent) {
     try {
-      const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in focus event: ${error}`);
     }
   }
 };
@@ -1274,15 +1305,10 @@ const handleBlur = async (item: any) => {
   const selectedEvent = item.find((event: any) => event.rule.code === "blur");
   if (selectedEvent) {
     try {
-      const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in blur event: ${error}`);
     }
   }
 };
@@ -1294,15 +1320,10 @@ const handleMouseenter = async (item: any) => {
   );
   if (selectedEvent) {
     try {
-      const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in mouseenter event: ${error}`);
     }
   }
 };
@@ -1314,15 +1335,10 @@ const handleMouseleave = async (item: any) => {
   );
   if (selectedEvent) {
     try {
-      const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in mouseleave event: ${error}`);
     }
   }
 };
@@ -1346,26 +1362,26 @@ const handleRefs = (event: any) => {
 };
 const executeFun = async (code: string) => {
   try {
-    await eval("(async () => { const store = useAppStore(); " + code + "})()");
+    await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
     console.error("error", error);
-    logger.error(error);
+    logger.error(`Error in executeFun: ${error}`);
   }
 };
 const handleCodeselected = async (code: string) => {
   try {
-    await eval("(async () => { const store = useAppStore(); " + code + "})()");
+    await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
     console.error("error", error);
-    logger.error(error);
+    logger.error(`Error in handleCodeselected: ${error}`);
   }
 };
 const searchItemFunc = async (code: string) => {
   try {
-    await eval("(async () => { const store = useAppStore(); " + code + "})()");
+    await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
     console.error("error", error);
-    logger.error(error);
+    logger.error(`Error in searchItemFunc: ${error}`);
   }
 };
 const repeatableZoneChildrens = ref({} as any);
@@ -1397,12 +1413,10 @@ const navigateNext = (page: any) => {
   calculatePagesStyle();
   if (codeBefore) {
     try {
-      eval(
-        "(async () => { const store = useAppStore(); " + codeBefore + "})()"
-      );
+      executeCodeAsync(codeBefore, createExecutionContext());
     } catch (error) {
       console.error("error", error);
-      logger.error(error);
+      logger.error(`Error in beforeFollowing code: ${error}`);
     }
   } else {
     showPageNum.value < props.stepper.steps

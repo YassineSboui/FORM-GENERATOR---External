@@ -3,17 +3,13 @@ import axios from "axios";
 import { usePVToastService } from "@/composable/usePVToastService";
 import { logger } from "@/api/api";
 import { useAppStore } from "@/store/app.store";
-import keycloak from "@/keycloak"; // ✅ Utilise le token Keycloak globalement
+
 axios.interceptors.request.use(
   (config) => {
     const appStore = useAppStore();
     const url = config.url || "";
 
-    // ✅ Toujours ajouter le token Keycloak si disponible
-    if (keycloak?.token) {
-      config.headers = config.headers || {};
-      config.headers["Authorization"] = `Bearer ${keycloak.token}`;
-    }
+    // No Keycloak authentication - removed
     if (!url.includes("neoformexternal/local") && !url.includes("auth-type")) {
       if (!config.params) {
         config.params = {};
@@ -60,6 +56,7 @@ export const useHttpRequest = defineStore("httpRequest", {
     version: "",
     userIsAdmin: false,
     debugMode: true,
+    executionTimeout: 300000, // 5 minutes
   }),
 
   actions: {
@@ -71,6 +68,7 @@ export const useHttpRequest = defineStore("httpRequest", {
       this.externalUrl = data.API_URL;
       this.userIsAdmin = data.GLB_USER === "admin";
       this.debugMode = data.ENABLE_SERVER_LOG;
+      this.executionTimeout = data.EXECUTION_TIMEOUT ?? 5000; // Load execution timeout
     },
 
     async fetchJwt(guid: string) {
@@ -98,9 +96,9 @@ export const useHttpRequest = defineStore("httpRequest", {
     },
     async logout() {
       try {
-        if (keycloak.authenticated) {
-          await keycloak.logout();
-        }
+        // No Keycloak authentication - logout just clears local state
+        console.log("Logout called - clearing session");
+        this.jwt = "";
       } catch (error) {
         console.error("Error during logout:", error);
         logger.error(error);

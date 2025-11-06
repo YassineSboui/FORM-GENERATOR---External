@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using NeoForm_Externe.Interfaces;
 using NeoForm_Externe.Models.Dto;
 using NeoForm_Externe.Services;
@@ -9,7 +8,6 @@ namespace NeoFormExterne.Controllers
 {
     [ApiController]
     [Route("neoformexternal/[controller]")]
-    [Authorize(Roles = "Admin")]
     public class ClientsController : ControllerBase
     {
         private readonly IClientStoreService _clientStore;
@@ -66,7 +64,6 @@ namespace NeoFormExterne.Controllers
         }
 
         [HttpGet("Clients")]
-        [AllowAnonymous]
         [ServiceFilter(typeof(DynamicApiKeyAuthFilter))]
         public IActionResult GetClientByUrl([FromQuery] string url)
         {

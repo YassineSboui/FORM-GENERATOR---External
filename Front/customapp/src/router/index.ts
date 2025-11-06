@@ -3,13 +3,13 @@ import { useAppStore } from "@/store/app.store";
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { createRouter, createWebHistory } from "vue-router";
 import { logger } from "@/api/api";
-import keycloak from "@/keycloak";
+
 const routes = [
   {
     path: "/",
     name: "home",
     component: () => import("../views/HomeView.vue"),
-    meta: { fullMode: false, requiresAdmin: true }, // 🔐 ici
+    meta: { fullMode: false },
   },
   {
     path: "/form/:client/:guid",
@@ -67,17 +67,8 @@ router.beforeEach(async (to, from) => {
     }
   }
 
-  // 🔐 Si la route nécessite un rôle Admin
-  if (to.meta.requiresAdmin) {
-    console.log(keycloak.tokenParsed);
-    const roles =
-      keycloak.tokenParsed?.resource_access?.NeoFormExt?.roles || [];
-    const isAdmin = roles.includes("Admin");
-
-    if (!isAdmin) {
-      return { name: "unauthorized" };
-    }
-  }
+  // Admin check removed - no authentication required
+  // All routes are now accessible without role-based access control
 
   if (to.name !== "form") {
     httpRequest.setLoading(false);

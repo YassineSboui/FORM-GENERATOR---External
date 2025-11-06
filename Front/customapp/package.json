@@ -30,7 +30,6 @@
     "date-fns": "^3.6.0",
     "exceljs": "^4.4.0",
     "fast-xml-parser": "^4.3.2",
-    "keycloak-js": "^26.2.0",
     "leaflet": "^1.9.4",
     "lodash": "^4.17.21",
     "material-icons": "^1.13.12",

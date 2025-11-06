@@ -2,5 +2,6 @@
   "API_URL": "https://localhost:7172/neoformexternal/",
   "KEYCLOAK_PORT": 8080,
   "GLB_USER": "admin",
-  "ENABLE_SERVER_LOG": false
+  "ENABLE_SERVER_LOG": false,
+  "EXECUTION_TIMEOUT": 5000
 }
