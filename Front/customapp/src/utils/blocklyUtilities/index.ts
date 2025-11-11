@@ -14,6 +14,8 @@ import { mathUtility } from "./mathUtility";
 import { arrayUtility } from "./arrayUtility";
 import { sectionUtility, initSectionUtility } from "./sectionUtility";
 import { eliseUtility, initEliseUtility } from "./eliseUtility";
+import { storeUtility, initStoreUtility } from "./storeUtility";
+import { formUtility, initFormUtility } from "./formUtility";
 
 // Export all utilities
 export * from "./fieldUtility";
@@ -22,6 +24,8 @@ export * from "./mathUtility";
 export * from "./arrayUtility";
 export * from "./sectionUtility";
 export * from "./eliseUtility";
+export * from "./storeUtility";
+export * from "./formUtility";
 
 // Re-export utility instances
 export {
@@ -34,6 +38,10 @@ export {
   initSectionUtility,
   eliseUtility,
   initEliseUtility,
+  storeUtility,
+  initStoreUtility,
+  formUtility,
+  initFormUtility,
 };
 
 /**
@@ -43,19 +51,22 @@ export {
  * to provide all utilities with necessary context (app, store, etc.)
  *
  * @param context - Context object containing app, store, and other dependencies
- * @param context.app - Vue app instance
+ * @param context.app - Vue app instance (optional for Blockly workspace components)
  * @param context.store - Pinia store instance
  */
 export function initializeBlocklyUtilities(context: {
-  app: any;
+  app?: any;
   store: any;
 }): void {
   const { app, store } = context;
 
   // Initialize utilities that need context
-  initFieldUtility(app, store);
-  initSectionUtility(app, store);
+  if (app) {
+    initFieldUtility(app, store);
+    initSectionUtility(app, store);
+  }
   initEliseUtility(store);
+  initStoreUtility(store);
 }
 
 /**
@@ -73,5 +84,6 @@ export function getAllUtilities() {
     arrayUtility,
     sectionUtility,
     eliseUtility,
+    storeUtility,
   };
 }

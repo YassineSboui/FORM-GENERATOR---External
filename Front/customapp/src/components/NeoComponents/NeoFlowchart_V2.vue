@@ -57,7 +57,7 @@
               'rtl-loader': isRTL,
               'p-invalid': errorMessage || errorState.errorMessage,
             }"
-            @complete="search(false)"
+            @complete="handleComplete"
             @item-select="select"
             optionLabel="name"
             data-key="id"
@@ -212,6 +212,8 @@ export default {
     const store = useHttpRequest();
     const appStore = useAppStore();
     const loading = ref(true);
+    const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
+    const isUserTyping = ref(false); // Flag to track if user is actively searching
 
     const internalValue = computed({
       get() {
@@ -221,6 +223,50 @@ export default {
         emit("update:modelValue", newValue);
       },
     });
+
+    // Watch for modelValue changes to fetch data when it's a string ID
+    // Skip this when user is actively typing/searching
+    watch(
+      () => props.modelValue,
+      async (newValue) => {
+        // Skip if user is actively typing
+        if (isUserTyping.value) {
+          return;
+        }
+
+        if (typeof newValue === "string" && newValue.trim() !== "") {
+          const payload = {
+            searchTerm: newValue,
+            fullService: localOptions.fullService,
+            ignoredElements: [],
+            itemType: localOptions.itemType,
+            searchType: isLexiconOrGuid(newValue)
+              ? "Id"
+              : localOptions.searchType,
+            ldapAttribute: "",
+          };
+
+          let response = await searchFlowChart(payload);
+          const key = isLexiconOrGuid(newValue)
+            ? "id"
+            : localOptions.searchType.toLowerCase();
+
+          if (
+            response.length > 0 &&
+            (response[0] as Record<string, any>)[key] === newValue
+          ) {
+            // Only update if the current modelValue is still the same string ID
+            // This prevents setting an object when we expect to keep the string ID
+            if (
+              props.modelValue === newValue &&
+              typeof props.modelValue === "string"
+            ) {
+              emit("update:modelValue", response[0]);
+            }
+          }
+        }
+      }
+    );
 
     // Create a local copy of options to manage mutability
     const localOptions = reactive({ ...props.options });
@@ -307,13 +353,13 @@ export default {
     // Function to show field
     const showField = () => updateOptions({ hidden: false });
 
-    // Watcher for modelValue changes
-    watch(
-      () => props.modelValue,
-      (newValue) => {
-        internalValue.value = newValue;
-      }
-    );
+    // // Watcher for modelValue changes
+    // watch(
+    //   () => props.modelValue,
+    //   (newValue) => {
+    //     internalValue.value = newValue;
+    //   }
+    // );
 
     // Watcher for options changes
     watch(
@@ -376,10 +422,14 @@ export default {
     function makeInvalid(value: boolean) {
       isInvalid.value = value;
     }
-    const search = async (strict: boolean) => {
-      console.log("internalValue", internalValue.value);
-      console.log("typeof internalValue.value", typeof internalValue.value);
+
+    // Debounced search function
+    const debouncedSearch = async (strict: boolean) => {
       if (typeof internalValue.value === "string") {
+        console.log(
+          "[NeoFlowchart_V2] Executing debounced search:",
+          internalValue.value
+        );
         const payload = {
           searchTerm: strict
             ? internalValue.value
@@ -394,7 +444,46 @@ export default {
       }
     };
 
+    // Handle complete event from AutoComplete with debouncing
+    const handleComplete = () => {
+      console.log("[NeoFlowchart_V2] Complete event triggered, debouncing...");
+
+      // Set flag to prevent modelValue watcher from triggering
+      isUserTyping.value = true;
+
+      // Clear any existing timeout
+      if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+      }
+
+      // Debounce: wait 1500ms after user stops typing
+      searchTimeout.value = setTimeout(() => {
+        console.log("[NeoFlowchart_V2] User stopped typing, executing search");
+        debouncedSearch(false);
+      }, 1500);
+    };
+
+    const search = (strict: boolean) => {
+      console.log(
+        "[NeoFlowchart_V2] Search triggered, value type:",
+        typeof internalValue.value
+      );
+
+      // Clear any existing timeout
+      if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+      }
+
+      // Debounce: wait 1500ms after user stops typing
+      searchTimeout.value = setTimeout(() => {
+        debouncedSearch(strict);
+      }, 1500);
+    };
+
     const select = () => {
+      // Clear the typing flag when user selects an item
+      isUserTyping.value = false;
+
       const selectedEvent = props.options.events.find(
         (event: any) => event.rule.code === "select"
       );
@@ -409,15 +498,38 @@ export default {
       }
     }
 
+    // Function to check if value contains LEXICON_ or is a GUID
+    function isLexiconOrGuid(value: any): boolean {
+      if (!value || typeof value !== "string") {
+        return false;
+      }
+
+      // Check if contains LEXICON_
+      if (value.includes("LEXICON_")) {
+        return true;
+      }
+
+      // Check if it's a GUID format (32 hexadecimal characters)
+      const guidRegex = /^[0-9a-f]{32}$/i;
+      return guidRegex.test(value);
+    }
+
     watch(
       () => store.loading,
       async (newValue, oldValue) => {
-        console.log("newValue", newValue);
-        console.log("oldValue", oldValue);
+        console.log(
+          "[NeoFlowchart_V2] Store loading changed:",
+          oldValue,
+          "→",
+          newValue
+        );
         if (newValue === false) {
           loading.value = true;
           await search(true);
-          console.log("items", items.value);
+          console.log(
+            "[NeoFlowchart_V2] Search completed, items found:",
+            items.value.length
+          );
           if (items.value.length > 0) {
             internalValue.value = items.value[0];
           }
@@ -435,32 +547,6 @@ export default {
     //     }
     //   }
     // );
-
-    watch(
-      () => props.modelValue,
-      async (newValue) => {
-        if (typeof newValue === "string") {
-          const payload = {
-            searchTerm: newValue,
-            fullService: localOptions.fullService,
-            ignoredElements: [],
-            itemType: localOptions.itemType,
-            searchType: localOptions.searchType,
-            ldapAttribute: "",
-          };
-          let response = await searchFlowChart(payload);
-          const key = localOptions.searchType
-            ? localOptions.searchType.toLowerCase()
-            : "";
-          if (
-            response.length !== 0 &&
-            (response[0] as Record<string, any>)[key] === newValue
-          ) {
-            internalValue.value = response.length > 0 ? response[0] : null;
-          }
-        }
-      }
-    );
 
     onMounted(async () => {
       if (
@@ -490,9 +576,11 @@ export default {
         }
       }
     });
+
     return {
       loading,
       search,
+      handleComplete,
       select,
       isDisabled,
       isHidden,
@@ -515,10 +603,12 @@ export default {
       makeInvalid,
       updateField,
       manageProperties,
+      isLexiconOrGuid,
     };
   },
 };
 </script>
+
 <style lang="scss">
 .p-autocomplete .p-autocomplete-label {
   padding: 0 0.5rem !important;

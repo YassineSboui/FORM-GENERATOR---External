@@ -398,7 +398,7 @@ export default defineComponent({
 
     // Function to get current value
     const getValue = () => {
-      console.log(props.modelValue);
+      console.log("[NeoPhoto] getValue called, returning:", props.modelValue);
       return props.modelValue;
       //return internalValue.value;
     };
@@ -453,7 +453,9 @@ export default defineComponent({
     const takeSnapshot = async () => {
       try {
         if (camera.value) {
-          console.log("Taking snapshot...");
+          console.log(
+            "[NeoPhoto] takeSnapshot - Initiating camera snapshot..."
+          );
           isUploading.value = true; // Start loading
 
           const blob = await camera.value.snapshot({

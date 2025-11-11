@@ -325,7 +325,7 @@ export default defineComponent({
     const TableRef = ref(null);
     const selectedObjects = ref([]);
     const getSelectedObjects = (event: any) => {
-      console.log("Selected Objects:", event);
+      console.log("[NeoTableComponent] Selected Objects:", event);
       selectedObjects.value = event;
     };
     const exposeSelectedObjects = () => {

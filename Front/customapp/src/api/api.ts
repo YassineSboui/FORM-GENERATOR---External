@@ -24,7 +24,7 @@ const logToServer = async (level: any, message: any, BlocklyCall?: boolean) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Failed to send log to server:", error);
+    console.error("[API] Failed to send log to server:", error);
     logger.error(error);
   }
 };
@@ -42,7 +42,7 @@ export const uploadFile = async (base64: string, fileName?: string) => {
     const response = await axios.post(apiUrl, payload);
     return response.data;
   } catch (error) {
-    console.error("Error uploading photo:", error);
+    console.error("[API] uploadFile failed for file:", fileName, error);
     logger.error(error);
     throw error;
   }
@@ -55,7 +55,7 @@ export const getFileByGuid = async (guid: string) => {
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
-    console.error("Error fetching form:", error);
+    console.error("[API] getFileByGuid failed for guid:", guid, error);
     logger.error(error);
     throw error;
   }
@@ -102,7 +102,7 @@ export const getNeoFormVersion = async () => {
     const { data }: { data: string } = await axios.get(apiUrl);
     return data;
   } catch (error) {
-    console.error("Error creating/updating Object:", error);
+    console.error("[API] getNeoFormVersion failed:", error);
     logger.error(error);
     throw error;
   }
@@ -114,7 +114,7 @@ export const importObject = async (Object: any) => {
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, Object);
     return data;
   } catch (error) {
-    console.error("Error creating/updating Object:", error);
+    console.error("[API] importObject failed:", error);
     logger.error(error);
     throw error;
   }
@@ -138,7 +138,7 @@ export const createObject = async ({ objectJson }: any) => {
     });
     return data;
   } catch (error) {
-    console.error("Error creating/updating Object:", error);
+    console.error("[API] createObject failed:", error);
     logger.error(error);
     throw error;
   }
@@ -152,7 +152,7 @@ export const updateObject = async ({ id, objectJson }: any) => {
     });
     return data;
   } catch (error) {
-    console.error("Error creating/updating Object:", error);
+    console.error("[API] updateObject failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -165,7 +165,7 @@ export const deleteObject = async (id: number) => {
     const response = await axios.delete(apiUrl);
     return response.data;
   } catch (error) {
-    console.error("Error deleting form:", error);
+    console.error("[API] deleteObject failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -196,7 +196,13 @@ export const saveNotice = async ({
     return data;
   } catch (error) {
     httpRequest.setLoading(false);
-    console.error("Error deleting form:", error);
+    console.error(
+      "[API] saveNotice failed for objectId:",
+      objectId,
+      "objectGuid:",
+      objectGuid,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -227,7 +233,13 @@ export const updateNotice = async ({
     return data;
   } catch (error) {
     httpRequest.setLoading(false);
-    console.error("Error deleting form:", error);
+    console.error(
+      "[API] updateNotice failed for noticeId:",
+      noticeId,
+      "objectId:",
+      objectId,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -243,7 +255,11 @@ export const fetchNotice = async (noticeType: NoticeType) => {
 
     return data;
   } catch (error) {
-    console.error("Error deleting form:", error);
+    console.error(
+      "[API] fetchNotice failed for noticeType:",
+      noticeType,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -257,7 +273,7 @@ export const fetchMetadata = async (formGuid: string) => {
       await axios.get(apiUrl);
     return data;
   } catch (error) {
-    console.error("Error deleting form:", error);
+    console.error("[API] fetchMetadata failed for formGuid:", formGuid, error);
     logger.error(error);
     throw error;
   }
@@ -271,7 +287,7 @@ export const fetchOneObject = async (id: string) => {
     return data;
   } catch (error) {
     httpRequest.setLoading(false);
-    console.error("Error fetching form:", error);
+    console.error("[API] fetchOneObject failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -283,7 +299,7 @@ export const fetchOneTable = async (id: string) => {
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
-    console.error("Error fetching form:", error);
+    console.error("[API] fetchOneTable failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -295,7 +311,7 @@ export const getConnexion = async (connection: any) => {
     const response = await axios.post(apiUrl, connection);
     return response.data;
   } catch (error) {
-    console.error("Error deleting form:", error);
+    console.error("[API] getConnexion failed:", error);
     logger.error(error);
     throw error;
   }
@@ -322,7 +338,11 @@ export const fetchDataTest = async ({
     });
     return response.data;
   } catch (error) {
-    console.error("Error deleting form:", error);
+    console.error(
+      "[API] fetchDataTest failed for databaseConfigGuid:",
+      databaseConfigGuid,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -349,7 +369,7 @@ export const fetchData = async ({
     });
     return response.data;
   } catch (error) {
-    console.error("Error deleting form:", error);
+    console.error("[API] fetchData failed for request:", request, error);
     logger.error(error);
     throw error;
   }
@@ -362,7 +382,7 @@ export const getNoticesByCourriesId = async (id: string) => {
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
-    console.error("Error fetching form:", error);
+    console.error("[API] getNoticesByCourriesId failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -373,10 +393,14 @@ export const getNoticesByFormId = async (id: number) => {
     const apiUrl = `${httpRequest.externalUrl}/NeoForm/Notice/form/${id}`;
     // const { data }: { data: any } = await axios.get(apiUrl);
     const response = await axios.get(apiUrl);
-    console.log("response", response.data);
+    console.log(
+      "[API] getNoticesByFormId response for formId:",
+      id,
+      response.data
+    );
     return response.data;
   } catch (error) {
-    console.error("Error fetching form:", error);
+    console.error("[API] getNoticesByFormId failed for formId:", id, error);
     logger.error(error);
     throw error;
   }
@@ -389,7 +413,11 @@ export const getNoticesCountByFormId = async (id: number) => {
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
-    console.error("Error Getting Data:", error);
+    console.error(
+      "[API] getNoticesCountByFormId failed for formId:",
+      id,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -403,7 +431,7 @@ export const createData = async ({ dataJson }: any) => {
     });
     return data;
   } catch (error) {
-    console.error("Error creating/updating Data:", error);
+    console.error("[API] createData failed:", error);
     logger.error(error);
     throw error;
   }
@@ -423,7 +451,11 @@ export const importData = async ({
     );
     return data;
   } catch (error) {
-    console.error("Error importing Data array:", error);
+    console.error(
+      "[API] importData failed, array length:",
+      dataJsonArray?.length,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -436,7 +468,7 @@ export const fetchDataByObjectID = async (id: string) => {
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
-    console.error("Error fetching form:", error);
+    console.error("[API] fetchDataByObjectID failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -449,7 +481,7 @@ export const fetchDataByTableGuid = async (guid: string) => {
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
-    console.error("Error fetching form:", error);
+    console.error("[API] fetchDataByTableGuid failed for guid:", guid, error);
     logger.error(error);
     throw error;
   }
@@ -462,7 +494,7 @@ export const fetchObjectByGuid = async (guid: string) => {
     const { data }: { data: ObjectModel } = await axios.get(apiUrl);
     return data;
   } catch (error) {
-    console.error("Error fetching form:", error);
+    console.error("[API] fetchObjectByGuid failed for guid:", guid, error);
     logger.error(error);
     throw error;
   }
@@ -476,7 +508,7 @@ export const updateData = async ({ id, dataJson }: any) => {
     });
     return data;
   } catch (error) {
-    console.error("Error creating/updating Data:", error);
+    console.error("[API] updateData failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -488,7 +520,7 @@ export const deleteData = async (id: number) => {
     const response = await axios.delete(apiUrl);
     return response.data;
   } catch (error) {
-    console.error("Error deleting Data:", error);
+    console.error("[API] deleteData failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -506,7 +538,7 @@ export const fileUpload = async (file: any) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error upload file:", error);
+    console.error("[API] fileUpload failed for file:", file?.name, error);
     logger.error(error);
     throw error;
   }
@@ -524,7 +556,7 @@ export const AifileUpload = async (file: any) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error upload file:", error);
+    console.error("[API] AifileUpload failed for file:", file?.name, error);
     logger.error(error);
     throw error;
   }
@@ -536,7 +568,7 @@ export const fetchActionConfigurations = async () => {
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
-    console.error("Error fetch Action Configurations: ", error);
+    console.error("[API] fetchActionConfigurations failed:", error);
     logger.error(error);
     throw error;
   }
@@ -548,7 +580,11 @@ export const fetchActionConfigurationById = async (id: number) => {
     const response = await axios.get(apiUrl);
     return response.data;
   } catch (error) {
-    console.error("Error fetch Action Configurations: ", error);
+    console.error(
+      "[API] fetchActionConfigurationById failed for id:",
+      id,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -560,7 +596,7 @@ export const createActionConfiguration = async (obj: any) => {
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, obj);
     return data;
   } catch (error) {
-    console.error("Error creating Data:", error);
+    console.error("[API] createActionConfiguration failed:", error);
     logger.error(error);
     throw error;
   }
@@ -572,7 +608,7 @@ export const updateActionConfiguration = async (id: any, obj: any) => {
     const { data }: { data: ObjectModel } = await axios.put(apiUrl, obj);
     return data;
   } catch (error) {
-    console.error("Error creating Data:", error);
+    console.error("[API] updateActionConfiguration failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -584,7 +620,7 @@ export const deleteActionConfiguration = async (id: any) => {
     const { data }: { data: ObjectModel } = await axios.delete(apiUrl);
     return data;
   } catch (error) {
-    console.error("Error creating Data:", error);
+    console.error("[API] deleteActionConfiguration failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -596,7 +632,7 @@ export const executeAPI = async (dataJson: any) => {
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, dataJson);
     return data;
   } catch (error) {
-    console.error("Error Executing the Api:", error);
+    console.error("[API] executeAPI failed:", error);
     logger.error(error);
     throw error;
   }
@@ -607,10 +643,10 @@ export const executeAPIBeforeSave = async (dataJson: any) => {
     const apiUrl = `${httpRequest.externalUrl}/ExternalApi/ExecuteBeforeSave`;
     const { data }: { data: ObjectModel } = await axios.post(apiUrl, dataJson);
     const response = await axios.post(apiUrl, dataJson);
-    console.log("response", response);
+    console.log("[API] executeAPIBeforeSave response:", response);
     return data;
   } catch (error) {
-    console.error("Error Executing the Api:", error);
+    console.error("[API] executeAPIBeforeSave failed:", error);
     logger.error(error);
     throw error;
   }
@@ -625,7 +661,11 @@ export const executeApiCollection = async (objectName: string, params: any) => {
     });
     return data;
   } catch (error) {
-    console.error("Error Executing the Api:", error);
+    console.error(
+      "[API] executeApiCollection failed for objectName:",
+      objectName,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -640,7 +680,7 @@ export const countObject = async (id: any) => {
     });
     return data;
   } catch (error) {
-    console.error("Error Executing the Api:", error);
+    console.error("[API] countObject failed for id:", id, error);
     logger.error(error);
     throw error;
   }
@@ -653,7 +693,7 @@ export const countAllObjects = async () => {
     const { data }: { data: any } = await axios.get(apiUrl);
     return data;
   } catch (error) {
-    console.error("Error Executing the Api:", error);
+    console.error("[API] countAllObjects failed:", error);
     logger.error(error);
     throw error;
   }
@@ -673,7 +713,11 @@ export const executeDatabaseConnection = async (
     });
     return data;
   } catch (error) {
-    console.error("Error Executing the Api:", error);
+    console.error(
+      "[API] executeDatabaseConnection failed for objectName:",
+      objectName,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -689,7 +733,7 @@ export const generateXMLModel = async (formJson: any) => {
     return data;
   } catch (error) {
     httpRequest.setLoading(false);
-    console.error("Error Executing the Api:", error);
+    console.error("[API] generateXMLModel failed:", error);
     logger.error(error);
     throw error;
   }
@@ -719,7 +763,7 @@ export const generateModel = async (formJson: any) => {
   } catch (error) {
     httpRequest.setLoading(false);
 
-    console.error("Error Executing the Api:", error);
+    console.error("[API] generateModel failed:", error);
     logger.error(error);
     throw error;
   }
@@ -737,7 +781,7 @@ export const uploadModelFile = (file: any) => {
     });
     return response;
   } catch (error) {
-    console.error("Error upload file:", error);
+    console.error("[API] uploadModelFile failed for file:", file?.name, error);
     logger.error(error);
     throw error;
   }
@@ -812,13 +856,13 @@ export const getServiceOrUserById = async (
       },
     });
     if (data && data.message !== "Item not found") {
-      console.log("item", data);
+      console.log("[API] getServiceOrUserById found item for id:", id, data);
       return data;
     } else {
       return { message: "Item not found" };
     }
   } catch (error) {
-    console.error("Error fetching service or user:", error);
+    console.error("[API] getServiceOrUserById failed for id:", id, error);
     return { message: "Error fetching data" };
   }
 };
@@ -1039,7 +1083,13 @@ export const GetAuthInfo = async ({
     });
     return response.data;
   } catch (error) {
-    console.error("Error getting auth type from access:", error);
+    console.error(
+      "[API] getAuthTypeFromAccessConfig failed for code:",
+      code,
+      "guid:",
+      guid,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -1057,9 +1107,14 @@ export const validateOidcCode = async (
     const configUrl = `${
       httpRequest.externalUrl + client
     }/api/external/auth-type`;
-    console.log("Validating OIDC code with URL:", httpRequest);
-    console.log("Client ID:", client);
-    console.log("Personal Code:", personalCode);
+    console.log(
+      "[API] validateOidcCode - URL:",
+      httpRequest.externalUrl,
+      "client:",
+      client,
+      "personalCode:",
+      personalCode
+    );
     const response = await axios.post(apiUrl, {
       code,
       state,
@@ -1069,7 +1124,13 @@ export const validateOidcCode = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error validating OIDC code:", error);
+    console.error(
+      "[API] validateOidcCode failed for code:",
+      code,
+      "guid:",
+      guid,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -1089,13 +1150,11 @@ export const validateEmailInvitation = async (
       httpRequest.externalUrl + client
     }/api/external/auth-type`;
     console.log(
-      "Validating email invitation:",
+      "[API] validateEmailInvitation for email:",
       email,
-      "for GUID:",
+      "guid:",
       guid,
-      "Personal Code:",
-      personalCode,
-      "Client:",
+      "client:",
       client
     );
 
@@ -1107,7 +1166,13 @@ export const validateEmailInvitation = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error validating email invitation:", error);
+    console.error(
+      "[API] validateEmailInvitation failed for email:",
+      email,
+      "guid:",
+      guid,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -1126,13 +1191,11 @@ export const sendEmailOTP = async (
       httpRequest.externalUrl + client
     }/api/external/auth-type`;
     console.log(
-      "Sending OTP to email:",
+      "[API] sendEmailOTP to email:",
       email,
-      "for GUID:",
+      "guid:",
       guid,
-      "Personal Code:",
-      personalCode,
-      "Client:",
+      "client:",
       client
     );
 
@@ -1144,7 +1207,13 @@ export const sendEmailOTP = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error sending OTP:", error);
+    console.error(
+      "[API] sendEmailOTP failed for email:",
+      email,
+      "guid:",
+      guid,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -1164,13 +1233,11 @@ export const verifyEmailOTP = async (
       httpRequest.externalUrl + client
     }/api/external/auth-type`;
     console.log(
-      "Verifying OTP for email:",
+      "[API] verifyEmailOTP for email:",
       email,
-      "GUID:",
+      "guid:",
       guid,
-      "Personal Code:",
-      personalCode,
-      "Client:",
+      "client:",
       client
     );
 
@@ -1183,7 +1250,13 @@ export const verifyEmailOTP = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error verifying OTP:", error);
+    console.error(
+      "[API] verifyEmailOTP failed for email:",
+      email,
+      "guid:",
+      guid,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -1204,13 +1277,11 @@ export const validateAuthToken = async (
       httpRequest.externalUrl + client
     }/api/external/auth-type`;
     console.log(
-      "Validating auth token for email:",
+      "[API] validateAuthToken for email:",
       email,
-      "GUID:",
+      "guid:",
       guid,
-      "Personal Code:",
-      personalCode,
-      "Client:",
+      "client:",
       client
     );
 
@@ -1223,7 +1294,13 @@ export const validateAuthToken = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error validating auth token:", error);
+    console.error(
+      "[API] validateAuthToken failed for email:",
+      email,
+      "guid:",
+      guid,
+      error
+    );
     logger.error(error);
     throw error;
   }
@@ -1279,7 +1356,11 @@ export const executeStandalone = async (payload: {
     const { data } = await axios.post(apiUrl, payload);
     return { success: true, ...data };
   } catch (error: any) {
-    console.error("Standard Workflow execution failed:", error);
+    console.error(
+      "[API] executeStandalone failed for identifier:",
+      payload.identifier,
+      error
+    );
     logger.error(error);
     return {
       success: false,
@@ -1304,7 +1385,11 @@ export const executeAsyncWorkflow = (payload: {
     axios.post(apiUrl, payload);
     return { success: true, message: "Workflow execution started" };
   } catch (error: any) {
-    console.error("Workflow execution failed:", error);
+    console.error(
+      "[API] executeAsyncWorkflow failed for identifier:",
+      payload.identifier,
+      error
+    );
     logger.error(error);
     return {
       success: false,
@@ -1328,7 +1413,11 @@ export const executeAsyncStandalone = (payload: {
     axios.post(apiUrl, payload);
     return { success: true, message: "Script execution started" };
   } catch (error: any) {
-    console.error("Standard Workflow execution failed:", error);
+    console.error(
+      "[API] executeAsyncStandalone failed for identifier:",
+      payload.identifier,
+      error
+    );
     logger.error(error);
     return {
       success: false,
@@ -1353,7 +1442,11 @@ export const generateModelWithoutNotice = async (payload: {
     const { data } = await axios.post(apiUrl, payload);
     return { success: true, ...data };
   } catch (error: any) {
-    console.error("Document generation failed:", error);
+    console.error(
+      "[API] generateModelWithoutNotice failed for courrierId:",
+      payload.courrierId,
+      error
+    );
     logger.error(error);
     return {
       success: false,
@@ -1373,7 +1466,11 @@ export const publishFiles = async (payload: {
     const { data } = await axios.post(apiUrl, payload);
     return { success: true, ...data };
   } catch (error: any) {
-    console.error("File publishing failed:", error);
+    console.error(
+      "[API] publishFiles failed, attachments count:",
+      payload.attachments?.length,
+      error
+    );
     logger.error(error);
     return {
       success: false,

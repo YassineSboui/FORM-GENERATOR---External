@@ -150,12 +150,16 @@ export default {
 
     // Function to update field
     const setValue = (value: string) => {
-      internalValue.value = value;
-      emit("update:modelValue", value);
+      // Convert literal \n strings to actual newline characters
+      const processedValue = value ? value.replace(/\\n/g, "\n") : value;
+      internalValue.value = processedValue;
+      emit("update:modelValue", processedValue);
     };
     const updateField = (value: string) => {
-      internalValue.value = value;
-      emit("update:modelValue", value);
+      // Convert literal \n strings to actual newline characters
+      const processedValue = value ? value.replace(/\\n/g, "\n") : value;
+      internalValue.value = processedValue;
+      emit("update:modelValue", processedValue);
     };
 
     // Function to get current value

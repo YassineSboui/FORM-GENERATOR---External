@@ -227,7 +227,10 @@ app.directive("badge", BadgeDirective);
 function mountApp() {
   app.use(pinia);
   app.use(router);
-  console.log("primevueLocale", primevueLocale);
+  console.log(
+    "[Main] mountApp - Initializing PrimeVue with locale keys:",
+    Object.keys(primevueLocale || {}).length
+  );
   app.use(PrimeVue, {
     locale: primevueLocale,
     theme: {

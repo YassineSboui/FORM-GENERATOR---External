@@ -426,9 +426,6 @@ export class CodeExecutor {
     } = options;
 
     // Validate input
-    console.log("code to execute", code);
-    console.log("code to context", context);
-
     if (!code || typeof code !== "string") {
       throw new Error("Code must be a non-empty string");
     }

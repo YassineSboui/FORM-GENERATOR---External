@@ -1,9 +1,9 @@
 ﻿/**
  * Field Utility Functions
- * 
+ *
  * Provides safe, abstracted access to form field operations.
  * Hides internal implementation details (stores, refs, etc.)
- * 
+ *
  * @module fieldUtility
  */
 
@@ -35,7 +35,9 @@ export class FieldUtility {
       if (instance) {
         this.app = instance;
       } else {
-        throw new Error('[FieldUtility] App instance not available. Call initFieldUtility() before using field operations.');
+        throw new Error(
+          "[FieldUtility] App instance not available. Call initFieldUtility() before using field operations."
+        );
       }
     }
     return this.app;
@@ -51,7 +53,9 @@ export class FieldUtility {
       try {
         this.store = useAppStore();
       } catch (error) {
-        throw new Error('[FieldUtility] Store not available. Call initFieldUtility() with store instance before using field operations.');
+        throw new Error(
+          "[FieldUtility] Store not available. Call initFieldUtility() with store instance before using field operations."
+        );
       }
     }
     return this.store;
@@ -63,7 +67,7 @@ export class FieldUtility {
    */
   private stringifyForLog(value: any): string {
     try {
-      if (typeof value === 'string') return value;
+      if (typeof value === "string") return value;
       return JSON.stringify(value);
     } catch {
       return String(value);
@@ -75,31 +79,36 @@ export class FieldUtility {
    * @private
    */
   private validateFieldName(fieldName: string): boolean {
-    if (!fieldName || typeof fieldName !== 'string') {
-      throw new Error('Field name must be a non-empty string');
+    console.log("[FieldUtility] Validating field name:", fieldName);
+    if (!fieldName || typeof fieldName !== "string") {
+      throw new Error("Field name must be a non-empty string");
     }
-    
-    // Only allow CF_ prefix + alphanumeric + underscore
-    if (!/^CF_[A-Z0-9_]+$/.test(fieldName)) {
-      throw new Error(`Invalid field name format: ${fieldName}. Expected format: CF_FIELDNAME`);
+
+    // Only allow CF_, TBL_, or COL_ prefix + alphanumeric + underscore (case-insensitive)
+    if (!/^(CF_|TBL_|COL_)[A-Z0-9_]+$/i.test(fieldName)) {
+      throw new Error(
+        `Invalid field name format: ${fieldName}. Expected format: CF_FIELDNAME, TBL_FIELDNAME, or COL_FIELDNAME`
+      );
     }
-    
+
     return true;
   }
 
   /**
    * Get field reference safely
+   * Searches in accumulated refs from all initialized components
    * @private
    */
   private getFieldRef(fieldName: string): any {
     this.validateFieldName(fieldName);
-    
+
     const app = this.getApp();
+
     const fieldRef = app?.refs?.[fieldName];
     if (!fieldRef || !fieldRef[0]) {
       throw new Error(`Field not found: ${fieldName}`);
     }
-    
+
     return fieldRef[0];
   }
 
@@ -113,7 +122,11 @@ export class FieldUtility {
       field.showField();
       logger.debug(`[FieldUtility] Showed field: ${fieldName}`);
     } catch (error) {
-      logger.error(`[FieldUtility] Error showing field ${fieldName}: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error showing field ${fieldName}: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -128,7 +141,11 @@ export class FieldUtility {
       field.hideField();
       logger.debug(`[FieldUtility] Hid field: ${fieldName}`);
     } catch (error) {
-      logger.error(`[FieldUtility] Error hiding field ${fieldName}: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error hiding field ${fieldName}: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -143,7 +160,11 @@ export class FieldUtility {
       field.enableField();
       logger.debug(`[FieldUtility] Enabled field: ${fieldName}`);
     } catch (error) {
-      logger.error(`[FieldUtility] Error enabling field ${fieldName}: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error enabling field ${fieldName}: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -158,7 +179,11 @@ export class FieldUtility {
       field.disableField();
       logger.debug(`[FieldUtility] Disabled field: ${fieldName}`);
     } catch (error) {
-      logger.error(`[FieldUtility] Error disabling field ${fieldName}: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error disabling field ${fieldName}: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -173,10 +198,18 @@ export class FieldUtility {
       // Access via store Fields
       const store = this.getStore();
       const value = store.Fields[fieldName];
-      logger.debug(`[FieldUtility] Got value for ${fieldName}: ${this.stringifyForLog(value)}`);
+      logger.debug(
+        `[FieldUtility] Got value for ${fieldName}: ${this.stringifyForLog(
+          value
+        )}`
+      );
       return value;
     } catch (error) {
-      logger.error(`[FieldUtility] Error getting value for ${fieldName}: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error getting value for ${fieldName}: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -189,13 +222,21 @@ export class FieldUtility {
   setValue(fieldName: string, value: any): void {
     try {
       this.validateFieldName(fieldName);
-      
+
       // Set via store Fields
       const store = this.getStore();
       store.Fields[fieldName] = value;
-      logger.debug(`[FieldUtility] Set value for ${fieldName}: ${this.stringifyForLog(value)}`);
+      logger.debug(
+        `[FieldUtility] Set value for ${fieldName}: ${this.stringifyForLog(
+          value
+        )}`
+      );
     } catch (error) {
-      logger.error(`[FieldUtility] Error setting value for ${fieldName}: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error setting value for ${fieldName}: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -209,9 +250,15 @@ export class FieldUtility {
     try {
       const value = this.getValue(sourceField);
       this.setValue(targetField, value);
-      logger.debug(`[FieldUtility] Copied value from ${sourceField} to ${targetField}`);
+      logger.debug(
+        `[FieldUtility] Copied value from ${sourceField} to ${targetField}`
+      );
     } catch (error) {
-      logger.error(`[FieldUtility] Error copying field value: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error copying field value: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -225,9 +272,15 @@ export class FieldUtility {
     try {
       const field = this.getFieldRef(fieldName);
       field.setFieldError(errorMessage);
-      logger.debug(`[FieldUtility] Set error for ${fieldName}: ${errorMessage}`);
+      logger.debug(
+        `[FieldUtility] Set error for ${fieldName}: ${errorMessage}`
+      );
     } catch (error) {
-      logger.error(`[FieldUtility] Error setting field error: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error setting field error: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -242,7 +295,11 @@ export class FieldUtility {
       field.clearFieldError();
       logger.debug(`[FieldUtility] Cleared error for ${fieldName}`);
     } catch (error) {
-      logger.error(`[FieldUtility] Error clearing field error: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error clearing field error: ${this.stringifyForLog(
+          error
+        )}`
+      );
       throw error;
     }
   }
@@ -255,9 +312,9 @@ export class FieldUtility {
   setItems(fieldName: string, items: any[]): void {
     try {
       const field = this.getFieldRef(fieldName);
-      
+
       if (!Array.isArray(items)) {
-        throw new Error('Items must be an array');
+        throw new Error("Items must be an array");
       }
       // Support multiple component APIs: prefer setElements, fallback to updateItems or setItems
       const setterCandidates = [
@@ -266,9 +323,9 @@ export class FieldUtility {
         (field as any).setItems,
       ];
 
-      const setter = setterCandidates.find((fn) => typeof fn === 'function');
+      const setter = setterCandidates.find((fn) => typeof fn === "function");
       if (!setter) {
-        const available = Object.keys(field).join(', ');
+        const available = Object.keys(field).join(", ");
         throw new Error(
           `Field ${fieldName} does not support setting elements (no setElements/updateItems/setItems). Available: ${available}`
         );
@@ -276,9 +333,15 @@ export class FieldUtility {
 
       // Call the discovered setter
       setter.call(field, items);
-      logger.debug(`[FieldUtility] Set items for ${fieldName} using ${setter.name}: ${this.stringifyForLog(items)}`);
+      logger.debug(
+        `[FieldUtility] Set items for ${fieldName} using ${
+          setter.name
+        }: ${this.stringifyForLog(items)}`
+      );
     } catch (error) {
-      logger.error(`[FieldUtility] Error setting items: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error setting items: ${this.stringifyForLog(error)}`
+      );
       throw error;
     }
   }
@@ -295,7 +358,11 @@ export class FieldUtility {
       logger.debug(`[FieldUtility] Field ${fieldName} valid: ${isValid}`);
       return isValid;
     } catch (error) {
-      logger.error(`[FieldUtility] Error checking field validity: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error checking field validity: ${this.stringifyForLog(
+          error
+        )}`
+      );
       return false;
     }
   }
@@ -308,16 +375,107 @@ export class FieldUtility {
   setDocuments(fieldName: string, documents: any): void {
     try {
       const field = this.getFieldRef(fieldName);
-      
+
       if (!field.setDocuments) {
-        throw new Error(`Field ${fieldName} does not support document operations`);
+        throw new Error(
+          `Field ${fieldName} does not support document operations`
+        );
       }
-      
+
       field.setDocuments(documents);
-      logger.debug(`[FieldUtility] Set documents for ${fieldName}: ${this.stringifyForLog(documents)}`);
+      logger.debug(
+        `[FieldUtility] Set documents for ${fieldName}: ${this.stringifyForLog(
+          documents
+        )}`
+      );
     } catch (error) {
-      logger.error(`[FieldUtility] Error setting documents: ${this.stringifyForLog(error)}`);
+      logger.error(
+        `[FieldUtility] Error setting documents: ${this.stringifyForLog(error)}`
+      );
       throw error;
+    }
+  }
+
+  /**
+   * Replace variables in vhtml element template
+   * @param fieldName - Field identifier containing the vhtml element
+   * @param variables - Array of {key, value} pairs to replace in template
+   */
+  replaceVariablesInVhtml(
+    fieldName: string,
+    variables: Array<{ key: string; value: any }>
+  ): void {
+    try {
+      this.validateFieldName(fieldName);
+      const app = this.getApp();
+      const field = app.refs[fieldName];
+
+      if (!field || !field[0]) {
+        throw new Error(`Field ${fieldName} not found`);
+      }
+
+      const el = field[0].$el;
+
+      // Store original template on first use
+      if (!el.hasAttribute("data-template")) {
+        el.setAttribute("data-template", el.innerHTML);
+      }
+
+      // Replace all variables in template
+      el.innerHTML = variables.reduce(
+        (content, variable) =>
+          content.replace(
+            new RegExp("\\{\\{" + variable.key + "\\}\\}", "g"),
+            variable.value
+          ),
+        el.getAttribute("data-template")
+      );
+
+      logger.debug(
+        `[FieldUtility] Replaced variables in ${fieldName} vhtml template`
+      );
+    } catch (error) {
+      logger.error(
+        `[FieldUtility] Error replacing variables in vhtml: ${this.stringifyForLog(
+          error
+        )}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Get QR code image from QR code field
+   * @param fieldName - Field identifier for the QR code component
+   * @returns Promise<string | null> - Base64 image string or null
+   */
+  async getQRCodeImage(fieldName: string): Promise<string | null> {
+    try {
+      this.validateFieldName(fieldName);
+      const app = this.getApp();
+      const field = app.refs[fieldName];
+
+      if (!field || !field[0]) {
+        logger.warn(`[FieldUtility] QR code field ${fieldName} not found`);
+        return null;
+      }
+
+      if (!field[0].getImage) {
+        throw new Error(
+          `Field ${fieldName} does not support getImage() method`
+        );
+      }
+
+      const image = await field[0].getImage();
+      logger.debug(`[FieldUtility] Got QR code image from ${fieldName}`);
+      return image;
+    } catch (error) {
+      logger.error(
+        `[FieldUtility] Error getting QR code image: ${this.stringifyForLog(
+          error
+        )}`
+      );
+      return null;
     }
   }
 }
@@ -331,8 +489,22 @@ export const fieldUtility = new FieldUtility();
 /**
  * Initialize field utility in execution context
  * Call this in ComponentForm.vue before executing Blockly code
+ * Accumulates refs from multiple component initializations instead of overriding
+ * @param app - Local app instance (current component)
+ * @param store - Store instance
  */
 export function initFieldUtility(app: any, store: any) {
-  (fieldUtility as any).app = app;
+  // ADD refs to existing ones instead of overriding
+  if ((fieldUtility as any).app?.refs && app?.refs) {
+    // Save existing refs (from parent components like ComponentForm)
+    const existingRefs = { ...(fieldUtility as any).app.refs };
+    // Set new app instance (from current component like NeoTable)
+    (fieldUtility as any).app = app;
+    // Merge: existing refs first, then current refs (current component refs take precedence)
+    Object.assign((fieldUtility as any).app.refs, existingRefs, app.refs);
+  } else {
+    // First initialization
+    (fieldUtility as any).app = app;
+  }
   (fieldUtility as any).store = store;
 }

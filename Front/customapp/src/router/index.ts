@@ -62,8 +62,14 @@ router.beforeEach(async (to, from) => {
       }
       await initLoader();
     } catch (error) {
-      console.error("error jwt", error);
-      logger.error(error);
+      console.error(
+        "[Router] Failed to initialize JWT and loader for route:",
+        String(to.name),
+        error
+      );
+      logger.error(
+        `[Router] initLoader failed for ${String(to.name)}: ${error}`
+      );
     }
   }
 

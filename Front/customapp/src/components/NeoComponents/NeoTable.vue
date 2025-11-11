@@ -100,7 +100,12 @@
             style="font-weight: bold"
           >
             <span :class="{ underline: column.unique }">
-              {{ column.columnConfig.options.label }}
+              {{
+                typeof column.columnConfig.options.label === "string" &&
+                column.columnConfig.options.label.includes(".")
+                  ? t(column.columnConfig.options.label)
+                  : column.columnConfig.options.label
+              }}
             </span>
           </span>
           <span
@@ -151,15 +156,20 @@
             }}
           </div>
           <div v-else-if="column.columnConfig.component === 'NeoCheckboxGroup'">
+            {{ data[field as any].toString() }}
+          </div>
+          <div v-else-if="column.columnConfig.component === 'NeoFlowchart_V2'">
+            {{ data[field as any].name }}
+          </div>
+          <div v-else-if="column.columnConfig.component === 'NeoContact'">
             {{
-              data[field as any] && data[field as any].length > 0
-                ? data[field as any].join(", ")
-                : ""
+              contactDisplay(
+                data[field as any],
+                column.columnConfig.options.optionLabel
+              )
             }}
           </div>
-          <div v-else>
-            {{ data[field as any] }}
-          </div>
+          <div v-else>{{ data[field as any] }}</div>
         </template>
 
         <template #editor="{ data, field }">
@@ -215,7 +225,7 @@
           (type === 'DIALOG' &&
             objects.length > 0 &&
             editingRows.length === 0 &&
-            config.objectConfig.formConfig.withActions)
+            config.objectConfig.formConfig.withActions !== false)
         "
         :dir="isRTL ? 'rtl' : 'ltr'"
       >
@@ -357,7 +367,12 @@
             style="font-weight: bold"
           >
             <span :class="{ underline: column.unique }">
-              {{ column.columnConfig.options.label }}
+              {{
+                typeof column.columnConfig.options.label === "string" &&
+                column.columnConfig.options.label.includes(".")
+                  ? t(column.columnConfig.options.label)
+                  : column.columnConfig.options.label
+              }}
             </span>
           </span>
           <span
@@ -408,11 +423,20 @@
             }}
           </div>
           <div v-else-if="column.columnConfig.component === 'NeoCheckboxGroup'">
+            {{ data[field as any].toString() }}
+          </div>
+          <div v-else-if="column.columnConfig.component === 'NeoFlowchart_V2'">
+            {{ data[field as any].name }}
+          </div>
+
+          <div v-else-if="column.columnConfig.component === 'NeoContact'">
             {{
-              data[field as any] && data[field as any].length > 0
-                ? data[field as any].join(", ")
-                : ""
+              contactDisplay(
+                data[field as any],
+                column.columnConfig.options.optionLabel
+              )
             }}
+            {{ data[field as any][column.columnConfig.options.optionLabel] }}
           </div>
           <div v-else>
             {{ data[field as any] }}
@@ -475,7 +499,7 @@
       />
 
       <Column
-        v-if="config.objectConfig.formConfig.withActions"
+        v-if="config.objectConfig.formConfig.withActions !== false"
         style="width: 10%; max-width: 100px; min-width: 100px"
         :rowEditor="true"
         header-class="headerClass"
@@ -483,8 +507,8 @@
           'text-align': 'center',
         }"
         alignFrozen="right"
-        :dir="isRTL ? 'rtl' : 'ltr'"
         :frozen="EditFrozen"
+        :dir="isRTL ? 'rtl' : 'ltr'"
       >
         <template #body="slotProps">
           <div class="flex justify-content-end">
@@ -528,7 +552,7 @@
 
     <Dialog
       v-model:visible="formDialog"
-      :header="isEditTableCol ? 'Modification' : 'Ajout'"
+      :header="isEditTableCol ? t('Dialog.edit') : t('Dialog.add')"
       :modal="true"
       :class="dialogClass"
       :style="dialogStyle"
@@ -546,9 +570,14 @@
       ></component-form-table>
 
       <template #footer>
-        <Button label="Annuler" icon="pi pi-times" @click="hideDialog" text />
         <Button
-          label="Valider"
+          :label="t('Dialog.cancel')"
+          icon="pi pi-times"
+          @click="hideDialog"
+          text
+        />
+        <Button
+          :label="t('Dialog.validate')"
           icon="pi pi-check"
           type="submit"
           @click="setMyWatchedVariable"
@@ -575,9 +604,13 @@
       v-model:expandedRows="expandedRows"
       v-model:selection="selectedObjects"
     >
-      <template #empty>Aucun objet trouvé.</template>
-      <template #loading>Chargement des objets...</template>
-
+      <template #empty>{{ t("Table.empty") }}</template>
+      <template #loading>{{ t("Table.loading") }}</template>
+      <Column
+        v-if="config.objectConfig.formConfig.selectable"
+        :selectionMode="config.objectConfig.formConfig.selectionMode"
+        headerStyle="width: 3rem"
+      ></Column>
       <Column
         v-for="column in filterColumnsByShow"
         :key="column.column_name"
@@ -595,7 +628,12 @@
             style="font-weight: bold"
           >
             <span :class="{ underline: column.unique }">
-              {{ column.columnConfig.options.label }}
+              {{
+                typeof column.columnConfig.options.label === "string" &&
+                column.columnConfig.options.label.includes(".")
+                  ? t(column.columnConfig.options.label)
+                  : column.columnConfig.options.label
+              }}
             </span>
           </span>
           <span
@@ -646,10 +684,17 @@
             }}
           </div>
           <div v-else-if="column.columnConfig.component === 'NeoCheckboxGroup'">
+            {{ data[field as any].toString() }}
+          </div>
+          <div v-else-if="column.columnConfig.component === 'NeoFlowchart_V2'">
+            {{ data[field as any].name }}
+          </div>
+          <div v-else-if="column.columnConfig.component === 'NeoContact'">
             {{
-              data[field as any] && data[field as any].length > 0
-                ? data[field as any].join(", ")
-                : ""
+              contactDisplay(
+                data[field as any],
+                column.columnConfig.options.optionLabel
+              )
             }}
           </div>
           <div v-else>
@@ -706,7 +751,20 @@ import {
   updateData,
   deleteData,
   logger,
+  callEliseWebService,
 } from "@/api/api";
+import { useI18n } from "vue-i18n";
+import { executeCodeAsync } from "@/utils/codeExecutor";
+import {
+  storeUtility,
+  fieldUtility,
+  formUtility,
+  stringUtility,
+  mathUtility,
+  arrayUtility,
+  eliseUtility,
+  initializeBlocklyUtilities,
+} from "@/utils/blocklyUtilities";
 
 const props = defineProps({
   label: String,
@@ -750,6 +808,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  canAdd: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const generateRandomString = (length: number) => {
@@ -763,6 +825,7 @@ const generateRandomString = (length: number) => {
 };
 
 // Reactive references
+const { t } = useI18n();
 const formData = ref();
 const tableFields = ref({} as any);
 const isEditTableCol = ref(null);
@@ -943,16 +1006,11 @@ const handleInputChange = async (item: any) => {
   await nextTick();
   const selectedEvent = item.find((event: any) => event.rule.code === "change");
   if (selectedEvent) {
-    console.log("selectedEvent", selectedEvent);
+    console.log("[NeoTable] Change event triggered");
     try {
-      const store = useAppStore();
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          selectedEvent.code +
-          "})()"
-      );
+      await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
+      console.error("[NeoTable] Error executing event code:", error);
       logger.error(error);
     }
   }
@@ -969,24 +1027,20 @@ watch(
   () => tabVarsComputed.value,
   async (value) => {
     if (!value) return; // Early exit if value is falsy
-    console.log("value", value);
+    console.log("[NeoTable] Table variables changed");
     // Helper function to find variable by key
     const findVariableByKey = (key: string) =>
       value.find((item: any) => item.key === key);
     try {
       // eval the code of the Last event
-      console.log("aap refs :  ", app.refs);
+      console.log("[NeoTable] App refs available:", Object.keys(app.refs));
       await nextTick();
       // app.refs.TEST[0].disableField();
       const events = props.config.objectConfig.formConfig.events;
       if (events && events.length > 0) {
         const lastEventCode = events[events.length - 1].code;
         if (lastEventCode) {
-          await eval(
-            "(async () => { const store = useAppStore(); " +
-              lastEventCode +
-              "})()"
-          );
+          await executeCodeAsync(lastEventCode, createExecutionContext());
         }
       }
       setTimeout(async () => {
@@ -1028,11 +1082,10 @@ watch(
   () => props.params,
   async (value) => {
     try {
-      console.log("value :", value);
-      await eval(
-        "(async () => { const store = useAppStore(); " +
-          configForm.value.events[3].code +
-          "})()"
+      console.log("[NeoTable] Params changed:", value);
+      await executeCodeAsync(
+        configForm.value.events[3].code,
+        createExecutionContext()
       );
     } catch (error) {
       console.error("Error parsing Excel data:", error);
@@ -1114,6 +1167,37 @@ const uuidv4 = () => {
   });
 };
 
+// Create execution context with all necessary variables and functions
+const createExecutionContext = () => ({
+  // Helper functions
+  uuidv4,
+
+  // Data objects
+  Fields: store.Fields,
+  objects,
+  fieldsValue,
+  tableFields,
+  selectedObjects,
+  formData,
+  editingRows,
+  lockedRows,
+
+  // System objects
+  app,
+  store,
+  toast,
+  t,
+
+  // Blockly utilities - Secure abstraction layer
+  fieldUtility,
+  stringUtility,
+  mathUtility,
+  arrayUtility,
+  eliseUtility,
+  storeUtility,
+  formUtility,
+});
+
 const computedOptions = (originalOptions: Record<string, any>) => {
   // Create a shallow copy and override properties in one step
   return {
@@ -1187,7 +1271,7 @@ const handleRowClick = (event: any) => {
     (props.config.objectConfig.formConfig.allowedActions &&
       !props.config.objectConfig.formConfig.allowedActions.includes("update"))
   )
-    return;
+    return; // Early return for 'DIALOG' type or if edit is not allowed
   onRowEditInit(event); // Proceed if type is not 'DIALOG'
 };
 
@@ -1237,7 +1321,7 @@ const Delete = async (obj: any) => {
       // If onRowDeleteFunction is defined, evaluate it
       if (onRowDeleteEvent) {
         try {
-          eval(onRowDeleteEvent);
+          await executeCodeAsync(onRowDeleteEvent, createExecutionContext());
         } catch (error) {
           console.error("Error in onRowDelete function:", error);
           logger.error(error);
@@ -1299,11 +1383,7 @@ const deleteSelectedRows = () => {
       // If onRowDeleteFunction is defined, evaluate it (once after all deletions)
       if (onRowDeleteEvent) {
         try {
-          eval(
-            "(async () => { const store = useAppStore(); " +
-              onRowDeleteEvent +
-              "})()"
-          );
+          await executeCodeAsync(onRowDeleteEvent, createExecutionContext());
         } catch (error) {
           console.error("Error in onRowDelete function:", error);
           logger.error(error);
@@ -1321,7 +1401,6 @@ const deleteSelectedRows = () => {
     reject: () => {},
   });
 };
-
 const onRowEditInit = (event: { data: Record<string, any>; index: number }) => {
   const { data } = event;
   if (data?.id !== undefined) {
@@ -1342,47 +1421,51 @@ const onRowEditSave = async (event: any) => {
       (event: any) => event.rule.code == "beforeRowSave"
     )?.code;
   // Execute the 'beforeRowSave' function BEFORE any validation or saving logic
-  console.log("beforeRowSaveFunction", beforeRowSaveFunction);
-  if (beforeRowSaveFunction != undefined) {
+  if (
+    beforeRowSaveFunction != undefined &&
+    beforeRowSaveFunction != null &&
+    beforeRowSaveFunction != ""
+  ) {
     try {
       // Store original data for comparison
       const originalData = JSON.stringify(fieldsValue.value);
-
       // Execute the function and capture the potentially modified newData
+      const context = {
+        ...createExecutionContext(),
+        newData: newData,
+      };
 
-      const result = await eval(
-        "(async () => { " +
-          "const store = useAppStore(); " +
-          beforeRowSaveFunction +
-          "; return newData; " + // Return the potentially modified newData
-          "})()"
-      );
-
-      // Check if newData was modified and update fieldsValue.value
-      if (result && JSON.stringify(result) !== originalData) {
-        console.log(
-          "newData was modified by beforeRowSave, updating fieldsValue"
-        );
-        fieldsValue.value = result;
-        newData = result; // Also update the local value variable
+      const resp = await executeCodeAsync(beforeRowSaveFunction, context);
+      // Check if newData was modified in the context
+      if (context.newData && JSON.stringify(context.newData) !== originalData) {
+        fieldsValue.value = context.newData;
+        newData = context.newData; // Also update the local value variable
       }
     } catch (error) {
-      console.error("error", error);
+      console.error("[NeoTable] Error executing beforeRowSave event:", error);
       logger.error(error);
     }
   }
+
   // Find the 'afterRowSave' event function, if any
   const afterRowSaveFunction =
     props.config.objectConfig.formConfig?.events?.find(
       (event: any) => event.rule.code == "afterRowSave"
     )?.code;
   // Execute the 'afterRowSave' function, if it exists
-  console.log("afterRowSaveFunction", afterRowSaveFunction);
-  if (afterRowSaveFunction != undefined) {
+  console.log(
+    "[NeoTable] AfterRowSave function available:",
+    !!afterRowSaveFunction
+  );
+  if (
+    afterRowSaveFunction != undefined &&
+    afterRowSaveFunction != null &&
+    afterRowSaveFunction != ""
+  ) {
     try {
-      eval(afterRowSaveFunction); // Dynamically run the afterRowSave function
+      await executeCodeAsync(afterRowSaveFunction, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
+      console.error("[NeoTable] Error executing afterRowSave event:", error);
       logger.error(error);
     }
   }
@@ -1425,7 +1508,7 @@ const onRowEditSave = async (event: any) => {
       )
     ) {
       // If the type is not 'DIALOG', reset the form and editing states
-      if (type.value != "DIALOG") {
+      if (type.value != "DIALOG" && props.canAdd) {
         if (
           props.config.objectConfig.formConfig.allowedActions &&
           !props.config.objectConfig.formConfig.allowedActions.includes(
@@ -1459,7 +1542,7 @@ const onRowEditSave = async (event: any) => {
         )
       ) {
         // If the type is not 'DIALOG', reset the form and editing states
-        if (type.value != "DIALOG") {
+        if (type.value != "DIALOG" && props.canAdd) {
           if (
             props.config.objectConfig.formConfig.allowedActions &&
             !props.config.objectConfig.formConfig.allowedActions.includes(
@@ -1507,7 +1590,6 @@ const onRowEditSave = async (event: any) => {
           life: 3000,
         });
       }
-
       // Show error if fields are missing
     } else {
       // If the output format is JSON or local storage is used
@@ -1573,7 +1655,7 @@ const onRowEditSave = async (event: any) => {
   }
 
   // If the type is not 'DIALOG', reset the form and editing states
-  if (type.value != "DIALOG") {
+  if (type.value != "DIALOG" && props.canAdd) {
     if (
       props.config.objectConfig.formConfig.allowedActions &&
       !props.config.objectConfig.formConfig.allowedActions.includes("create")
@@ -1611,7 +1693,7 @@ const onRowEditCancel = (event?: unknown) => {
     return; // Early return for clarity
   }
 
-  if (lockedRows.value.length === 0) {
+  if (lockedRows.value.length === 0 && props.canAdd) {
     if (
       props.config.objectConfig.formConfig.allowedActions &&
       !props.config.objectConfig.formConfig.allowedActions.includes("create")
@@ -1626,15 +1708,16 @@ const onRowEditCancel = (event?: unknown) => {
 
 const handleFieldsValue = async (value: any) => {
   var isJsonOutput = props.config.objectConfig.formConfig.sortie == "JSON";
+
   // Initialize a new object structure
   const newObject = {
     dataJson: {
       guid: uuidv4(),
       application: "NEOFORM",
       dataType: "TAB",
-      objectId: props.config.id || "", // Use the config id
-      objectGuid: props.config.guid || "", // Use the config guid
-      datas: {}, // This will be filled later
+      objectId: props.config.id || "",
+      objectGuid: props.config.guid || "",
+      datas: {},
     },
   };
 
@@ -1703,38 +1786,40 @@ const handleFieldsValue = async (value: any) => {
       (event: any) => event.rule.code == "beforeRowSave"
     )?.code;
   // Execute the 'beforeRowSave' function BEFORE any validation or saving logic
-  console.log("beforeRowSaveFunction", beforeRowSaveFunction);
+  console.log(
+    "[NeoTable] BeforeRowSave function available:",
+    !!beforeRowSaveFunction
+  );
   if (beforeRowSaveFunction != undefined) {
     try {
       // Store original data for comparison
       const originalData = JSON.stringify(fieldsValue.value);
 
       // Execute the function and capture the potentially modified newData
+      const context = {
+        ...createExecutionContext(),
+        newData: fieldsValue.value,
+      };
 
-      const result = await eval(
-        "(async () => { " +
-          "const store = useAppStore(); " +
-          "let newData = " +
-          JSON.stringify(fieldsValue.value) +
-          "; " +
-          beforeRowSaveFunction +
-          "; return newData; " + // Return the potentially modified newData
-          "})()"
-      );
+      await executeCodeAsync(beforeRowSaveFunction, context);
 
-      // Check if newData was modified and update fieldsValue.value
-      if (result && JSON.stringify(result) !== originalData) {
+      // Check if newData was modified in the context
+      if (context.newData && JSON.stringify(context.newData) !== originalData) {
         console.log(
           "newData was modified by beforeRowSave, updating fieldsValue"
         );
-        fieldsValue.value = result;
-        value = result; // Also update the local value variable
+        fieldsValue.value = context.newData;
+        value = context.newData; // Also update the local value variable
       }
     } catch (error) {
-      console.error("error", error);
+      console.error(
+        "[NeoTable] Error executing beforeColumnSave event:",
+        error
+      );
       logger.error(error);
     }
   }
+
   // Handle editing of an existing table column
   if (isEditTableCol.value !== null) {
     const id = isEditTableCol.value;
@@ -1795,9 +1880,13 @@ const handleFieldsValue = async (value: any) => {
 
   if (props.isTableCreation) {
     if (index.value == null) {
-      store.addID(value.column_name); // Add the column name to the store
+      store.addID(value.column_name);
     }
   }
+
+  console.log("[NeoTable] Saving column fields");
+  console.log("[NeoTable] Config available:", !!props.config.objectConfig);
+
   // Find the 'afterRowSave' event function, if any
   const afterRowSaveFunction =
     props.config.objectConfig.formConfig?.events?.find(
@@ -1805,25 +1894,29 @@ const handleFieldsValue = async (value: any) => {
     )?.code;
 
   // Execute the 'afterRowSave' function, if it exists
-  console.log("afterRowSaveFunction", afterRowSaveFunction);
-  if (afterRowSaveFunction != undefined) {
+  console.log(
+    "[NeoTable] AfterRowSave function for column available:",
+    !!afterRowSaveFunction
+  );
+  if (
+    afterRowSaveFunction != undefined &&
+    afterRowSaveFunction != null &&
+    afterRowSaveFunction != ""
+  ) {
     try {
-      await eval(
-        "(async () => { " +
-          "const store = useAppStore(); " +
-          "const newData = " +
-          JSON.stringify(fieldsValue.value) +
-          "; " +
-          afterRowSaveFunction +
-          "})()"
-      );
+      const context = {
+        ...createExecutionContext(),
+        newData: fieldsValue.value,
+      };
+      await executeCodeAsync(afterRowSaveFunction, context);
     } catch (error) {
-      console.error("error", error);
+      console.error("[NeoTable] Error executing afterColumnSave event:", error);
       logger.error(error);
     }
   }
-  myWatchedVariable.value = false; // Reset watched variable
-  hideDialog(); // Close the dialog
+
+  myWatchedVariable.value = false;
+  hideDialog();
 };
 
 // Helper functions
@@ -1839,10 +1932,14 @@ const neoSelectValue = (
     returnObject == undefined ||
     returnObject == null
   ) {
-    return value;
+    const elem = elements.find((element: any) => element.code === value);
+    if (elem == undefined) {
+      return value;
+    }
+    return elem.name || elem[key];
   }
   if (returnObject) {
-    return value[valueKey];
+    return value[key];
   } else {
     const element = elements.find((element: any) => element.code === value);
     return element ? element[key] : "";
@@ -1876,6 +1973,10 @@ const formatTime = (date: Date | string) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+const contactDisplay = (value: any, labelOption: string) => {
+  return value[labelOption] ?? value.mission.person.name ?? value;
 };
 
 const initFilters = (columns: Array<any>) => {
@@ -1948,13 +2049,36 @@ onBeforeMount(async () => {
 });
 
 onMounted(async () => {
+  // Initialize Blockly utilities with the component context
+  try {
+    initializeBlocklyUtilities({
+      app: app,
+      store: store,
+    });
+  } catch (error) {
+    console.error("Failed to initialize Blockly utilities:", error);
+    logger.error(error);
+  }
+
   // Set the form value from data
   form.value = data.value;
-  console.log("props.isTableCreation", props.isTableCreation);
+  try {
+    initializeBlocklyUtilities({
+      app: app,
+      store: store,
+    });
+  } catch (error) {
+    console.error("Failed to initialize Blockly utilities:", error);
+    logger.error(error);
+  }
+
+  // Set the form value from data
+  form.value = data.value;
+  console.log("[NeoTable] isTableCreation:", props.isTableCreation);
   // Set the current table ID if not in table creation mode
   if (!props.isTableCreation) {
     console.log(
-      "TableID changed to: ",
+      "[NeoTable] Setting current table ID:",
       props.config.objectConfig.formConfig.TableID
     );
     store.setCurrentTable(props.config.objectConfig.formConfig.TableID);
@@ -1971,13 +2095,13 @@ onMounted(async () => {
     ];
     store.setTableVariables(tableVariables);
   }
-  if (type.value !== "DIALOG") {
+  if (type.value !== "DIALOG" && props.canAdd) {
     forceChangeIcon();
   }
   initFilters(columns.value);
 
   // Set up empty objects for locked and editing rows if not in dialog mode
-  if (type.value !== "DIALOG") {
+  if (type.value !== "DIALOG" && props.canAdd) {
     if (
       props.config.objectConfig.formConfig.allowedActions &&
       !props.config.objectConfig.formConfig.allowedActions.includes("create")
@@ -2007,7 +2131,10 @@ onMounted(async () => {
   //   }
 });
 const refs = computed(() => app.refs);
-console.log("refs", refs);
+console.log(
+  "[NeoTable] Component refs available:",
+  refs.value ? Object.keys(refs.value).length : 0
+);
 // Expose the references to the parent component
 
 // Expose the references to the parent component
@@ -2084,6 +2211,7 @@ async function deleteObject(id: any) {
     objects.value = objects.value.filter((item: any) => item.id != id);
   }
 }
+
 // watch selectedRows to get the selected objects
 watch(selectedObjects, (newValue) => {
   if (!newValue || newValue.length === 0) {
@@ -2096,6 +2224,22 @@ watch(selectedObjects, (newValue) => {
     emit("selectedObjects", selectedObjects.value);
   }
 });
+
+async function executeWebService(webServiceName: String, parameters: any) {
+  const obj = {
+    eliseWsInputType: webServiceName,
+    objet: parameters,
+  };
+  console.log("[NeoTable] Calling Elise web service:", webServiceName);
+  try {
+    const result = await callEliseWebService(obj);
+    return result;
+  } catch (error) {
+    console.error("[NeoTable] Error calling Elise web service:", error);
+    logger.error(error);
+    return error;
+  }
+}
 defineExpose({
   refs,
   formDialog,
@@ -2103,10 +2247,11 @@ defineExpose({
   tableFields,
   myWatchedVariable,
   fetchTableData,
+  executeWebService,
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .custom-disabled {
   color: #00000082 !important; /* Keep the text black even when disabled */
   background-color: transparent !important; /* Optional: Keep background white */

@@ -410,7 +410,7 @@ const loadClients = async () => {
       })
     );
   } catch (error) {
-    console.error("Failed to load clients", error);
+    console.error("[HomeView] loadClients failed:", error);
     toast.add({
       severity: "error",
       summary: "Erreur",
@@ -461,7 +461,11 @@ const confirmAddClient = async () => {
     closeAddDialog();
     await loadClients();
   } catch (error) {
-    console.error("Failed to add client", error);
+    console.error(
+      "[HomeView] confirmAddClient failed for clientId:",
+      newClientId.value,
+      error
+    );
     toast.add({
       severity: "error",
       summary: "Erreur",
@@ -517,7 +521,11 @@ const saveEditClient = async () => {
     closeEditDialog();
     await loadClients();
   } catch (error) {
-    console.error("Failed to update client", error);
+    console.error(
+      "[HomeView] confirmEditClient failed for clientId:",
+      editingClientId.value,
+      error
+    );
     toast.add({
       severity: "error",
       summary: "Erreur",
@@ -546,7 +554,11 @@ const confirmDeleteClient = (clientId) => {
         });
         await loadClients();
       } catch (error) {
-        console.error("Failed to delete client", error);
+        console.error(
+          "[HomeView] confirmDeleteClient failed for clientId:",
+          clientId,
+          error
+        );
         toast.add({
           severity: "error",
           summary: "Error",
@@ -578,7 +590,7 @@ const copyApiKey = async (apiKey) => {
       life: 2000,
     });
   } catch (error) {
-    console.error("Failed to copy API key", error);
+    console.error("[HomeView] copyApiKey failed:", error);
     toast.add({
       severity: "error",
       summary: "Erreur",
@@ -614,7 +626,11 @@ const regenerateApiKey = (clientId) => {
           await loadClients();
         }
       } catch (error) {
-        console.error("Failed to regenerate API key", error);
+        console.error(
+          "[HomeView] regenerateApiKey failed for clientId:",
+          clientId,
+          error
+        );
         toast.add({
           severity: "error",
           summary: "Erreur",

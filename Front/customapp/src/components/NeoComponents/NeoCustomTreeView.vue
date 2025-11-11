@@ -217,7 +217,10 @@ export default {
     // Function to get current value
     const getValue = () => {
       if (props.options.selectionMode == "single") {
-        console.log("internalValue.value", internalValue.value);
+        console.log(
+          "[NeoCustomTreeView] getValue - internalValue keys:",
+          Object.keys(internalValue.value as any)
+        );
         return Object.keys(internalValue.value as any)[0] ?? ""; // Return the first key
       } else {
         return Object.keys(internalValue.value as any) ?? [];
@@ -233,7 +236,12 @@ export default {
         } else {
           internalValue.value = value;
         }
-        console.log("internalValue.value", internalValue.value);
+        console.log(
+          "[NeoCustomTreeView] setValue - internalValue updated:",
+          value,
+          "type:",
+          typeof value
+        );
       } else {
         if (Array.isArray(value) && typeof value[0] === "string") {
           internalValue.value = value.map((item: any) => ({ [item]: true }));

@@ -1,5 +1,5 @@
 <template>
-  <div class="neoThesaurusExternal" v-show="!isHidden">
+  <div class="neoThesaurus" v-show="!isHidden">
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         <span>{{
@@ -62,8 +62,8 @@
             }}
             <Button
               style="
-                height: 20px !important;
-                width: 20px !important ;
+                height: 10px !important;
+                width: 10px !important ;
                 color: white !important;
               "
               text
@@ -82,10 +82,13 @@
       :class="{ 'thesaurus-frame-top': showOnTop }"
       :append-to="neoThesaurusRef"
       style="width: 80%"
+      @show="checkPosition"
     >
       <!-- :style="{ width: maxWidth + 'px' }" -->
       <div v-if="isSelectedTermLimit" class="thesaurus-limit truncated">
-        <span class="limit-label truncated"> Limite des termes atteinte</span>
+        <span class="limit-label truncated">{{
+          $t("NeoThesaurus.termLimit")
+        }}</span>
       </div>
       <div class="thesaurus-header">
         <span class="thesaurus-label">{{ options.label }}</span>
@@ -126,11 +129,11 @@
           />
         </div>
         <span v-else class="results-label truncated">
-          résultat ({{ thesaurusTerms.length }})
+          {{ $t("NeoThesaurus.Result") }} ({{ thesaurusTerms.length }})
         </span>
         <div v-if="thesaurusTerms.length === 0" class="no-result">
           <span class="no-result-label truncated">
-            Aucun résultat de recherche de terme
+            {{ $t("NeoThesaurus.noResult") }}
           </span>
         </div>
         <div v-else :class="getResultContainerClasses">
@@ -186,6 +189,7 @@
 import { eliseLevelThesaurus, eliseSearchThesaurus } from "@/api/api";
 import { computed, ref, watch, Teleport, type Ref, reactive } from "vue";
 import _ from "lodash";
+import { useI18n } from "vue-i18n";
 
 export default {
   props: {
@@ -238,6 +242,7 @@ export default {
   setup(props, { emit }) {
     const terms: Ref<Term[]> = ref([]);
     const showOnTop = ref(false);
+
     watch(
       terms,
       async (newValue) => {
@@ -252,6 +257,7 @@ export default {
         // emit("update:modelValue", JSON.stringify(newValue));
       }
     );
+    const { t } = useI18n();
     const maxWidth = ref(100);
     const home: Ref<any> = ref({
       icon: "pi pi-home",
@@ -414,18 +420,23 @@ export default {
 
     const openThesaurusFrame = (event: any) => {
       if (!op.value.visible) {
-        // Check available space
-        const inputRect = neoThesaurusRef.value?.getBoundingClientRect();
-        const panelHeight = 280; // Should match $thesaurus-frame-height
-        const spaceBelow = window.innerHeight - (inputRect?.bottom ?? 0);
-        const spaceAbove = inputRect?.top ?? 0;
-
-        showOnTop.value = spaceBelow < panelHeight && spaceAbove > panelHeight;
-
+        // Check available space before opening
+        checkPosition();
         op.value.toggle(event);
         loadRootTermLevel();
         selectAllThesaurus();
       }
+    };
+
+    const checkPosition = () => {
+      // Calculate available space
+      const inputRect = neoThesaurusRef.value?.getBoundingClientRect();
+      const panelHeight = 280; // Should match $thesaurus-frame-height
+      const spaceBelow = window.innerHeight - (inputRect?.bottom ?? 0);
+      const spaceAbove = inputRect?.top ?? 0;
+
+      // Show on top if not enough space below and there's more space above
+      showOnTop.value = spaceBelow < panelHeight && spaceAbove > spaceBelow;
     };
     /*
     const setFocusOnSearchInput = () => {
@@ -684,7 +695,9 @@ const trySearchThesaurusTerm = (event: any) => {
       },
       { immediate: true, deep: true }
     );
+
     return {
+      t,
       itemsPath,
       home,
       errorState,
@@ -706,6 +719,7 @@ const trySearchThesaurusTerm = (event: any) => {
       resetSearchTerm,
       closeThesaurusFrame,
       openThesaurusFrame,
+      checkPosition,
       loadTermChildren,
       isLeaf,
       addTerm,
@@ -732,7 +746,7 @@ const trySearchThesaurusTerm = (event: any) => {
 .p-overlaypanel-content {
   padding: 0px;
 }
-.neoThesaurusExternal {
+.neoThesaurus {
   width: 100%;
   .neoThesaurus-container {
     position: relative;
@@ -758,13 +772,10 @@ const trySearchThesaurusTerm = (event: any) => {
   }
   .input-container {
     width: 100%;
-    height: 60px;
-    // max-height: 50px;
     position: relative;
     .p-autocomplete {
       width: 100%;
-      height: 36px !important;
-      padding: 0px !important;
+      padding: 4px !important;
       overflow: overlay !important;
       background-color: #f3f8f9;
       border-radius: 4px;
@@ -1177,24 +1188,29 @@ $result-container-height: $thesaurus-frame-height - $thesaurus-header-height -
 }
 .thesaurus-frame {
   position: absolute !important;
-  top: 40px !important;
+  top: calc(
+    100% + 5px
+  ) !important; // Position directly below the input with 5px gap
   left: 0 !important;
   width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  // width: 50% !important;
   height: $thesaurus-frame-height !important;
   background-color: $color-white !important;
-  box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.15) !important;
   padding: 0 !important;
   margin: 0 !important;
-  // position: absolute;
   box-sizing: border-box !important;
   border: 1px solid $color-blue-dark !important;
   border-radius: $radius-sm !important;
+  z-index: 9999 !important; // Ensure it stays on top
+
   &.thesaurus-frame-top {
-    //label input height + thesaurus frame height
-    top: -275px !important;
+    // Position directly above the input when not enough space below
+    top: auto !important;
+    bottom: calc(
+      100% + 5px
+    ) !important; // Position above the input with 5px gap
   }
 
   .thesaurus-header {

@@ -26,14 +26,17 @@ axios.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error(error);
+    console.error("[HTTP] Request interceptor error:", error);
   }
 );
 axios.interceptors.response.use(null, (error) => {
   const toast = usePVToastService();
   const message = error?.response?.data?.Message;
-  console.error(error);
-  logger.error(error);
+  const status = error?.response?.status;
+  const url = error?.config?.url || "unknown";
+
+  console.error(`[HTTP] Response error (${status}) for ${url}:`, error);
+  logger.error(`[HTTP] ${status} - ${url}: ${error.message || error}`);
 
   if (message && message !== "Notice Not Found") {
     toast.add({
@@ -81,8 +84,14 @@ export const useHttpRequest = defineStore("httpRequest", {
         this.jwt = response.data.jwt;
         //  axios.defaults.headers.common["Authorization"] = `Bearer ${this.jwt}`;
       } catch (error) {
-        console.error("Error fetching JWT:", error);
-        logger.error(error);
+        console.error(
+          "[HttpRequest] Failed to fetch JWT for guid:",
+          guid,
+          error
+        );
+        logger.error(
+          `[HttpRequest] fetchJwt failed for guid ${guid}: ${error}`
+        );
         throw error;
       }
     },
@@ -97,11 +106,11 @@ export const useHttpRequest = defineStore("httpRequest", {
     async logout() {
       try {
         // No Keycloak authentication - logout just clears local state
-        console.log("Logout called - clearing session");
+        console.log("[HttpRequest] Logout called - clearing session state");
         this.jwt = "";
       } catch (error) {
-        console.error("Error during logout:", error);
-        logger.error(error);
+        console.error("[HttpRequest] Error during logout:", error);
+        logger.error(`[HttpRequest] logout failed: ${error}`);
       }
     },
 

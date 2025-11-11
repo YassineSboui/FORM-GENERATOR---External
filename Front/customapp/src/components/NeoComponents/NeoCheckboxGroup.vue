@@ -207,7 +207,7 @@ export default {
           console.warn("Value is not an array or string, skipping update.");
         }
       }
-      console.log("Setting value:", value);
+      console.log("[NeoCheckboxGroup] Setting value:", value);
       internalValue.value = value;
       emit("update:modelValue", value);
     };
@@ -227,7 +227,7 @@ export default {
           console.warn("Value is not an array or string, skipping update.");
         }
       }
-      console.log("Setting value:", value);
+      console.log("[NeoCheckboxGroup] Setting value:", value);
       internalValue.value = value;
       emit("update:modelValue", value);
     };

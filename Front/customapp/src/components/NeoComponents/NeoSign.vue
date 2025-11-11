@@ -56,7 +56,6 @@
             @mouseup="save('image/jpeg')"
             @touchend="save('image/jpeg')"
             @touchmove="onTouchMove"
-            @mousemove="onMouseMove"
           />
         </div>
         <div v-if="!readOnly" class="signature-actions">
@@ -239,12 +238,7 @@ export default {
     };
 
     const onTouchMove = () => {
-      // Save on touch move to ensure signature is captured during drawing
-      debouncedSave("image/jpeg");
-    };
-
-    const onMouseMove = () => {
-      // Save on mouse move for desktop consistency
+      // Save on touch move to ensure signature is captured during drawing on mobile
       debouncedSave("image/jpeg");
     };
 
@@ -341,7 +335,6 @@ export default {
       signatures,
       showEliseSignatures,
       onTouchMove,
-      onMouseMove,
       toPx,
     };
   },

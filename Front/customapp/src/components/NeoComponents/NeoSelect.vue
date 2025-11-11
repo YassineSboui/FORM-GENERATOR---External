@@ -587,7 +587,10 @@ export default {
           })
           .filter((item) => item !== null); // Filter out null items (éléments vides)
       }
-      console.log("formattedElements", formattedElements);
+      console.log(
+        "[NeoSelect] fetchEnumerations - formatted elements count:",
+        formattedElements?.length
+      );
       // Log the formatted elements for debugging
       internalItems.value = formattedElements;
       // await nextTick();

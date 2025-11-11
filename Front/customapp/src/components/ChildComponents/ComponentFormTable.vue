@@ -467,7 +467,10 @@ import {
   mathUtility,
   arrayUtility,
   eliseUtility,
+  storeUtility,
+  formUtility,
   sectionUtility,
+  initializeBlocklyUtilities,
 } from "@/utils/blocklyUtilities";
 
 // export default {
@@ -803,6 +806,8 @@ const createExecutionContext = () => ({
   math: mathUtility,
   array: arrayUtility,
   elise: eliseUtility,
+  storePinia: storeUtility,
+  form: formUtility,
   section: sectionUtility,
 
   // Blockly utility modules (sandboxed API) - direct access for Blockly-generated code
@@ -811,6 +816,8 @@ const createExecutionContext = () => ({
   mathUtility,
   arrayUtility,
   eliseUtility,
+  storeUtility,
+  formUtility,
   sectionUtility,
 });
 
@@ -829,7 +836,7 @@ const submitNotice = async () => {
     NoticeData.value[key] = Fields.value[key] ?? "";
   }
 
-  console.log("app.refs", app.refs);
+  console.log("[ComponentFormTable] Application Ref object:", app.refs);
   for (let element in app.refs) {
     const options = app.refs[element][0]?.options;
     const related = options?.relatedToElise;
@@ -902,8 +909,11 @@ const submitNotice = async () => {
         try {
           await executeCodeAsync(beforeSaveCode, createExecutionContext());
         } catch (error) {
-          console.error("error", error);
-          logger.error(`Error in beforeSave code: ${error}`);
+          console.error(
+            "[ComponentFormTable] beforeSave event execution failed:",
+            error
+          );
+          logger.error(`[ComponentFormTable] beforeSave code error: ${error}`);
         }
       }
       if (props.isGenerateModel) {
@@ -941,8 +951,13 @@ const submitNotice = async () => {
               try {
                 await executeCodeAsync(afterSaveCode, createExecutionContext());
               } catch (error) {
-                console.error("error", error);
-                logger.error(`Error in afterSave code: ${error}`);
+                console.error(
+                  "[ComponentFormTable] afterSave event execution failed (saveNotice success):",
+                  error
+                );
+                logger.error(
+                  `[ComponentFormTable] afterSave code error in saveNotice: ${error}`
+                );
               }
             }
 
@@ -975,8 +990,13 @@ const submitNotice = async () => {
               try {
                 await executeCodeAsync(afterSaveCode, createExecutionContext());
               } catch (error) {
-                console.error("error", error);
-                logger.error(`Error in afterSave code: ${error}`);
+                console.error(
+                  "[ComponentFormTable] afterSave event execution failed (updateNotice success):",
+                  error
+                );
+                logger.error(
+                  `[ComponentFormTable] afterSave code error in updateNotice: ${error}`
+                );
               }
             }
             emit("done", true);
@@ -1043,7 +1063,7 @@ const mapFileField = (field: any) => {
     return [];
   }
   const mappedFiles = [];
-  console.log("field", field);
+  console.log("[ComponentFormTable] mapFileField input:", field);
   for (let i = 0; i < field.length; i++) {
     const file = field[i];
     mappedFiles.push({
@@ -1052,7 +1072,10 @@ const mapFileField = (field: any) => {
       fileName: file.fileName,
     });
   }
-  console.log("mappedFiles", mappedFiles);
+  console.log(
+    "[ComponentFormTable] mapFileField output mappedFiles:",
+    mappedFiles
+  );
   return mappedFiles;
 };
 
@@ -1205,6 +1228,8 @@ const setLocale = () => {
 const HeaderHeight = ref([] as any);
 onMounted(async () => {
   logBlockly.info("onMounted");
+  // Initialize Blockly utilities with app and store context
+  initializeBlocklyUtilities({ app, store: storeUtility });
   setLocale();
   // loading.value = true;
   setFields(itemsFormCopy.value, 0);
@@ -1219,8 +1244,11 @@ onMounted(async () => {
       try {
         await executeCodeAsync(evnt.code, createExecutionContext());
       } catch (error) {
-        console.error("error", error);
-        logger.error(`Error in beforeLoad code: ${error}`);
+        console.error(
+          "[ComponentFormTable] beforeLoad event execution failed:",
+          error
+        );
+        logger.error(`[ComponentFormTable] beforeLoad code error: ${error}`);
       }
     }
     if (evnt.code != "" && evnt.rule.code == "afterLoad") {
@@ -1233,8 +1261,11 @@ onMounted(async () => {
     try {
       await executeCodeAsync(afterLoad.value.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in afterLoad code: ${error}`);
+      console.error(
+        "[ComponentFormTable] afterLoad event execution failed:",
+        error
+      );
+      logger.error(`[ComponentFormTable] afterLoad code error: ${error}`);
     }
   }
   const headerElement = document.querySelector(
@@ -1251,7 +1282,7 @@ onMounted(async () => {
   }
 
   calculatePagesStyle();
-  console.log("app.refsapp.refsapp.refs", app.refs);
+  console.log("[ComponentFormTable] Application Ref object:", app.refs);
   // setTimeout(() => {
   //   console.log("app.refs.TBL_QSD[0].$refs", app.refs.TBL_QSD[0].TableRef);
   //   console.log("app.refs.TBL_QSD[0].$refs.refs", app.refs.TBL_QSD[0].TableRef.refs.TEST[0]    );
@@ -1281,8 +1312,11 @@ const handleInputChange = async (item: any) => {
     try {
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in change event: ${error}`);
+      console.error(
+        "[ComponentFormTable] change event execution failed:",
+        error
+      );
+      logger.error(`[ComponentFormTable] change event error: ${error}`);
     }
   }
 };
@@ -1294,8 +1328,11 @@ const handleFocus = async (item: any) => {
     try {
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in focus event: ${error}`);
+      console.error(
+        "[ComponentFormTable] focus event execution failed:",
+        error
+      );
+      logger.error(`[ComponentFormTable] focus event error: ${error}`);
     }
   }
 };
@@ -1307,8 +1344,8 @@ const handleBlur = async (item: any) => {
     try {
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in blur event: ${error}`);
+      console.error("[ComponentFormTable] blur event execution failed:", error);
+      logger.error(`[ComponentFormTable] blur event error: ${error}`);
     }
   }
 };
@@ -1322,8 +1359,11 @@ const handleMouseenter = async (item: any) => {
     try {
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in mouseenter event: ${error}`);
+      console.error(
+        "[ComponentFormTable] mouseenter event execution failed:",
+        error
+      );
+      logger.error(`[ComponentFormTable] mouseenter event error: ${error}`);
     }
   }
 };
@@ -1337,8 +1377,11 @@ const handleMouseleave = async (item: any) => {
     try {
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in mouseleave event: ${error}`);
+      console.error(
+        "[ComponentFormTable] mouseleave event execution failed:",
+        error
+      );
+      logger.error(`[ComponentFormTable] mouseleave event error: ${error}`);
     }
   }
 };
@@ -1364,24 +1407,30 @@ const executeFun = async (code: string) => {
   try {
     await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
-    console.error("error", error);
-    logger.error(`Error in executeFun: ${error}`);
+    console.error("[ComponentFormTable] executeFun execution failed:", error);
+    logger.error(`[ComponentFormTable] executeFun error: ${error}`);
   }
 };
 const handleCodeselected = async (code: string) => {
   try {
     await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
-    console.error("error", error);
-    logger.error(`Error in handleCodeselected: ${error}`);
+    console.error(
+      "[ComponentFormTable] handleCodeselected execution failed:",
+      error
+    );
+    logger.error(`[ComponentFormTable] handleCodeselected error: ${error}`);
   }
 };
 const searchItemFunc = async (code: string) => {
   try {
     await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
-    console.error("error", error);
-    logger.error(`Error in searchItemFunc: ${error}`);
+    console.error(
+      "[ComponentFormTable] searchItemFunc execution failed:",
+      error
+    );
+    logger.error(`[ComponentFormTable] searchItemFunc error: ${error}`);
   }
 };
 const repeatableZoneChildrens = ref({} as any);
@@ -1400,7 +1449,7 @@ const deleteDuplicated = (elem: any, index: any) => {
 };
 
 const navigatePrevious = (page: any) => {
-  console.log("navigatePrevious");
+  console.log("[ComponentFormTable] navigatePrevious called for page:", page);
   if (showPageNum.value > 1) {
     showPageNum.value--;
     calculatePagesStyle();
@@ -1415,8 +1464,14 @@ const navigateNext = (page: any) => {
     try {
       executeCodeAsync(codeBefore, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in beforeFollowing code: ${error}`);
+      console.error(
+        "[ComponentFormTable] navigateNext beforeFollowing event failed for page:",
+        page,
+        error
+      );
+      logger.error(
+        `[ComponentFormTable] beforeFollowing error for page ${page}: ${error}`
+      );
     }
   } else {
     showPageNum.value < props.stepper.steps
@@ -1640,7 +1695,7 @@ const computePageStyle = computed(() => (pg: any) => {
 });
 const marginTop = computed(() => {
   console.log(
-    "fixedHeadersHeights.value[showPageNum.value]",
+    "[ComponentFormTable] marginTop computed:",
     fixedHeadersHeights.value
   );
   return props.stepper.showPageNames

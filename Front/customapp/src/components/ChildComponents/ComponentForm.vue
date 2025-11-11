@@ -519,6 +519,8 @@ import {
   mathUtility,
   arrayUtility,
   eliseUtility,
+  storeUtility,
+  formUtility,
   sectionUtility,
   initializeBlocklyUtilities,
 } from "@/utils/blocklyUtilities";
@@ -779,7 +781,7 @@ watch(
   () => systemVariables.value.MAPPING_NAME,
   (newMappingName) => {
     if (newMappingName !== undefined) {
-      console.log("newMappingName", newMappingName);
+      console.log("[ComponentForm] MAPPING_NAME updated:", newMappingName);
       newNotice.mappingName = newMappingName;
     }
   },
@@ -790,7 +792,7 @@ watch(
   () => systemVariables.value.RACK_CODE,
   (newRackCode) => {
     if (newRackCode !== undefined) {
-      console.log("newRackCode", newRackCode);
+      console.log("[ComponentForm] RACK_CODE updated:", newRackCode);
       newNotice.rackCode = newRackCode;
     }
   },
@@ -802,7 +804,10 @@ watch(
   () => systemVariables.value.MAPPING_NAME,
   (newMappingName) => {
     if (newMappingName !== undefined) {
-      console.log("newMappingName", newMappingName);
+      console.log(
+        "[ComponentForm] MAPPING_NAME updated (duplicate):",
+        newMappingName
+      );
       newNotice.mappingName = newMappingName;
     }
   },
@@ -813,7 +818,10 @@ watch(
   () => systemVariables.value.RACK_CODE,
   (newRackCode) => {
     if (newRackCode !== undefined) {
-      console.log("newRackCode", newRackCode);
+      console.log(
+        "[ComponentForm] RACK_CODE watcher - newRackCode:",
+        newRackCode
+      );
       newNotice.rackCode = newRackCode;
     }
   },
@@ -1097,10 +1105,15 @@ const executeBeforeSaveCode = async () => {
 
   if (beforeSaveCode) {
     try {
-      await executeCodeAsync(beforeSaveCode, createExecutionContext());
+      const context = createExecutionContext();
+      await executeCodeAsync(beforeSaveCode, context);
+      await prepareNoticeData();
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in beforeSave code: ${error}`);
+      console.error(
+        "[ComponentForm] beforeSave event execution failed:",
+        error
+      );
+      logger.error(`[ComponentForm] beforeSave error: ${error}`);
     }
   }
 };
@@ -1116,8 +1129,8 @@ const executeAfterSaveCode = async (obj: any) => {
     try {
       await executeCodeAsync(afterSaveCode, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in afterSave code: ${error}`);
+      console.error("[ComponentForm] afterSave event execution failed:", error);
+      logger.error(`[ComponentForm] afterSave error: ${error}`);
     }
   }
 };
@@ -1241,7 +1254,7 @@ const handleNoticeSaveUpdate = async () => {
     disableNotice: Boolean(route.query.disableNotice),
   };
 
-  console.log("newNotice", newNotice);
+  console.log("[ComponentForm] newNotice payload:", newNotice);
 
   let obj;
   if (isNewDocument) {
@@ -1358,7 +1371,7 @@ const mapFileField = (field: any, base64Only?: boolean) => {
     return [];
   }
   const mappedFiles = [];
-  console.log("field", field);
+  console.log("[ComponentForm] mapFileField input:", field);
   if (base64Only) {
     const files = [];
     for (let i = 0; i < field.length; i++) {
@@ -1375,7 +1388,7 @@ const mapFileField = (field: any, base64Only?: boolean) => {
       fileName: file.fileName,
     });
   }
-  console.log("mappedFiles", mappedFiles);
+  console.log("[ComponentForm] mapFileField output mappedFiles:", mappedFiles);
   return mappedFiles;
 };
 
@@ -1563,10 +1576,10 @@ onMounted(async () => {
       // i want to simulate a delay of an await function
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
-      console.error("error", error);
-      logger.error(error);
+      console.error("[ComponentForm] Delay simulation error:", error);
+      logger.error(`[ComponentForm] Delay error: ${error}`);
     }
-    console.log("QueryParameters.value", QueryParameters.value);
+    console.log("[ComponentForm] QueryParameters:", QueryParameters.value);
     if (QueryParameters.value.fromDoc) {
       try {
         const n = await fetchNotice(QueryParameters.value.noticeType);
@@ -1609,8 +1622,12 @@ onMounted(async () => {
             isLoadingComponent.value = false;
           }
         } catch (error) {
-          console.error("error", error);
-          logger.error(error);
+          console.error(
+            "[ComponentForm] Failed to fetch metadata for guid:",
+            route.params.guid,
+            error
+          );
+          logger.error(`[ComponentForm] fetchMetadata error: ${error}`);
         }
         isLoadingComponent.value = false;
       } catch (e) {
@@ -1626,8 +1643,12 @@ onMounted(async () => {
             isLoadingComponent.value = false;
           }
         } catch (error) {
-          console.error("error", error);
-          logger.error(error);
+          console.error(
+            "[ComponentForm] Failed to fetch metadata (retry) for guid:",
+            route.params.guid,
+            error
+          );
+          logger.error(`[ComponentForm] fetchMetadata retry error: ${error}`);
           isLoadingComponent.value = false;
         }
         isLoadingComponent.value = false;
@@ -1646,8 +1667,11 @@ onMounted(async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
         await executeCodeAsync(evnt.code, createExecutionContext());
       } catch (error) {
-        console.error("error", error);
-        logger.error(`Error in beforeLoad code: ${error}`);
+        console.error(
+          "[ComponentForm] beforeLoad event execution failed:",
+          error
+        );
+        logger.error(`[ComponentForm] beforeLoad error: ${error}`);
       }
     }
     if (evnt.code != "" && evnt.rule.code == "afterLoad") {
@@ -1660,8 +1684,8 @@ onMounted(async () => {
     try {
       await executeCodeAsync(afterLoad.value.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in afterLoad code: ${error}`);
+      console.error("[ComponentForm] afterLoad event execution failed:", error);
+      logger.error(`[ComponentForm] afterLoad error: ${error}`);
     }
   }
   const headerElement = document.querySelector(
@@ -1703,8 +1727,8 @@ const handleInputChange = async (item: any) => {
       const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in change event: ${error}`);
+      console.error("[ComponentForm] change event execution failed:", error);
+      logger.error(`[ComponentForm] change event error: ${error}`);
     }
   }
 };
@@ -1717,8 +1741,8 @@ const handleFocus = async (item: any) => {
       const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in focus event: ${error}`);
+      console.error("[ComponentForm] focus event execution failed:", error);
+      logger.error(`[ComponentForm] focus event error: ${error}`);
     }
   }
 };
@@ -1731,8 +1755,8 @@ const handleBlur = async (item: any) => {
       const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in blur event: ${error}`);
+      console.error("[ComponentForm] blur event execution failed:", error);
+      logger.error(`[ComponentForm] blur event error: ${error}`);
     }
   }
 };
@@ -1747,8 +1771,11 @@ const handleMouseenter = async (item: any) => {
       const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in mouseenter event: ${error}`);
+      console.error(
+        "[ComponentForm] mouseenter event execution failed:",
+        error
+      );
+      logger.error(`[ComponentForm] mouseenter event error: ${error}`);
     }
   }
 };
@@ -1763,8 +1790,11 @@ const handleMouseleave = async (item: any) => {
       const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in mouseleave event: ${error}`);
+      console.error(
+        "[ComponentForm] mouseleave event execution failed:",
+        error
+      );
+      logger.error(`[ComponentForm] mouseleave event error: ${error}`);
     }
   }
 };
@@ -1787,28 +1817,27 @@ const handleRefs = (event: any) => {
   app.refs = mergedObject;
 };
 const executeFun = async (event: any) => {
-  console.log("exeeeecccc");
+  console.log("[ComponentForm] executeFun called for event:", event.id);
   if (
     !app.refs[event.id] ||
     app.refs[event.id].length === 0 ||
     event.id === undefined
   ) {
-    console.log("No reference found for event id:");
-    console.warn(`No reference found for event id:`);
+    console.warn("[ComponentForm] No reference found for event id:", event.id);
     return;
   }
-  console.log("event.id", event.id);
-  console.log("app.refs", app.refs);
-  console.log(" app.refs[event.id]", app.refs[event.id]);
-  console.log(" event.code", event.code);
   app.refs[event.id][0].enableLoading();
   try {
     await eval(
       "(async () => { const store = useAppStore(); " + event.code + "})()"
     );
   } catch (error) {
-    console.error("error", error);
-    logger.error(error);
+    console.error(
+      "[ComponentForm] executeFun execution failed for event:",
+      event.id,
+      error
+    );
+    logger.error(`[ComponentForm] executeFun error for ${event.id}: ${error}`);
   } finally {
     app.refs[event.id][0].disableLoading();
   }
@@ -1817,16 +1846,19 @@ const handleCodeselected = async (code: string) => {
   try {
     await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
-    console.error("error", error);
-    logger.error(`Error in handleCodeselected: ${error}`);
+    console.error(
+      "[ComponentForm] handleCodeselected execution failed:",
+      error
+    );
+    logger.error(`[ComponentForm] handleCodeselected error: ${error}`);
   }
 };
 const searchItemFunc = async (code: string) => {
   try {
     await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
-    console.error("error", error);
-    logger.error(`Error in searchItemFunc: ${error}`);
+    console.error("[ComponentForm] searchItemFunc execution failed:", error);
+    logger.error(`[ComponentForm] searchItemFunc error: ${error}`);
   }
 };
 const repeatableZoneChildrens = ref({} as any);
@@ -1845,7 +1877,7 @@ const deleteDuplicated = (elem: any, index: any) => {
 };
 
 const navigatePrevious = (page: any) => {
-  console.log("navigatePrevious");
+  console.log("[ComponentForm] navigatePrevious called for page:", page);
   if (showPageNum.value > 1) {
     showPageNum.value--;
     calculatePagesStyle();
@@ -1860,8 +1892,14 @@ const navigateNext = (page: any) => {
     try {
       executeCodeAsync(codeBefore, createExecutionContext());
     } catch (error) {
-      console.error("error", error);
-      logger.error(`Error in beforeFollowing code: ${error}`);
+      console.error(
+        "[ComponentForm] navigateNext beforeFollowing event failed for page:",
+        page,
+        error
+      );
+      logger.error(
+        `[ComponentForm] beforeFollowing error for page ${page}: ${error}`
+      );
     }
   } else {
     showPageNum.value < props.stepper.steps
@@ -2002,6 +2040,7 @@ const createExecutionContext = () => ({
   User,
   Version,
   Variables,
+  systemVariables,
   GlobalVariables,
   QueryParameters,
   newNotice,
@@ -2048,6 +2087,8 @@ const createExecutionContext = () => ({
   arrayUtility,
   eliseUtility,
   sectionUtility,
+  storeUtility,
+  formUtility,
 });
 
 const validateField = (pageItem: any, columnName: string, valid: boolean) => {
@@ -2079,7 +2120,11 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
           Array.isArray(options.rules) &&
           !isEmpty(Fields.value[options.name])
         ) {
-          console.log("options.rules", options.rules);
+          console.log(
+            "[ComponentForm] Validating rules for field:",
+            options.name,
+            options.rules
+          );
 
           const val = Fields.value[options.name];
           let messages: string[] = [];
@@ -2089,7 +2134,11 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
               rule,
               options.label || options.name
             );
-            console.log("result", result);
+            console.log(
+              "[ComponentForm] Validation result for rule:",
+              rule.code,
+              result
+            );
             if (!result.valid && result.msg) {
               messages.push(result.msg);
               fieldValid = false;
@@ -2296,10 +2345,7 @@ const computePageStyle = computed(() => (pg: any) => {
   };
 });
 const marginTop = computed(() => {
-  console.log(
-    "fixedHeadersHeights.value[showPageNum.value]",
-    fixedHeadersHeights.value
-  );
+  console.log("[ComponentForm] marginTop computed:", fixedHeadersHeights.value);
   return props.stepper.showPageNames
     ? fixedHeadersHeights.value[showPageNum.value] + 40 + "px"
     : calculateHeight("FIXED_HEADER") + "px";
@@ -2354,8 +2400,14 @@ async function executeWebService(webServiceName: String, parameters: any) {
     );
     return result;
   } catch (error) {
-    console.error("error", error);
-    logger.error(`Error in executeWebService: ${error}`);
+    console.error(
+      "[ComponentForm] executeWebService failed for service:",
+      webServiceName,
+      error
+    );
+    logger.error(
+      `[ComponentForm] executeWebService error for ${webServiceName}: ${error}`
+    );
     return error;
   }
 }
@@ -2368,9 +2420,9 @@ function validateByRule(
   fieldLabel?: string
 ): { valid: boolean; msg: string } {
   if (!rule || typeof rule.code !== "string") return { valid: true, msg: "" };
-  console.log("rule", rule);
-  console.log("value", value);
-  console.log("fieldLabel", fieldLabel);
+  console.log("[ComponentForm] validateByRule - rule:", rule.code);
+  console.log("[ComponentForm] validateByRule - value:", value);
+  console.log("[ComponentForm] validateByRule - fieldLabel:", fieldLabel);
   // Helper for empty
   const isEmpty = (val: any) => {
     if (val === null || val === undefined) return true;
@@ -2390,7 +2442,10 @@ function validateByRule(
       return { valid: false, msg: `${label} est requis.` };
     }
   }
-  console.log("rule.code", rule.code);
+  console.log(
+    "[ComponentForm] validateByRule - processing rule code:",
+    rule.code
+  );
   switch (rule.code) {
     case "required":
       return {

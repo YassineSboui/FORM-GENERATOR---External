@@ -10,7 +10,7 @@
       </div>
     </div>
     <div class="form-viewer-container-content">
-      <div v-if="form.length === 0">
+      <div v-if="form.length === 0 && !initialisingForm">
         <div></div>
       </div>
       <div v-else>
@@ -324,6 +324,7 @@ import {
 import { useI18n } from "vue-i18n";
 import { i18n } from "@/main"; // Import i18n from main.ts
 import { useAppStore } from "@/store/app.store";
+import { initFormUtility, formUtility } from "@/utils/blocklyUtilities";
 import { usePrimeVue } from "primevue/config";
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { definePreset, palette } from "@primeuix/themes";
@@ -365,6 +366,8 @@ export default defineComponent({
     const isAuthenticated = ref(false);
     const authRequired = ref(false);
     const authConfig = ref(null as any);
+    const initialisingForm = ref(true);
+    const currentFormId = ref(formID.value); // Track current form ID
 
     // Email authentication variables
     const showEmailDialog = ref(false);
@@ -621,7 +624,10 @@ export default defineComponent({
 
           if (result.valid) {
             showEmailDialog.value = false;
-            console.log("authConfig:", authConfig.value);
+            console.log(
+              "[Form] Authentication configuration:",
+              authConfig.value
+            );
             // Need OTP verification
             await sendOTP(emailInput.value);
             showOTPDialog.value = true;
@@ -822,9 +828,54 @@ export default defineComponent({
       await loadFormData();
     };
 
+    // Initialize form data and configuration
+    async function initForm() {
+      console.log("[Form] Form ID:", formID.value);
+      // force empty object
+      object.value = null;
+
+      object.value = await fetchOneObject(formID.value);
+      localFormConfig.value = JSON.parse(
+        object.value?.objectJson
+      ).objectConfig.formConfig;
+
+      // Initialize system variables
+      systemVariables.value = localFormConfig.value.systemVariables || {
+        BUTTON_CANCEL: "Annuler",
+        BUTTON_OK: "Valider",
+        FORM_UID: "",
+        DISPLAY_BUTTON_CANCEL: true,
+        DISPLAY_BUTTON_OK: true,
+      };
+      console.log(
+        "[Form] System Variables initialized:",
+        systemVariables.value
+      );
+      formName.value = localFormConfig.value.formName;
+      isStepper.value = localFormConfig.value.isStepper;
+      isRTL.value = localFormConfig.value.isRTL;
+      isMultilingual.value = localFormConfig.value.isMultilingual;
+      languages.value = localFormConfig.value.languages;
+      steps.value = localFormConfig.value.stepNumber;
+      showPageNames.value = localFormConfig.value.showPageNames;
+      if (isStepper.value) {
+        names.value = JSON.parse(
+          object.value?.objectJson
+        ).objectConfig.formTemplate[0].config.names;
+      }
+      i18n.global.locale.value = isRTL.value ? "ar" : "fr";
+      isRTL.value
+        ? (PrimeVue.config.locale = { ...arabic.LocaleOptions })
+        : (PrimeVue.config.locale = { ...french.LocaleOptions });
+
+      // Update current form ID after successful initialization
+      currentFormId.value = formID.value;
+    }
+
     // Extract form loading logic into a separate function
     const loadFormData = async () => {
       try {
+        initialisingForm.value = true;
         // For email authentication, validate token before loading sensitive data
         if (
           authRequired.value &&
@@ -854,39 +905,69 @@ export default defineComponent({
         }
 
         console.log("Loading form data...");
-        object.value = await fetchOneObject(formID.value);
-
-        localFormConfig.value = JSON.parse(
-          object.value?.objectJson
-        ).objectConfig.formConfig;
+        await initForm();
         applyDynamicTheme();
-        // Initialize system variables
-        systemVariables.value = localFormConfig.value.systemVariables || {
-          BUTTON_CANCEL: "Annuler",
-          BUTTON_OK: "Valider",
-          FORM_UID: "",
-          DISPLAY_BUTTON_CANCEL: true,
-          DISPLAY_BUTTON_OK: true,
-        };
-        formName.value = localFormConfig.value.formName;
-        isStepper.value = localFormConfig.value.isStepper;
-        isRTL.value = localFormConfig.value.isRTL;
-        isMultilingual.value = localFormConfig.value.isMultilingual;
-        languages.value = localFormConfig.value.languages;
-        steps.value = localFormConfig.value.stepNumber;
-        showPageNames.value = localFormConfig.value.showPageNames;
-        if (isStepper.value) {
-          names.value = JSON.parse(
-            object.value?.objectJson
-          ).objectConfig.formTemplate[0].config.names;
+
+        // Initialize formUtility with form context
+        initFormUtility({
+          formID: formID,
+          currentFormId: currentFormId,
+          initForm: initForm,
+        });
+
+        // Execute beforeInit event if exists
+        if (object.value?.objectJson) {
+          const beforeInitEvent = JSON.parse(
+            object.value.objectJson
+          ).objectConfig.formConfig.events?.find(
+            (event: any) => event.rule.code === "beforeInit"
+          );
+          if (beforeInitEvent && beforeInitEvent.code) {
+            try {
+              const store = useAppStore();
+              // Create a function that has access to all needed variables and refs
+              const executeBeforeInitEvent = new Function(
+                "initForm",
+                "currentFormId",
+                "formID",
+                "store",
+                "systemVariables",
+                "QueryParameters",
+                "beforeInitCode",
+                "uuidv4",
+                "executeWebService",
+                "formUtility",
+                `return (async () => {
+                  ${beforeInitEvent.code}
+                  console.log('[Form] Before Init Event Completed');
+                })()`
+              );
+
+              await executeBeforeInitEvent(
+                initForm,
+                currentFormId,
+                formID,
+                store,
+                systemVariables,
+                QueryParameters,
+                beforeInitEvent.code,
+                uuidv4,
+                executeWebService,
+                formUtility
+              );
+            } catch (error) {
+              console.error("[Form] Error executing beforeInit event:", error);
+            }
+          }
+        } else {
+          console.log("[Form] Form object or objectJson is missing");
         }
-        i18n.global.locale.value = isRTL.value ? "ar" : "fr";
-        isRTL.value
-          ? (PrimeVue.config.locale = { ...arabic.LocaleOptions })
-          : (PrimeVue.config.locale = { ...french.LocaleOptions });
+
         console.log("Form data loaded successfully");
+        initialisingForm.value = false;
       } catch (error) {
         console.error("Failed to load form data:", error);
+        initialisingForm.value = false;
       }
     };
 
@@ -1162,7 +1243,7 @@ export default defineComponent({
 
       // Only proceed to load the form if authenticated
       if (isAuthenticated.value) {
-        console.log("Auth Updated");
+        console.log("[Form] Authentication completed, loading form data");
         await loadFormData();
       }
     });
@@ -1251,13 +1332,24 @@ export default defineComponent({
         eliseWsInputType: webServiceName,
         objet: parameters,
       };
-      console.log("obj", obj);
+      console.log(
+        "[Form] Calling Elise web service:",
+        webServiceName,
+        "with params:",
+        parameters
+      );
       try {
         const result = await callEliseWebService(obj);
         return result;
       } catch (error) {
-        console.error("error", error);
-        logger.error(error);
+        console.error(
+          "[Form] Elise web service call failed for:",
+          webServiceName,
+          error
+        );
+        logger.error(
+          `[Form] callEliseWebService failed for ${webServiceName}: ${error}`
+        );
         return error;
       }
     }
@@ -1425,7 +1517,7 @@ export default defineComponent({
         }
 
         updateOverflowClass();
-        console.log("Overflow check:", {
+        console.log("[Form] Overflow check:", {
           scrollHeight: el.scrollHeight,
           clientHeight: el.clientHeight,
           hasOverflow,
@@ -1491,6 +1583,8 @@ export default defineComponent({
       );
     }
     return {
+      initialisingForm,
+      currentFormId,
       form,
       formID,
       object,

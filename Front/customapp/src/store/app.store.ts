@@ -390,8 +390,11 @@ export const useAppStore = defineStore("AppStore", {
         });
         return this.tables;
       } catch (error) {
-        console.error("error", error);
-        logger.error(error);
+        console.error(
+          "[AppStore] Failed to fetch tables (objectType: TAB):",
+          error
+        );
+        logger.error(`[AppStore] fetchTables failed: ${error}`);
       }
     },
     checkIfNeoTableComponentExists() {
@@ -538,8 +541,11 @@ export const useAppStore = defineStore("AppStore", {
           });
         });
       } catch (error) {
-        console.error("error", error);
-        logger.error(error);
+        console.error(
+          "[AppStore] Failed to initialize database collections (objectType: CDQ):",
+          error
+        );
+        logger.error(`[AppStore] initLoader CDQ failed: ${error}`);
       }
       try {
         const value = await fetchObjects({ objectType: "API" });
@@ -553,8 +559,11 @@ export const useAppStore = defineStore("AppStore", {
           });
         });
       } catch (error) {
-        console.error("error", error);
-        logger.error(error);
+        console.error(
+          "[AppStore] Failed to initialize API collections (objectType: API):",
+          error
+        );
+        logger.error(`[AppStore] initLoader API failed: ${error}`);
       }
       try {
         const forms = await fetchObjects({ objectType: "FORM" });
@@ -569,8 +578,11 @@ export const useAppStore = defineStore("AppStore", {
           });
         });
       } catch (error) {
-        console.error("error", error);
-        logger.error(error);
+        console.error(
+          "[AppStore] Failed to initialize forms (objectType: FORM):",
+          error
+        );
+        logger.error(`[AppStore] initLoader FORM failed: ${error}`);
       }
       try {
         const functionsResp = await fetchObjects({ objectType: "FNC" });
@@ -590,8 +602,11 @@ export const useAppStore = defineStore("AppStore", {
           });
         });
       } catch (error) {
-        console.error("error", error);
-        logger.error(error);
+        console.error(
+          "[AppStore] Failed to initialize functions (objectType: FNC):",
+          error
+        );
+        logger.error(`[AppStore] initLoader FNC failed: ${error}`);
       }
     },
     setMailsTemplates(mail: mailTemplate) {
@@ -714,8 +729,11 @@ export const useAppStore = defineStore("AppStore", {
     },
 
     setTableVariables(tableVariables: TableVariables[]) {
-      console.log("this.tableVariables", this.tableVariables);
-      console.log("tableVariables", tableVariables);
+      console.log(
+        "[AppStore] Setting table variables. Current count:",
+        this.tableVariables.length
+      );
+      console.log("[AppStore] New table variables to add:", tableVariables);
 
       tableVariables.forEach((item) => {
         const exists = this.tableVariables.some(
@@ -735,7 +753,10 @@ export const useAppStore = defineStore("AppStore", {
       this.currentTable = table;
     },
     setCurrentTableInsertionType(insertionType: string) {
-      console.log("insertionType", insertionType);
+      console.log(
+        "[AppStore] Setting current table insertion type:",
+        insertionType
+      );
       this.currentTableInsertionType = insertionType;
     },
     resetCurrentTableInsertionType() {
@@ -788,7 +809,10 @@ export const useAppStore = defineStore("AppStore", {
       return await postAiChatMessage(payload);
     },
     async getObjectByLexicon(identifier: string | Record<string, boolean>) {
-      console.log("identifier", identifier);
+      console.log(
+        "[AppStore] Getting object by lexicon identifier:",
+        identifier
+      );
 
       // Extract the key if identifier is an object
       const id =
@@ -800,7 +824,7 @@ export const useAppStore = defineStore("AppStore", {
       const item = await getServiceOrUserById(id, false);
 
       if (item && item.message !== "Item not found") {
-        console.log("item", item);
+        console.log("[AppStore] Object found by lexicon:", { id, item });
         return item;
       } else {
         return { message: "Item not found" };
@@ -852,7 +876,11 @@ export const useAppStore = defineStore("AppStore", {
           throw new Error(`Function with name ${functionName} not found`);
         }
       } catch (error) {
-        console.error("Execution error:", error);
+        console.error(
+          "[AppStore] Function execution error for:",
+          functionName,
+          error
+        );
         throw error;
       }
     },

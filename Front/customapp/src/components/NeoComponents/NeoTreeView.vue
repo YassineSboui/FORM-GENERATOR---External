@@ -324,7 +324,10 @@ export default {
     // Function to get current value
     const getValue = () => {
       if (optionsType.value == "Organigramme") {
-        console.log("internalValue.value", internalValue.value);
+        console.log(
+          "[NeoTreeView] getValue - internalValue:",
+          Object.keys(internalValue.value as any)
+        );
         return Object.keys(internalValue.value as any)[0] ?? ""; // Return the first key
       } else {
         return Object.keys(internalValue.value as any) ?? [];
@@ -340,7 +343,12 @@ export default {
         } else {
           internalValue.value = value;
         }
-        console.log("internalValue.value", internalValue.value);
+        console.log(
+          "[NeoTreeView] setValue - internalValue updated:",
+          value,
+          "type:",
+          typeof value
+        );
       } else {
         if (Array.isArray(value) && typeof value[0] === "string") {
           internalValue.value = value.map((item: any) => ({ [item]: true }));
@@ -504,12 +512,16 @@ export default {
         TreeItems.value = [];
         // Fetch services and users combined using the new API
         const servicesAndUsersList = await fetchFlowChartWithUsers(); // This is your updated API function
-        console.log("mergedArray", servicesAndUsersList);
-        console.log("typeof mergedArray", typeof servicesAndUsersList);
+        console.log(
+          "[NeoTreeView] fetchServicesAndUsers - received items count:",
+          servicesAndUsersList?.length,
+          "type:",
+          typeof servicesAndUsersList
+        );
         // Use your function to create the tree items based on the merged data
         TreeItems.value = createServiceUsersTree(servicesAndUsersList);
       } catch (error) {
-        console.error("Error fetching services and users:", error);
+        console.error("[NeoTreeView] fetchServicesAndUsers failed:", error);
       } finally {
         loading.value = false;
       }
@@ -975,7 +987,10 @@ export default {
           props.options.thesaurusId,
           ""
         );
-        console.log("response", response);
+        console.log(
+          "[NeoTreeView] Thesaurus response - children count:",
+          response.Children?.length
+        );
         TreeItems.value = buildTreeThesaurus(response.Children);
         loading.value = false;
       }

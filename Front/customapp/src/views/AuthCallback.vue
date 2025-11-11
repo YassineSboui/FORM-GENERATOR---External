@@ -34,9 +34,14 @@ export default defineComponent({
     const isValidating = ref(true);
 
     onMounted(() => {
-      console.log("AuthCallback component mounted");
-      console.log("Current URL:", window.location.href);
-      console.log("Route query:", route.query);
+      console.log(
+        "[AuthCallback] Component mounted - URL:",
+        window.location.href.substring(0, 100) + "..."
+      );
+      console.log(
+        "[AuthCallback] Route query params:",
+        Object.keys(route.query).join(", ")
+      );
 
       // Get the authorization code and state from the URL
       const code = route.query.code as string;
@@ -44,12 +49,21 @@ export default defineComponent({
       const error = route.query.error as string;
       const errorDescription = route.query.error_description as string;
 
-      console.log("Authorization code:", code);
-      console.log("State:", state);
+      console.log(
+        "[AuthCallback] Authorization code exists:",
+        !!code,
+        "State exists:",
+        !!state
+      );
 
       // Check for OIDC error responses
       if (error) {
-        console.error("OIDC Error:", error, errorDescription);
+        console.error(
+          "[AuthCallback] OIDC Error received:",
+          error,
+          "Description:",
+          errorDescription
+        );
         router.push({
           name: "unauthorized",
           query: {
@@ -62,24 +76,41 @@ export default defineComponent({
 
       // Verify the state parameter for security
       const storedState = sessionStorage.getItem("oidc_state");
-      console.log("Stored state:", storedState);
+      console.log(
+        "[AuthCallback] State verification - stored exists:",
+        !!storedState,
+        "matches received:",
+        state === storedState
+      );
 
       if (!code || !state) {
-        console.error("Missing code or state parameter");
+        console.error(
+          "[AuthCallback] Missing required parameter - code:",
+          !!code,
+          "state:",
+          !!state
+        );
         router.push({ name: "unauthorized" });
         return;
       }
 
       if (state !== storedState) {
-        console.error("State parameter mismatch - possible CSRF attack");
-        console.error("Expected state:", storedState, "Received state:", state);
+        console.error(
+          "[AuthCallback] State mismatch - possible CSRF attack. Expected:",
+          storedState?.substring(0, 20) + "...",
+          "Received:",
+          state?.substring(0, 20) + "..."
+        );
         router.push({ name: "unauthorized" });
         return;
       }
 
       // Get the original return URL
       const returnUrl = sessionStorage.getItem("return_url");
-      console.log("Return URL:", returnUrl);
+      console.log(
+        "[AuthCallback] Return URL retrieved, length:",
+        returnUrl?.length || 0
+      );
       // http://localhost:5174/neoformext/front/form/client2/61adbe8f-59ad-4122-bb60-3d061bf3f0eb?code=55179767d3fd4a6bbb50e541c6dec80a
       // extract the "client2"
 
@@ -90,35 +121,41 @@ export default defineComponent({
         const formIndex = urlParts.findIndex((part) => part === "form");
         if (formIndex !== -1 && formIndex + 1 < urlParts.length) {
           clientId = urlParts[formIndex + 1];
-          console.log("Extracted client ID:", clientId);
+          console.log("[AuthCallback] Extracted client ID from URL:", clientId);
         }
       }
 
       // Get the personal code from the original query parameter
       const originalQuery = sessionStorage.getItem("original_query") || "";
       const personalCode = originalQuery.split("=")[1] || "";
-      console.log("Personal code from original query:", personalCode);
+      console.log(
+        "[AuthCallback] Personal code extracted:",
+        personalCode ? "yes" : "no"
+      );
 
       if (!returnUrl) {
-        console.error("No return URL found");
+        console.error("[AuthCallback] No return URL found in sessionStorage");
         router.push({ name: "unauthorized" });
         return;
       }
 
-      console.log("Authentication in progress, validating with backend...");
+      console.log("[AuthCallback] Starting backend validation...");
 
       // Retrieve the original guid from sessionStorage
       const originalGuid = sessionStorage.getItem("original_guid") || "";
 
       // Call the backend to validate the OIDC code
       try {
-        console.log("Extracted client ID:", clientId);
-        console.log("Using personal code:", personalCode);
+        console.log("[AuthCallback] Backend validation - clientId:", clientId);
+        console.log(
+          "[AuthCallback] Backend validation - Using personalCode:",
+          !!personalCode
+        );
         // Use our API service to validate the code
         validateOidcCode(code, state, originalGuid, clientId, personalCode)
           .then((response) => {
             if (response.success) {
-              console.log("Backend validation successful");
+              console.log("[AuthCallback] Backend validation successful");
               // Store authentication success flag
               sessionStorage.setItem("oidc_authenticated", "true");
 
@@ -128,11 +165,14 @@ export default defineComponent({
               // Keep original_query until Form.vue restores it
 
               // Redirect to the original URL
-              console.log("Redirecting to:", returnUrl);
+              console.log(
+                "[AuthCallback] Redirecting to return URL, length:",
+                returnUrl.length
+              );
               window.location.href = returnUrl;
             } else {
               console.error(
-                "Backend validation failed:",
+                "[AuthCallback] Backend validation failed:",
                 response.error || "Unknown error"
               );
               router.push({
@@ -146,7 +186,10 @@ export default defineComponent({
             }
           })
           .catch((error) => {
-            console.error("OIDC validation error:", error);
+            console.error(
+              "[AuthCallback] OIDC validation error:",
+              error.response?.status || error.message
+            );
 
             // Check if the error is due to the endpoint not existing (404) or not implemented (501)
             if (
@@ -156,7 +199,7 @@ export default defineComponent({
               // If the validate-oidc endpoint doesn't exist yet, fall back to the existing flow
               // You can remove this fallback once your backend endpoint is implemented
               console.warn(
-                "Falling back to client-side validation (less secure) - Backend endpoint not implemented yet"
+                "[AuthCallback] Falling back to client-side validation (less secure) - Backend endpoint not implemented yet"
               );
               sessionStorage.setItem("oidc_authenticated", "true");
 
@@ -165,7 +208,10 @@ export default defineComponent({
               sessionStorage.removeItem("return_url");
 
               // Redirect to the original URL
-              console.log("Redirecting to:", returnUrl);
+              console.log(
+                "[AuthCallback] Fallback redirect to return URL, length:",
+                returnUrl.length
+              );
               window.location.href = returnUrl;
             } else {
               // For any other error, redirect to unauthorized
@@ -182,7 +228,7 @@ export default defineComponent({
             }
           });
       } catch (error) {
-        console.error("Failed to validate OIDC code:", error);
+        console.error("[AuthCallback] Failed to validate OIDC code:", error);
         router.push({ name: "unauthorized" });
       }
     });
