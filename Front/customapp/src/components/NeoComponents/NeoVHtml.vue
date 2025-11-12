@@ -84,34 +84,84 @@ export default defineComponent({
     const processHtmlContent = (htmlContent: string): string => {
       if (!htmlContent) return "";
 
-      // Create a temporary DOM element to parse the HTML
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlContent, "text/html");
+      // If it's a full HTML document, extract and process it
+      if (
+        htmlContent.trim().toLowerCase().startsWith("<!doctype") ||
+        htmlContent.trim().toLowerCase().startsWith("<html")
+      ) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, "text/html");
 
-      // Extract styles from head
-      const styles = Array.from(doc.querySelectorAll("style"))
-        .map((style) => style.textContent)
-        .join("\n");
+        // Extract all styles from head
+        const styles = Array.from(doc.querySelectorAll("style"))
+          .map((style) => style.textContent)
+          .join("\n");
 
-      // Extract body content
-      const bodyContent = doc.body ? doc.body.innerHTML : htmlContent;
+        // Extract body content
+        const bodyContent = doc.body ? doc.body.innerHTML : htmlContent;
 
-      // Create scoped styles by prefixing with .vhtml-content
-      const scopedStyles = styles.replace(/([^{}]+){/g, (match, selector) => {
-        // Skip @media, @keyframes, etc.
-        if (selector.trim().startsWith("@")) return match;
+        // Extract body styles if present
+        const bodyStyles = doc.body ? doc.body.getAttribute("style") : "";
+        const wrapperStyles = bodyStyles ? ` style="${bodyStyles}"` : "";
 
-        // Replace body selector with .vhtml-content
-        if (selector.includes("body")) {
-          return selector.replace(/body/g, ".vhtml-content") + "{";
+        // Process styles: preserve @rules but scope regular selectors
+        let processedStyles = "";
+        let insideAtRule = false;
+        let braceDepth = 0;
+
+        // Split into tokens to properly handle nested @rules
+        const lines = styles.split("\n");
+        for (let line of lines) {
+          const trimmed = line.trim();
+
+          // Track @rule blocks
+          if (trimmed.startsWith("@")) {
+            processedStyles += line + "\n";
+            insideAtRule = true;
+            continue;
+          }
+
+          // Count braces to know when @rule ends
+          for (let char of line) {
+            if (char === "{") braceDepth++;
+            if (char === "}") {
+              braceDepth--;
+              if (braceDepth === 0) insideAtRule = false;
+            }
+          }
+
+          // If inside @rule (like @keyframes, @media), don't scope
+          if (insideAtRule) {
+            processedStyles += line + "\n";
+            continue;
+          }
+
+          // Scope regular CSS rules
+          if (trimmed && !trimmed.startsWith("}")) {
+            // Replace body, html, * with .vhtml-content
+            if (/^\s*(body|html|\*)/.test(line)) {
+              line = line.replace(/^\s*(body|html|\*)/, ".vhtml-content");
+            }
+            // Scope other selectors (but not closing braces or properties)
+            else if (trimmed.includes("{") && !trimmed.startsWith("@")) {
+              line = line.replace(
+                /([^{}]+)(\s*{)/g,
+                (match, selector, bracket) => {
+                  return ".vhtml-content " + selector.trim() + bracket;
+                }
+              );
+            }
+          }
+
+          processedStyles += line + "\n";
         }
 
-        // Scope other selectors
-        return ".vhtml-content " + selector.trim() + "{";
-      });
+        // Return scoped content
+        return `<style>${processedStyles}</style><div class="vhtml-content"${wrapperStyles}>${bodyContent}</div>`;
+      }
 
-      // Return processed content
-      return `<style scoped>${scopedStyles}</style><div class="vhtml-content">${bodyContent}</div>`;
+      // For non-full HTML documents, return as-is
+      return htmlContent;
     };
 
     const internalValue = computed({
@@ -197,10 +247,6 @@ export default defineComponent({
     watch(
       [() => props.options.content, () => props.modelValue],
       ([optionsContent, modelValue]) => {
-        console.log("Watcher triggered:", {
-          optionsContent,
-          modelValue,
-        });
         if (optionsContent && (!modelValue || modelValue.trim() === "")) {
           emit("update:modelValue", optionsContent);
         }
@@ -296,7 +342,7 @@ export default defineComponent({
   isolation: isolate;
   overflow: auto;
   position: relative;
-  border-radius: 15px;
+
   // Default styling for content
   :deep(.vhtml-content) {
     max-width: 100%;
@@ -315,9 +361,9 @@ export default defineComponent({
     }
   }
 
-  // Hide any style tags that might be injected
+  // Allow style tags for animations and custom styles
   :deep(style) {
-    display: none !important;
+    display: block !important;
   }
 }
 

@@ -308,6 +308,28 @@ export default {
     // Fetch user and their signatures
     onMounted(async () => {});
 
+    function toPx(value: string | number, axis: "w" | "h" = "w"): number {
+      if (typeof value === "number") return value;
+      if (typeof value === "string") {
+        if (value.endsWith("px")) return parseInt(value, 10);
+        if (value.endsWith("vw")) {
+          const vw = parseFloat(value);
+          return Math.round((window.innerWidth * vw) / 100);
+        }
+        if (value.endsWith("vh")) {
+          const vh = parseFloat(value);
+          return Math.round((window.innerHeight * vh) / 100);
+        }
+        if (value.endsWith("%")) {
+          // Optional: handle % if you want, or fallback to a default
+          return axis === "w" ? window.innerWidth : window.innerHeight;
+        }
+        // fallback: try to parse as number
+        return parseInt(value, 10);
+      }
+      return 400; // fallback default
+    }
+
     return {
       internalValue,
       localOptions,
@@ -339,28 +361,6 @@ export default {
     };
   },
 };
-
-function toPx(value: string | number, axis: "w" | "h" = "w"): number {
-  if (typeof value === "number") return value;
-  if (typeof value === "string") {
-    if (value.endsWith("px")) return parseInt(value, 10);
-    if (value.endsWith("vw")) {
-      const vw = parseFloat(value);
-      return Math.round((window.innerWidth * vw) / 100);
-    }
-    if (value.endsWith("vh")) {
-      const vh = parseFloat(value);
-      return Math.round((window.innerHeight * vh) / 100);
-    }
-    if (value.endsWith("%")) {
-      // Optional: handle % if you want, or fallback to a default
-      return axis === "w" ? window.innerWidth : window.innerHeight;
-    }
-    // fallback: try to parse as number
-    return parseInt(value, 10);
-  }
-  return 400; // fallback default
-}
 </script>
 
 <style scoped>
