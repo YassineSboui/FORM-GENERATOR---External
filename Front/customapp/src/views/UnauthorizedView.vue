@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-column align-content-center justify-content-center h-100"
+    class="flex flex-column align-content-center justify-content-center h-100 unauthorized-container"
   >
     <unauthorized class="unauthorized" />
 
@@ -97,6 +97,31 @@ svg#freepik_stories-security-on.animated #freepik--character-1--inject-2 {
 .animator-hidden {
   display: none;
 }
+.unauthorized-container {
+  max-height: 95vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Unauthorized Container */
+.unauthorized-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.unauthorized-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.unauthorized-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+.unauthorized-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
 .main-container {
   display: flex;
   overflow-y: auto;

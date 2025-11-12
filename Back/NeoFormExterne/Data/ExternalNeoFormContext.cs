@@ -3,20 +3,29 @@ using Microsoft.EntityFrameworkCore;
 using static NeoForm_Externe.Models.Dto.UserAuthenticationDto;
 using NeoForm_Externe.Interfaces;
 using NeoForm_Externe.Data.Converters;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace NeoForm_Externe.Data
 {
-    public class ExternalNeoFormContext : DbContext
+    public class ExternalNeoFormContext : IdentityDbContext<ApplicationUser>
     {
         private readonly IEncryptionService? _encryptionService;
 
         public ExternalNeoFormContext(DbContextOptions<ExternalNeoFormContext> options)
-            : base(options) { }
+            : base(options)
+        {
+            Objects = Set<ObjectModels>();
+            Clients = Set<ClientInfo>();
+            UserAuthentications = Set<UserAuthentication>();
+        }
 
         public ExternalNeoFormContext(DbContextOptions<ExternalNeoFormContext> options, IEncryptionService encryptionService)
             : base(options)
         {
             _encryptionService = encryptionService;
+            Objects = Set<ObjectModels>();
+            Clients = Set<ClientInfo>();
+            UserAuthentications = Set<UserAuthentication>();
         }
 
         public DbSet<ObjectModels> Objects { get; set; }
@@ -25,6 +34,8 @@ namespace NeoForm_Externe.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder); // Important: Call base for Identity
+
             // Object table configuration
             modelBuilder.Entity<ObjectModels>(entity =>
             {

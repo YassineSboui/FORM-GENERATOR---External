@@ -1041,31 +1041,51 @@ export const postAiChatMessage = async (payload: any) => {
 
 export const fetchClients = async () => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.externalUrl}clients`;
-  const { data } = await axios.get(apiUrl);
+  const apiUrl = `${httpRequest.externalUrl}Clients`;
+  const token = localStorage.getItem("authToken");
+  const { data } = await axios.get(apiUrl, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+  });
   return data; // returns Dictionary: { clientId: url }
 };
 
 export const addClient = async (payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.externalUrl}clients`;
-  const response = await axios.post(apiUrl, payload);
+  const apiUrl = `${httpRequest.externalUrl}Clients`;
+  const token = localStorage.getItem("authToken");
+  const response = await axios.post(apiUrl, payload, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+  });
   return response.data;
 };
 
 export const updateClient = async (clientId: string, payload: any) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.externalUrl}clients/${clientId}`;
+  const apiUrl = `${httpRequest.externalUrl}Clients/${clientId}`;
+  const token = localStorage.getItem("authToken");
   const response = await axios.put(apiUrl, payload, {
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    },
   });
   return response.data;
 };
 
 export const deleteClientById = async (clientId: string) => {
   const httpRequest = useHttpRequest();
-  const apiUrl = `${httpRequest.externalUrl}clients/${clientId}`;
-  const response = await axios.delete(apiUrl);
+  const apiUrl = `${httpRequest.externalUrl}Clients/${clientId}`;
+  const token = localStorage.getItem("authToken");
+  const response = await axios.delete(apiUrl, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+  });
   return response.data;
 };
 export const GetAuthInfo = async ({
@@ -1308,7 +1328,7 @@ export const validateAuthToken = async (
 export const getClientApiKey = async (clientId: string) => {
   const httpRequest = useHttpRequest();
   try {
-    const apiUrl = `${httpRequest.externalUrl}clients/${clientId}/apikey`;
+    const apiUrl = `${httpRequest.externalUrl}Clients/${clientId}/apikey`;
     const response = await axios.get(apiUrl);
     return response.data.apiKey; // Returns the API key for the specified client
   } catch (error) {

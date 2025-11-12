@@ -1,23 +1,60 @@
 <template>
   <div class="min-h-screen bg-gray-50 p-4">
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div class="flex justify-content-between items-center">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900">
-              Gestion des Clients
-            </h1>
-            <p class="text-gray-600 mt-1">
-              Gérez vos clients et leurs clés API
-            </p>
+    <div class="max-w-7xl mx-auto home-container">
+      <!-- Unified Header with Admin Info and Page Title -->
+      <div v-if="authStore.isAuthenticated" class="unified-header mb-6">
+        <!-- Top Section: Admin Info -->
+        <div class="admin-section">
+          <div class="user-info">
+            <div class="icon-wrapper">
+              <i class="pi pi-user-circle"></i>
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{
+                authStore.user?.fullName || authStore.user?.username
+              }}</span>
+              <span
+                class="user-role"
+                :class="{ 'super-admin': authStore.isSuperAdmin }"
+              >
+                {{ authStore.isSuperAdmin ? "SuperAdmin" : "Administrateur" }}
+              </span>
+            </div>
+          </div>
+          <div class="admin-actions">
+            <Button
+              v-if="authStore.isSuperAdmin"
+              label="Tableau de bord"
+              icon="pi pi-th-large"
+              class="p-button-text action-btn"
+              @click="goToDashboard"
+            />
+            <Button
+              label="Changer mot de passe"
+              icon="pi pi-key"
+              class="p-button-text action-btn"
+              @click="goToChangePassword"
+            />
+            <Button
+              label="Déconnexion"
+              icon="pi pi-sign-out"
+              class="p-button-text p-button-danger action-btn"
+              @click="confirmLogout"
+            />
+          </div>
+        </div>
+
+        <!-- Bottom Section: Page Title and Add Button -->
+        <div class="page-section">
+          <div class="page-info">
+            <h1 class="page-title">Gestion des Clients</h1>
+            <p class="page-subtitle">Gérez vos clients et leurs clés API</p>
           </div>
           <Button
             label="Ajouter un client"
             icon="pi pi-plus"
-            class="p-button-success"
+            class="add-client-btn"
             @click="showDialog = true"
-            variant="text"
           />
         </div>
       </div>
@@ -157,7 +194,12 @@
       v-model:visible="showDialog"
       header="Ajouter un nouveau client"
       modal
-      :style="{ width: '500px' }"
+      :style="{
+        width: '500px',
+        '--p-primary-color': '#667eea',
+        '--p-button-success-background': '#667eea',
+        '--p-button-success-hover-background': '#764ba2',
+      }"
       class="p-fluid"
     >
       <div class="grid gap-4">
@@ -210,7 +252,7 @@
           </small>
         </div>
 
-        <div class="field">
+        <div class="field col-12">
           <label
             for="clientApiKey"
             class="block text-sm font-medium text-gray-700 mb-2"
@@ -236,13 +278,22 @@
             icon="pi pi-times"
             class="p-button-text"
             @click="closeAddDialog"
+            :style="{
+              background: 'transparent',
+              border: '2px solid rgba(102, 126, 234, 0.3)',
+              color: '#667eea',
+            }"
           />
           <Button
             label="Enregistrer"
             icon="pi pi-check"
-            class="p-button-success"
             @click="confirmAddClient"
             :loading="saving"
+            :style="{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              color: 'white',
+            }"
           />
         </div>
       </template>
@@ -253,7 +304,12 @@
       v-model:visible="showEditDialog"
       header="Modifier le client"
       modal
-      :style="{ width: '500px' }"
+      :style="{
+        width: '500px',
+        '--p-primary-color': '#667eea',
+        '--p-button-success-background': '#667eea',
+        '--p-button-success-hover-background': '#764ba2',
+      }"
       class="p-fluid"
     >
       <div class="grid gap-4">
@@ -301,31 +357,27 @@
           </small>
         </div>
 
-        <div class="field w-full">
+        <div class="field">
           <label
             for="editApiKey"
             class="block text-sm font-medium text-gray-700 mb-2"
           >
             Clé API
           </label>
-          <div class="grid">
-            <div class="col-10">
-              <InputText
-                id="editApiKey"
-                v-model="editingClientApiKey"
-                placeholder="Clé API du client"
-                :type="showEditApiKey ? 'text' : 'password'"
-                class="flex-1"
-              />
-            </div>
-            <div class="col-2">
-              <Button
-                :icon="showEditApiKey ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                class="p-button-outline"
-                @click="showEditApiKey = !showEditApiKey"
-                type="button"
-              />
-            </div>
+          <div class="flex gap-2 w-full">
+            <InputText
+              id="editApiKey"
+              v-model="editingClientApiKey"
+              placeholder="Clé API du client"
+              :type="showEditApiKey ? 'text' : 'password'"
+              class="flex-1"
+            />
+            <Button
+              :icon="showEditApiKey ? 'pi pi-eye-slash' : 'pi pi-eye'"
+              class="p-button-outlined"
+              @click="showEditApiKey = !showEditApiKey"
+              type="button"
+            />
           </div>
           <small class="text-gray-500">
             Modifiez la clé API du client si nécessaire
@@ -340,13 +392,22 @@
             icon="pi pi-times"
             class="p-button-text"
             @click="closeEditDialog"
+            :style="{
+              background: 'transparent',
+              border: '2px solid rgba(102, 126, 234, 0.3)',
+              color: '#667eea',
+            }"
           />
           <Button
             label="Enregistrer"
             icon="pi pi-check"
-            class="p-button-success"
             @click="saveEditClient"
             :loading="saving"
+            :style="{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              color: 'white',
+            }"
           />
         </div>
       </template>
@@ -356,8 +417,10 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
+import { useAuthStore } from "@/store/auth.store";
 import {
   fetchClients,
   addClient,
@@ -365,6 +428,9 @@ import {
   updateClient,
   getClientApiKey,
 } from "@/api/api"; // adjust the path if needed
+
+const router = useRouter();
+const authStore = useAuthStore();
 
 const clientsArray = ref([]);
 const newClientId = ref("");
@@ -684,9 +750,712 @@ const generateApiKey = () => {
   return result;
 };
 
+// Admin actions
+const goToDashboard = () => {
+  router.push("/admin/dashboard");
+};
+
+const goToChangePassword = () => {
+  router.push("/admin/change-password");
+};
+
+const confirmLogout = () => {
+  confirm.require({
+    message: "Êtes-vous sûr de vouloir vous déconnecter?",
+    header: "Confirmer la déconnexion",
+    icon: "pi pi-exclamation-triangle",
+    acceptClass: "p-button-danger",
+    accept: async () => {
+      authStore.logout();
+      router.push("/admin/login");
+    },
+  });
+};
+
 onMounted(() => {
   loadClients();
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Scrollable Container */
+.home-container {
+  max-height: 95vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Home Container */
+.home-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.home-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.home-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+.home-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Unified Header with Purple Gradient Theme */
+.unified-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+  position: relative;
+  overflow: hidden;
+  animation: slideDown 0.6s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated Background Effect */
+.unified-header::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Admin Section (Top Part) */
+.admin-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.75rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  color: white;
+}
+
+.icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+}
+
+.icon-wrapper .pi {
+  font-size: 2rem;
+  color: white;
+}
+
+.icon-wrapper:hover {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.user-name {
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+}
+
+.user-role {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.4rem 1.125rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.25);
+  display: inline-block;
+  width: fit-content;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.user-role:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.user-role.super-admin {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.35) 0%,
+    rgba(255, 193, 7, 0.35) 100%
+  );
+  border-color: rgba(255, 215, 0, 0.6);
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+  }
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-actions :deep(.action-btn) {
+  color: white !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.admin-actions :deep(.action-btn:hover) {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.admin-actions :deep(.p-button-danger) {
+  border-color: rgba(239, 83, 80, 0.5) !important;
+  background: rgba(239, 83, 80, 0.15) !important;
+}
+
+.admin-actions :deep(.p-button-danger:hover) {
+  background: rgba(239, 83, 80, 0.3) !important;
+  border-color: rgba(239, 83, 80, 0.8) !important;
+}
+
+/* Page Section (Bottom Part) */
+.page-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2rem 2.25rem;
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(5px);
+}
+
+.page-info {
+  color: white;
+}
+
+.page-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin: 0;
+  color: white;
+  text-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+}
+
+.page-subtitle {
+  margin: 0.75rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.add-client-btn {
+  background: white !important;
+  color: #667eea !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 0.875rem 2rem !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.add-client-btn:hover {
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+  background: #f8f9fa !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .unified-header {
+    border-radius: 16px;
+  }
+
+  .admin-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .admin-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-actions :deep(.action-btn) {
+    flex: 1;
+    min-width: 110px;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .page-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.75rem 1.25rem;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .add-client-btn {
+    width: 100%;
+    padding: 0.875rem 1.5rem !important;
+  }
+
+  .icon-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+
+  .icon-wrapper .pi {
+    font-size: 1.75rem;
+  }
+
+  .user-name {
+    font-size: 1.15rem;
+  }
+}
+
+/* Table Styling */
+:deep(.p-datatable) {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+}
+
+:deep(.p-datatable .p-datatable-header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 1.5rem;
+  color: white;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 700;
+  padding: 1.25rem 1rem;
+  border: none;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr) {
+  transition: all 0.3s ease;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr:hover) {
+  background: rgba(102, 126, 234, 0.08) !important;
+  transform: translateX(5px);
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+  padding: 1.25rem 1rem;
+  border-color: rgba(102, 126, 234, 0.1);
+}
+
+:deep(.p-paginator) {
+  background: #f8f9fa;
+  border-top: 2px solid rgba(102, 126, 234, 0.2);
+  padding: 1rem;
+}
+
+:deep(.p-paginator .p-paginator-pages .p-paginator-page.p-highlight) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+}
+
+/* Button Styling in Table */
+:deep(.p-button.p-button-sm) {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+:deep(.p-button.p-button-success) {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+:deep(.p-button.p-button-success:hover) {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+:deep(.p-button.p-button-info) {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+:deep(.p-button.p-button-info:hover) {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+:deep(.p-button.p-button-warning) {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+:deep(.p-button.p-button-warning:hover) {
+  background: #d97706;
+  border-color: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+:deep(.p-button.p-button-danger) {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+:deep(.p-button.p-button-danger:hover) {
+  background: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Modal/Dialog Styling */
+:deep(.p-dialog) {
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 80px rgba(102, 126, 234, 0.45);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+:deep(.p-dialog .p-dialog-header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  padding: 2rem 2rem;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+:deep(.p-dialog .p-dialog-header::before) {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  animation: rotate 15s linear infinite;
+}
+
+:deep(.p-dialog .p-dialog-title) {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
+  color: white !important;
+}
+
+:deep(.p-dialog .p-dialog-header-icons .p-dialog-header-icon) {
+  color: white !important;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 1;
+}
+
+:deep(.p-dialog .p-dialog-header-icons .p-dialog-header-icon:hover) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg) scale(1.1);
+}
+
+:deep(.p-dialog .p-dialog-content) {
+  padding: 2.5rem 2rem;
+  background: white;
+}
+
+:deep(.p-dialog .p-dialog-footer) {
+  padding: 1.75rem 2rem;
+  background: linear-gradient(180deg, #fafafa 0%, #f3f4f6 100%);
+  border-top: 2px solid rgba(102, 126, 234, 0.15);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Input Fields in Dialog */
+:deep(.p-dialog .p-inputtext) {
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  padding: 0.875rem 1.125rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+:deep(.p-dialog .p-inputtext:focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+:deep(.p-dialog .p-inputtext.p-invalid) {
+  border-color: #ef4444;
+}
+
+/* Dialog Buttons - Simplified styling */
+:deep(.p-dialog .p-button) {
+  border-radius: 12px !important;
+  padding: 0.875rem 2rem !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+:deep(.p-dialog .p-button .p-button-icon) {
+  font-size: 1.125rem;
+}
+
+:deep(.p-dialog .p-button .p-button-label) {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* Confirm Dialog */
+:deep(.p-confirm-dialog) {
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(239, 68, 68, 0.35);
+}
+
+:deep(.p-confirm-dialog .p-dialog-header) {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+:deep(.p-confirm-dialog .p-confirm-dialog-icon) {
+  color: #ef4444;
+  font-size: 3rem;
+}
+
+/* Labels and Small Text in Dialog */
+:deep(.p-dialog label) {
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+:deep(.p-dialog small) {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+:deep(.p-dialog small.p-error) {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* Enhanced Field Styling */
+:deep(.field) {
+  margin-bottom: 1.5rem;
+}
+
+:deep(.field label) {
+  display: block;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+}
+
+:deep(.field .p-inputtext) {
+  width: 100%;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.field .p-inputtext:hover) {
+  border-color: #c7d2fe;
+  background: #fafbff;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+:deep(.field .p-inputtext:focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15),
+    0 4px 12px rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+  background: #ffffff;
+  outline: none;
+}
+
+:deep(.field .p-inputtext.p-invalid) {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+:deep(.field .p-inputtext.p-invalid:focus) {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+:deep(.field small) {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+:deep(.field small.p-error) {
+  color: #ef4444;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+:deep(.field small.p-error::before) {
+  content: "⚠";
+  font-size: 1rem;
+}
+
+/* Grid in Dialog */
+:deep(.p-dialog .grid) {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Close Button Enhancement */
+:deep(.p-dialog-header-close) {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+}
+
+:deep(.p-dialog-header-close:hover) {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: rotate(90deg) scale(1.1) !important;
+}
+
+:deep(.p-dialog-header-close:focus) {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2) !important;
+}
+</style>

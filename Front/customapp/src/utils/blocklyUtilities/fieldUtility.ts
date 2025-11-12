@@ -223,12 +223,18 @@ export class FieldUtility {
     try {
       this.validateFieldName(fieldName);
 
+      // Process string values to convert literal \n to actual line breaks
+      let processedValue = value;
+      if (typeof value === "string") {
+        processedValue = value.replace(/\\n/g, "\n");
+      }
+
       // Set via store Fields
       const store = this.getStore();
-      store.Fields[fieldName] = value;
+      store.Fields[fieldName] = processedValue;
       logger.debug(
         `[FieldUtility] Set value for ${fieldName}: ${this.stringifyForLog(
-          value
+          processedValue
         )}`
       );
     } catch (error) {

@@ -2,40 +2,42 @@
   <div class="main-layout">
     <Loader v-if="app.loading" />
     <div v-show="!app.loading">
-      <!-- Admin Navbar -->
-      <div v-if="!isFullMode && !isClient">
-        <div class="grid" ref="navbar">
-          <div class="col-12">
-            <Toolbar class="admin-bar">
-              <template #start class="pl-1">
-                <img src="@/assets/logoelise2.png" class="icon" />
-                <div class="title">NeoForm Externe</div>
-              </template>
-              <template #end>
-                <Button
-                  @click="onLogout"
-                  label="Quitter le mode administration"
-                  class="admin-btn"
-                ></Button>
-              </template>
-            </Toolbar>
+      <!-- Unified Modern Navbar -->
+      <div v-if="!isFullMode && !isClient" ref="navbar" class="unified-navbar">
+        <div class="navbar-container">
+          <!-- Left Section: Logo and Title -->
+          <div class="navbar-left">
+            <div class="logo-wrapper">
+              <img src="@/assets/logoelise2.png" class="navbar-logo" />
+            </div>
+            <div class="navbar-title">NeoForm Externe</div>
           </div>
-        </div>
 
-        <!-- Menu Bar -->
-        <div class="grid p-0">
-          <div class="col-12 p-0">
-            <Toolbar class="menu-bar">
-              <template #end>
-                <Button class="menu-icon p-1" text rounded>
-                  <span class="material-icons"> notifications </span>
-                </Button>
-                <Button class="menu-icon mr-3 p-1" text rounded>
-                  <span class="material-icons"> settings </span>
-                </Button>
-              </template>
-            </Toolbar>
-          </div>
+          <!-- Right Section: Actions -->
+          <!-- <div class="navbar-right">
+            <Button
+              class="navbar-icon-btn"
+              text
+              rounded
+              v-tooltip.bottom="'Notifications'"
+            >
+              <span class="material-icons">notifications</span>
+            </Button>
+            <Button
+              class="navbar-icon-btn"
+              text
+              rounded
+              v-tooltip.bottom="'Paramètres'"
+            >
+              <span class="material-icons">settings</span>
+            </Button>
+            <Button
+              @click="onLogout"
+              label="Quitter"
+              icon="pi pi-sign-out"
+              class="navbar-logout-btn"
+            ></Button>
+          </div> -->
         </div>
       </div>
 
@@ -154,5 +156,192 @@ watch(
 .full-height {
   padding: 5px !important;
   height: 102vh !important;
+}
+
+/* Unified Modern Navbar */
+.unified-navbar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  animation: slideDown 0.6s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background effect */
+.navbar-container::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  animation: rotate 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Left Section */
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-wrapper {
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.logo-wrapper:hover {
+  transform: scale(1.05) rotate(5deg);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.navbar-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+}
+
+/* Right Section */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.navbar-icon-btn {
+  color: white !important;
+  width: 42px !important;
+  height: 42px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s ease !important;
+  backdrop-filter: blur(5px);
+}
+
+.navbar-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-icon-btn .material-icons {
+  font-size: 1.25rem;
+}
+
+.navbar-logout-btn {
+  background: rgba(239, 83, 80, 0.2) !important;
+  color: white !important;
+  border: 2px solid rgba(239, 83, 80, 0.4) !important;
+  border-radius: 12px !important;
+  padding: 0.625rem 1.5rem !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  backdrop-filter: blur(5px);
+  margin-left: 0.5rem;
+}
+
+.navbar-logout-btn:hover {
+  background: rgba(239, 83, 80, 0.35) !important;
+  border-color: rgba(239, 83, 80, 0.7) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 83, 80, 0.4);
+}
+
+.navbar-logout-btn .pi {
+  font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 0.875rem 1rem;
+  }
+
+  .navbar-title {
+    font-size: 1.15rem;
+  }
+
+  .logo-wrapper {
+    width: 38px;
+    height: 38px;
+  }
+
+  .navbar-icon-btn {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .navbar-logout-btn {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .navbar-logout-btn .p-button-label {
+    display: none;
+  }
+
+  .navbar-logout-btn .pi {
+    margin-right: 0 !important;
+  }
 }
 </style>

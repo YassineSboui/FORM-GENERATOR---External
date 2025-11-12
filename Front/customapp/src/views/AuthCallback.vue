@@ -242,5 +242,27 @@ export default defineComponent({
 .auth-callback-container {
   background-color: #f8f9fa;
   min-height: 100vh;
+  max-height: 95vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Auth Callback Container */
+.auth-callback-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.auth-callback-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.auth-callback-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+.auth-callback-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 </style>

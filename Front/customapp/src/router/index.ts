@@ -3,6 +3,7 @@ import { useAppStore } from "@/store/app.store";
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { createRouter, createWebHistory } from "vue-router";
 import { logger } from "@/api/api";
+import { requireAuth, requireSuperAdmin } from "./authGuard";
 
 const routes = [
   {
@@ -10,6 +11,7 @@ const routes = [
     name: "home",
     component: () => import("../views/HomeView.vue"),
     meta: { fullMode: false },
+    beforeEnter: requireAuth,
   },
   {
     path: "/form/:client/:guid",
@@ -28,6 +30,26 @@ const routes = [
     name: "unauthorized",
     component: () => import("@/views/UnauthorizedView.vue"),
     meta: { fullMode: true },
+  },
+  {
+    path: "/admin/login",
+    name: "AdminLogin",
+    component: () => import("../views/AdminLogin.vue"),
+    meta: { fullMode: true },
+  },
+  {
+    path: "/admin/change-password",
+    name: "ChangePassword",
+    component: () => import("../views/ChangePassword.vue"),
+    meta: { fullMode: true },
+    beforeEnter: requireAuth,
+  },
+  {
+    path: "/admin/dashboard",
+    name: "AdminDashboard",
+    component: () => import("../views/AdminDashboard.vue"),
+    meta: { fullMode: true },
+    beforeEnter: [requireAuth, requireSuperAdmin],
   },
   {
     path: "/:pathMatch(.*)*",

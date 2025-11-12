@@ -10,6 +10,8 @@ using Yarp.ReverseProxy.Configuration;
 using NeoForm_Externe.Filters;
 using NeoForm_Externe.Repositories;
 using NeoForm_Externe.Helpers;
+using Microsoft.AspNetCore.Identity;
+using NeoForm_Externe.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +50,49 @@ builder.Services.AddDbContext<ExternalNeoFormContext>((serviceProvider, options)
     options.UseSqlServer(connectionString);
     // Note: The DbContext will get IEncryptionService from DI automatically
 });
+
+// Configure ASP.NET Core Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    // Password settings
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
+
+    // Lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+
+    // User settings
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<ExternalNeoFormContext>()
+.AddDefaultTokenProviders();
+
+// Configure JWT for Identity
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        var jwtKey = configEncryptionService.GetDecryptedValue("EmailAuth:JwtSecretKey");
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 
 // Services
 builder.Services.AddScoped<TokenService>();
@@ -98,6 +143,9 @@ using (var scope = app.Services.CreateScope())
 {
     var apiKeyMigrationService = scope.ServiceProvider.GetRequiredService<ApiKeyMigrationService>();
     await apiKeyMigrationService.MigrateApiKeysAsync();
+
+    // Initialize SuperAdmin user and roles
+    await DatabaseSeeder.InitializeAsync(scope.ServiceProvider);
 }
 
 app.UseHttpLogging();
@@ -114,6 +162,8 @@ app.Use(async (context, next) =>
 });
 app.UseRouting();
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 if (app.Environment.IsDevelopment())
