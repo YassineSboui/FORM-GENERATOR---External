@@ -284,7 +284,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0a6e89 0%, #fbc02d 100%);
   padding: 2rem 1rem;
   position: relative;
   overflow-x: hidden;
@@ -302,48 +302,9 @@ onMounted(() => {
   z-index: 0;
 }
 
-.circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  animation: float 20s infinite ease-in-out;
-}
+/* Floating circle animations removed for professional design */
 
-.circle:nth-child(1) {
-  width: 300px;
-  height: 300px;
-  top: -150px;
-  right: -150px;
-  animation-delay: 0s;
-}
 
-.circle:nth-child(2) {
-  width: 200px;
-  height: 200px;
-  bottom: -100px;
-  left: -100px;
-  animation-delay: 5s;
-}
-
-.circle:nth-child(3) {
-  width: 250px;
-  height: 250px;
-  top: 50%;
-  left: 50%;
-  animation-delay: 10s;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-}
 
 .password-container {
   width: 100%;
@@ -354,10 +315,10 @@ onMounted(() => {
 
 .password-card {
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(12, 56, 73, 0.15);
   overflow: hidden;
-  animation: slideUp 0.6s ease-out;
+  animation: slideUp 0.4s ease-out;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -366,16 +327,16 @@ onMounted(() => {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 .password-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0c3849 0%, #0a6e89 100%);
   color: white;
   padding: 2.5rem 2rem;
   position: relative;
@@ -410,8 +371,8 @@ onMounted(() => {
 .back-button:hover {
   background: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.5);
-  transform: translateX(-4px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateX(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .back-button:active {
@@ -423,54 +384,19 @@ onMounted(() => {
   text-align: center;
 }
 
-.password-header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  animation: pulse 4s ease-in-out infinite;
-}
 
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
 
 .icon-wrapper {
   width: 70px;
   height: 70px;
   margin: 0 auto 1rem;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(5px);
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  animation: bounceIn 0.8s ease-out;
-}
-
-@keyframes bounceIn {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  border: 3px solid rgba(255, 255, 255, 0.25);
 }
 
 .header-icon {
@@ -515,12 +441,12 @@ onMounted(() => {
 }
 
 .password-form::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0a6e89 0%, #fbc02d 100%);
   border-radius: 10px;
 }
 
 .password-form::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #fbc02d 0%, #0a6e89 100%);
 }
 
 .form-group {
@@ -538,7 +464,7 @@ onMounted(() => {
 }
 
 .form-group label i {
-  color: #667eea;
+  color: #0a6e89;
   font-size: 1.1rem;
 }
 
@@ -560,8 +486,8 @@ onMounted(() => {
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+  border-color: #0a6e89;
+  box-shadow: 0 0 0 4px rgba(10, 110, 137, 0.15);
   background: #fff;
   transform: translateY(-2px);
 }
@@ -596,8 +522,8 @@ onMounted(() => {
 }
 
 .toggle-password:hover:not(:disabled) {
-  color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
+  color: #0a6e89;
+  background: rgba(10, 110, 137, 0.1);
   transform: translateY(-50%) scale(1.1);
 }
 
@@ -637,7 +563,7 @@ onMounted(() => {
 }
 
 .requirements-title i {
-  color: #667eea;
+  color: #0a6e89;
 }
 
 .requirement-item {
@@ -653,25 +579,13 @@ onMounted(() => {
 }
 
 .requirement-item:hover {
-  background: rgba(102, 126, 234, 0.05);
+  background: rgba(10, 110, 137, 0.05);
 }
 
 .requirement-item.valid {
   color: #2e7d32;
   font-weight: 600;
-  animation: checkPop 0.3s ease-out;
-}
-
-@keyframes checkPop {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
+  transition: color 0.2s ease;
 }
 
 .requirement-item .pi {
@@ -715,41 +629,24 @@ onMounted(() => {
 .submit-button {
   width: 100%;
   padding: 1.125rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #fbc02d;
+  color: #0c3849;
   border: none;
-  border-radius: 12px;
-  font-size: 1.125rem;
-  font-weight: 700;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(251, 192, 45, 0.2);
   margin-bottom: 1rem;
   position: relative;
   overflow: hidden;
 }
 
-.submit-button::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.submit-button:hover::before {
-  width: 300px;
-  height: 300px;
-}
-
 .submit-button:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3);
+  background: #f9a825;
 }
 
 .submit-button:active:not(:disabled) {

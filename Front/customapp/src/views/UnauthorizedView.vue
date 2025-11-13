@@ -114,12 +114,12 @@ svg#freepik_stories-security-on.animated #freepik--character-1--inject-2 {
 }
 
 .unauthorized-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0a6e89 0%, #fbc02d 100%);
   border-radius: 10px;
 }
 
 .unauthorized-container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #fbc02d 0%, #0a6e89 100%);
 }
 
 .main-container {

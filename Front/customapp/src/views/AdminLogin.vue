@@ -156,7 +156,7 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0a6e89 0%, #fbc02d 100%);
   padding: 1rem;
   position: relative;
   overflow: hidden;
@@ -238,10 +238,10 @@ async function handleLogin() {
 
 .login-card {
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(12, 56, 73, 0.15);
   overflow: hidden;
-  animation: slideUp 0.6s ease-out;
+  animation: slideUp 0.4s ease-out;
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 10;
@@ -253,16 +253,16 @@ async function handleLogin() {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 .login-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0c3849 0%, #0a6e89 100%);
   color: white;
   padding: 3rem 2rem;
   text-align: center;
@@ -271,55 +271,18 @@ async function handleLogin() {
   flex-shrink: 0;
 }
 
-.login-header::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 70%
-  );
-  animation: pulse 4s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
-
 .icon-wrapper {
   width: 80px;
   height: 80px;
   margin: 0 auto 1rem;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2.5rem;
-  animation: rotate 20s linear infinite;
   backdrop-filter: blur(5px);
-  border: 3px solid rgba(255, 255, 255, 0.3);
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  border: 3px solid rgba(255, 255, 255, 0.25);
 }
 
 .login-header h1 {
@@ -343,9 +306,9 @@ async function handleLogin() {
 .info-box {
   margin: 2rem;
   padding: 1.25rem;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border: 2px solid #90caf9;
-  border-radius: 16px;
+  background: #fff9e6;
+  border: 2px solid #fbc02d;
+  border-radius: 8px;
   display: flex;
   gap: 1rem;
   font-size: 0.9rem;
@@ -407,12 +370,12 @@ async function handleLogin() {
 }
 
 .login-form::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0a6e89 0%, #fbc02d 100%);
   border-radius: 10px;
 }
 
 .login-form::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #fbc02d 0%, #0a6e89 100%);
 }
 
 .form-group {
@@ -430,7 +393,7 @@ async function handleLogin() {
 }
 
 .form-group label i {
-  color: #667eea;
+  color: #0a6e89;
   font-size: 1.1rem;
 }
 
@@ -452,8 +415,8 @@ async function handleLogin() {
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+  border-color: #0a6e89;
+  box-shadow: 0 0 0 4px rgba(10, 110, 137, 0.15);
   background: #fff;
   transform: translateY(-2px);
 }
@@ -488,8 +451,8 @@ async function handleLogin() {
 }
 
 .toggle-password:hover:not(:disabled) {
-  color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
+  color: #0a6e89;
+  background: rgba(10, 110, 137, 0.1);
   transform: translateY(-50%) scale(1.1);
 }
 
@@ -540,40 +503,23 @@ async function handleLogin() {
 .login-button {
   width: 100%;
   padding: 1.125rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #fbc02d;
+  color: #0c3849;
   border: none;
-  border-radius: 12px;
-  font-size: 1.125rem;
-  font-weight: 700;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(251, 192, 45, 0.2);
   position: relative;
   overflow: hidden;
 }
 
-.login-button::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.login-button:hover::before {
-  width: 300px;
-  height: 300px;
-}
-
 .login-button:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3);
+  background: #f9a825;
 }
 
 .login-button:active:not(:disabled) {

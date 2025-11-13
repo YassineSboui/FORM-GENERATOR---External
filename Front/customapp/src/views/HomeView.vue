@@ -196,9 +196,9 @@
       modal
       :style="{
         width: '500px',
-        '--p-primary-color': '#667eea',
-        '--p-button-success-background': '#667eea',
-        '--p-button-success-hover-background': '#764ba2',
+        '--p-primary-color': '#0a6e89',
+        '--p-button-success-background': '#0a6e89',
+        '--p-button-success-hover-background': '#fbc02d',
       }"
       class="p-fluid"
     >
@@ -280,8 +280,8 @@
             @click="closeAddDialog"
             :style="{
               background: 'transparent',
-              border: '2px solid rgba(102, 126, 234, 0.3)',
-              color: '#667eea',
+              border: '2px solid rgba(10, 110, 137, 0.3)',
+              color: '#0a6e89',
             }"
           />
           <Button
@@ -290,7 +290,7 @@
             @click="confirmAddClient"
             :loading="saving"
             :style="{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #0a6e89 0%, #fbc02d 100%)',
               border: 'none',
               color: 'white',
             }"
@@ -306,9 +306,9 @@
       modal
       :style="{
         width: '500px',
-        '--p-primary-color': '#667eea',
-        '--p-button-success-background': '#667eea',
-        '--p-button-success-hover-background': '#764ba2',
+        '--p-primary-color': '#0a6e89',
+        '--p-button-success-background': '#0a6e89',
+        '--p-button-success-hover-background': '#fbc02d',
       }"
       class="p-fluid"
     >
@@ -394,8 +394,8 @@
             @click="closeEditDialog"
             :style="{
               background: 'transparent',
-              border: '2px solid rgba(102, 126, 234, 0.3)',
-              color: '#667eea',
+              border: '2px solid rgba(10, 110, 137, 0.3)',
+              color: '#0a6e89',
             }"
           />
           <Button
@@ -404,7 +404,7 @@
             @click="saveEditClient"
             :loading="saving"
             :style="{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #0a6e89 0%, #fbc02d 100%)',
               border: 'none',
               color: 'white',
             }"
@@ -796,22 +796,22 @@ onMounted(() => {
 }
 
 .home-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0a6e89 0%, #0c3849 100%);
   border-radius: 10px;
+  transition: all 0.3s ease;
 }
 
 .home-container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #fbc02d;
 }
 
 /* Unified Header with Purple Gradient Theme */
 .unified-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 24px;
-  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #0c3849 0%, #0a6e89 100%);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(12, 56, 73, 0.15);
   position: relative;
   overflow: hidden;
-  animation: slideDown 0.6s ease-out;
 }
 
 @keyframes slideDown {
@@ -839,15 +839,6 @@ onMounted(() => {
     transparent 70%
   );
   animation: rotate 20s linear infinite;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Admin Section (Top Part) */
@@ -881,25 +872,14 @@ onMounted(() => {
 .icon-wrapper {
   width: 60px;
   height: 60px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.25);
   transition: all 0.3s ease;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
-  }
 }
 
 .icon-wrapper .pi {
@@ -1038,27 +1018,27 @@ onMounted(() => {
 }
 
 .add-client-btn {
-  background: white !important;
-  color: #667eea !important;
+  background: #fbc02d !important;
+  color: #0c3849 !important;
   border: none !important;
-  border-radius: 12px !important;
+  border-radius: 6px !important;
   padding: 0.875rem 2rem !important;
-  font-weight: 700 !important;
-  font-size: 1rem !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  box-shadow: 0 2px 4px rgba(251, 192, 45, 0.2) !important;
+  transition: all 0.2s ease !important;
 }
 
 .add-client-btn:hover {
-  transform: translateY(-3px) scale(1.05) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-  background: #f8f9fa !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3) !important;
+  background: #f9a825 !important;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .unified-header {
-    border-radius: 16px;
+    border-radius: 6px;
   }
 
   .admin-section {
@@ -1116,20 +1096,20 @@ onMounted(() => {
 
 /* Table Styling */
 :deep(.p-datatable) {
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 2px 8px rgba(12, 56, 73, 0.08);
 }
 
 :deep(.p-datatable .p-datatable-header) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0c3849;
   border: none;
   padding: 1.5rem;
   color: white;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0c3849;
   color: white;
   font-weight: 700;
   padding: 1.25rem 1rem;
@@ -1143,25 +1123,25 @@ onMounted(() => {
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr:hover) {
-  background: rgba(102, 126, 234, 0.08) !important;
-  transform: translateX(5px);
+  background: rgba(251, 192, 45, 0.05) !important;
+  transition: background 0.2s ease;
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr > td) {
   padding: 1.25rem 1rem;
-  border-color: rgba(102, 126, 234, 0.1);
+  border-color: rgba(10, 110, 137, 0.1);
 }
 
 :deep(.p-paginator) {
   background: #f8f9fa;
-  border-top: 2px solid rgba(102, 126, 234, 0.2);
+  border-top: 2px solid rgba(10, 110, 137, 0.2);
   padding: 1rem;
 }
 
 :deep(.p-paginator .p-paginator-pages .p-paginator-page.p-highlight) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
-  color: white;
+  background: #fbc02d;
+  border-color: #fbc02d;
+  color: #0c3849;
 }
 
 /* Button Styling in Table */
@@ -1225,12 +1205,12 @@ onMounted(() => {
 :deep(.p-dialog) {
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 25px 80px rgba(102, 126, 234, 0.45);
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  box-shadow: 0 25px 80px rgba(10, 110, 137, 0.45);
+  border: 1px solid rgba(10, 110, 137, 0.1);
 }
 
 :deep(.p-dialog .p-dialog-header) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: #0c3849 !important;
   color: white !important;
   padding: 2rem 2rem;
   border: none;
@@ -1303,9 +1283,8 @@ onMounted(() => {
 }
 
 :deep(.p-dialog .p-inputtext:focus) {
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
-  transform: translateY(-2px);
+  border-color: #fbc02d;
+  box-shadow: 0 0 0 3px rgba(251, 192, 45, 0.1);
 }
 
 :deep(.p-dialog .p-inputtext.p-invalid) {
@@ -1389,15 +1368,15 @@ onMounted(() => {
 }
 
 :deep(.field .p-inputtext:hover) {
-  border-color: #c7d2fe;
-  background: #fafbff;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  border-color: #fdb4a0;
+  background: #fffaf8;
+  box-shadow: 0 2px 8px rgba(10, 110, 137, 0.1);
 }
 
 :deep(.field .p-inputtext:focus) {
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15),
-    0 4px 12px rgba(102, 126, 234, 0.2);
+  border-color: #0a6e89;
+  box-shadow: 0 0 0 4px rgba(10, 110, 137, 0.15),
+    0 4px 12px rgba(10, 110, 137, 0.2);
   transform: translateY(-2px);
   background: #ffffff;
   outline: none;

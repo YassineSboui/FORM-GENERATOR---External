@@ -160,18 +160,18 @@ watch(
 
 /* Unified Modern Navbar */
 .unified-navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #0c3849 0%, #0a6e89 100%);
+  box-shadow: 0 2px 8px rgba(12, 56, 73, 0.2);
   position: sticky;
   top: 0;
   z-index: 1000;
-  animation: slideDown 0.6s ease-out;
+  animation: slideDown 0.4s ease-out;
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
@@ -188,31 +188,7 @@ watch(
   overflow: hidden;
 }
 
-/* Animated background effect */
-.navbar-container::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 70%
-  );
-  animation: rotate 20s linear infinite;
-  pointer-events: none;
-}
 
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 /* Left Section */
 .navbar-left {
@@ -226,21 +202,20 @@ watch(
 .logo-wrapper {
   width: 45px;
   height: 45px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.25);
   padding: 0.5rem;
   transition: all 0.3s ease;
 }
 
 .logo-wrapper:hover {
-  transform: scale(1.05) rotate(5deg);
-  background: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .navbar-logo {
@@ -277,10 +252,10 @@ watch(
 }
 
 .navbar-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .navbar-icon-btn .material-icons {
@@ -291,11 +266,11 @@ watch(
   background: rgba(239, 83, 80, 0.2) !important;
   color: white !important;
   border: 2px solid rgba(239, 83, 80, 0.4) !important;
-  border-radius: 12px !important;
+  border-radius: 6px !important;
   padding: 0.625rem 1.5rem !important;
   font-weight: 600 !important;
   font-size: 0.95rem !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.2s ease !important;
   backdrop-filter: blur(5px);
   margin-left: 0.5rem;
 }

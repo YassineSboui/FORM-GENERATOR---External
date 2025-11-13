@@ -379,21 +379,21 @@ function goBack() {
 }
 
 .dashboard-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0a6e89 0%, #fbc02d 100%);
   border-radius: 10px;
 }
 
 .dashboard-container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #fbc02d 0%, #0a6e89 100%);
 }
 
 .dashboard-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0c3849 0%, #0a6e89 100%);
   color: white;
   padding: 2rem;
-  border-radius: 16px;
+  border-radius: 8px;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(12, 56, 73, 0.15);
 }
 
 .header-layout {
@@ -422,8 +422,8 @@ function goBack() {
 .back-button:hover {
   background: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.5);
-  transform: translateX(-4px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateX(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .back-button:active {
@@ -456,9 +456,9 @@ function goBack() {
 
 .card {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .card h2 {
@@ -505,7 +505,8 @@ function goBack() {
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #fbc02d;
+  box-shadow: 0 0 0 3px rgba(251, 192, 45, 0.1);
 }
 
 .form-group input:disabled,
@@ -536,20 +537,21 @@ function goBack() {
 
 .create-button {
   padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #fbc02d;
+  color: #0c3849;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 2px 4px rgba(251, 192, 45, 0.2);
 }
 
 .create-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(251, 192, 45, 0.3);
+  background: #f9a825;
 }
 
 .create-button:disabled {

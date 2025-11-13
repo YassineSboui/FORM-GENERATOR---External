@@ -55,6 +55,16 @@
           :currencyDisplay="options.currencyDisplay"
           :min="options.minFractionDigits"
           :max="options.maxFractionDigits"
+          :minFractionDigits="
+            options.minFractionDigits !== undefined
+              ? options.minFractionDigits
+              : 0
+          "
+          :maxFractionDigits="
+            options.maxFractionDigits !== undefined
+              ? options.maxFractionDigits
+              : 2
+          "
           :useGrouping="options.useGrouping"
           :rules="['required']"
           @input="$emit('update:modelValue', internalValue)"
