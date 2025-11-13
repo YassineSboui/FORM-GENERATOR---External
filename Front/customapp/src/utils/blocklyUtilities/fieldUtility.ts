@@ -229,11 +229,39 @@ export class FieldUtility {
         processedValue = value.replace(/\\n/g, "\n");
       }
 
-      // Set via store Fields
+      // Try to get field reference and use component's setValue if available
+      try {
+        const field = this.getFieldRef(fieldName);
+
+        // Support multiple component APIs: prefer setValue, fallback to updateField or direct assignment
+        const setterCandidates = [
+          (field as any).setValue,
+          (field as any).updateField,
+        ];
+
+        const setter = setterCandidates.find((fn) => typeof fn === "function");
+        if (setter) {
+          // Call the discovered setter on the component
+          setter.call(field, processedValue);
+          logger.debug(
+            `[FieldUtility] Set value for ${fieldName} using ${
+              setter.name
+            }: ${this.stringifyForLog(processedValue)}`
+          );
+          return;
+        }
+      } catch (fieldError) {
+        // Field not found or doesn't have setValue method, fallback to store
+        logger.debug(
+          `[FieldUtility] Field ${fieldName} not found or no setValue method, using store fallback`
+        );
+      }
+
+      // Fallback: Set via store Fields (normal affectation)
       const store = this.getStore();
       store.Fields[fieldName] = processedValue;
       logger.debug(
-        `[FieldUtility] Set value for ${fieldName}: ${this.stringifyForLog(
+        `[FieldUtility] Set value for ${fieldName} via store: ${this.stringifyForLog(
           processedValue
         )}`
       );
