@@ -40,7 +40,7 @@ const routes = [
   {
     path: "/admin/change-password",
     name: "ChangePassword",
-    component: () => import("../views/Admin-ChangePassword.vue"),
+    component: () => import("../views/Admin-ChangePasswordView.vue"),
     meta: { fullMode: true },
     beforeEnter: requireAuth,
   },
