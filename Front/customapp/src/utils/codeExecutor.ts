@@ -1,7 +1,8 @@
 import { useAppStore } from "@/store/app.store";
 import { useHttpRequest } from "@/store/httpRequest.store";
 import type { Ref } from "vue";
-import { logger } from "@/api/api";
+import { isRef } from "vue";
+import { logger, logBlockly } from "@/api/api";
 
 /**
  * Context available to executed code
@@ -497,9 +498,97 @@ export class CodeExecutor {
     // Make store available in scope
     const store = context.store || useAppStore();
 
+    // Prepare execution context: wrap Vue refs with proxies so executed code
+    // can access properties directly (e.g., User.displayName = 'x') and have
+    // mutations reflected back into the original ref.
+    const prepareContext = (ctx: ExecutionContext) => {
+      const out: Record<string, any> = {};
+      for (const [k, v] of Object.entries(ctx)) {
+        if (isRef(v)) {
+          // Create a proxy that maps property access to the inner ref value
+          const refObj = v as Ref<any>;
+
+          const proxy = new Proxy(
+            {},
+            {
+              get(_t, prop: string | symbol) {
+                if (prop === "__isRefProxy") return true;
+                if (prop === "value") return refObj.value;
+                // Forward function calls or nested objects as-is
+                const val = refObj.value
+                  ? (refObj.value as any)[prop as any]
+                  : undefined;
+                return val;
+              },
+              set(_t, prop: string | symbol, value) {
+                if (prop === "value") {
+                  refObj.value = value;
+                  return true;
+                }
+                // Ensure the inner value is an object before setting properties
+                if (refObj.value == null || typeof refObj.value !== "object") {
+                  // replace primitive inner value with an object to hold properties
+                  refObj.value = {} as any;
+                }
+                (refObj.value as any)[prop as any] = value;
+                return true;
+              },
+              has(_t, prop: string | symbol) {
+                if (prop === "value") return true;
+                return refObj.value ? prop in (refObj.value as any) : false;
+              },
+              ownKeys() {
+                return refObj.value ? Object.keys(refObj.value) : [];
+              },
+              getOwnPropertyDescriptor() {
+                return {
+                  configurable: true,
+                  enumerable: true,
+                } as PropertyDescriptor;
+              },
+            }
+          );
+
+          out[k] = proxy;
+        } else {
+          out[k] = v;
+        }
+      }
+      // Helper to replace a ref entirely: setRef('User', { displayName: 'x' })
+      out.__setRef = (refName: string, value: any) => {
+        const orig = (ctx as any)[refName];
+        if (isRef(orig)) {
+          orig.value = value;
+          return true;
+        }
+        // fallback: set on prepared object
+        out[refName] = value;
+        return false;
+      };
+
+      // Helper to set a single property on a ref's inner value
+      out.__setRefProp = (refName: string, prop: string, value: any) => {
+        const orig = (ctx as any)[refName];
+        if (isRef(orig)) {
+          if (orig.value == null || typeof orig.value !== "object")
+            orig.value = {} as any;
+          (orig.value as any)[prop] = value;
+          return true;
+        }
+        // fallback
+        if (!out[refName] || typeof out[refName] !== "object")
+          out[refName] = {};
+        (out[refName] as any)[prop] = value;
+        return false;
+      };
+      return out;
+    };
+
+    const preparedContext = prepareContext(context || {});
+
     // Extract context keys and values
-    const contextKeys = Object.keys(context);
-    const contextValues = Object.values(context);
+    const contextKeys = Object.keys(preparedContext);
+    const contextValues = Object.values(preparedContext);
 
     // Wrap code in strict mode for additional security
     const strictCode = `'use strict';\n${code}`;
@@ -583,7 +672,7 @@ export async function executeCode(
 ): Promise<any> {
   const store = useAppStore();
   return codeExecutor.execute(code, {
-    context: { store, ...additionalContext },
+    context: { store, logBlockly, ...additionalContext },
     asyncWrapper: true,
   });
 }

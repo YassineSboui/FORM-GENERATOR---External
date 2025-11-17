@@ -30,7 +30,13 @@ const createApiClient = (): AxiosInstance => {
         // Token expired or invalid - redirect to login
         localStorage.removeItem("authToken");
         localStorage.removeItem("authUser");
-        window.location.href = "/admin/login";
+
+        if (
+          window.location.href.includes("/neoformext/front/admin/login") ===
+          false
+        ) {
+          window.location.href = "/neoformext/front/admin/login";
+        }
       }
       return Promise.reject(error);
     }

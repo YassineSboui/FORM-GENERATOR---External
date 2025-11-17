@@ -1,13 +1,50 @@
 <template>
-  <div v-if="loading">
-    <Loader style="height: 70vh !important" />
-  </div>
   <div
-    v-else
     class="componentForm"
     :dir="isRTL ? 'rtl' : 'ltr'"
     :style="{ '--scrollbar-margin-top': marginTop }"
   >
+    <!-- Custom Toast with Copy Button -->
+    <Toast position="center" group="custom" class="custom-toast-overlay">
+      <template #message="slotProps">
+        <div class="custom-toast-content">
+          <div class="toast-header">
+            <i class="pi pi-check-circle success-icon"></i>
+            <span class="toast-title">{{ slotProps.message.summary }}</span>
+            <button
+              @click="closeToast(slotProps)"
+              class="close-button"
+              title="Close"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+          <div class="toast-body">
+            <div class="chrono-container">
+              <span class="chrono-label">Référence:</span>
+              <span class="chrono-value">{{ slotProps.message.detail }}</span>
+            </div>
+            <div class="toast-actions">
+              <button
+                @click="copyAndClose(slotProps.message.detail, slotProps)"
+                class="action-button copy-btn"
+                title="Copy chrono and close"
+              >
+                <i class="pi pi-copy"></i>
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </Toast>
+
+    <!-- Backdrop blur overlay -->
+    <div
+      v-if="showToastBackdrop"
+      class="toast-backdrop"
+      @click="closeAllToasts"
+    ></div>
     <div class="stepper" v-if="stepper.isStepper">
       <div
         class="ZSTNavigation mb-3"
@@ -20,7 +57,7 @@
               v-show="showPageNum > 1"
               @click="navigatePrevious(showPageNum)"
             >
-              Précédent
+              {{ $t("FormButtons.previous") }}
             </Button>
           </div>
           <div class="col flex justify-content-end" v-if="isEdit">
@@ -28,7 +65,7 @@
               v-show="showPageNum < stepper.steps"
               @click="navigateNext(showPageNum)"
             >
-              Suivant
+              {{ $t("FormButtons.next") }}
             </Button>
           </div>
         </div>
@@ -52,12 +89,14 @@
             </div>
           </div>
         </div>
+
         <!-- <Button
-            v-if="showPageNum == stepper.steps && !isEdit"
-            @click="submitStepper()"
-            class="ml-2"
-            >Valider</Button
-          > -->
+          v-if="showPageNum == stepper.steps && !isEdit"
+          @click="submitStepper()"
+          class="ml-2"
+        >
+          {{ $t("FormButtons.validate") }}
+        </Button> -->
       </div>
       <div
         v-for="pg in stepper.steps"
@@ -97,6 +136,7 @@
               @blur="handleBlur($event)"
               @mouseenter="handleMouseenter($event)"
               @mouseleave="handleMouseleave($event)"
+              :language="language"
             ></P-ZR>
           </div>
           <div
@@ -155,6 +195,7 @@
                     @blur="handleBlur($event)"
                     @mouseenter="handleMouseenter($event)"
                     @mouseleave="handleMouseleave($event)"
+                    :language="language"
                   ></P-ZR>
                 </div>
 
@@ -177,6 +218,7 @@
                   @mouseenter="handleMouseenter($event)"
                   @mouseleave="handleMouseleave($event)"
                   style="min-height: 60px"
+                  :language="language"
                 ></zone-component>
               </div>
             </div>
@@ -231,6 +273,7 @@
                     @blur="handleBlur($event)"
                     @mouseenter="handleMouseenter($event)"
                     @mouseleave="handleMouseleave($event)"
+                    :language="language"
                   ></P-ZR>
                 </div>
                 <zone-component
@@ -252,6 +295,7 @@
                   @blur="handleBlur($event)"
                   @mouseenter="handleMouseenter($event)"
                   @mouseleave="handleMouseleave($event)"
+                  :language="language"
                 ></zone-component>
               </div>
             </div>
@@ -269,6 +313,7 @@
             @blur="handleBlur($event)"
             @mouseenter="handleMouseenter($event)"
             @mouseleave="handleMouseleave($event)"
+            :language="language"
           ></zone-component>
         </div>
       </div>
@@ -307,6 +352,7 @@
             @blur="handleBlur($event)"
             @mouseenter="handleMouseenter($event)"
             @mouseleave="handleMouseleave($event)"
+            :language="language"
           ></P-ZR>
         </div>
         <div
@@ -337,6 +383,7 @@
                   @blur="handleBlur($event)"
                   @mouseenter="handleMouseenter($event)"
                   @mouseleave="handleMouseleave($event)"
+                  :language="language"
                 ></P-ZR>
               </div>
 
@@ -355,6 +402,7 @@
                 @mouseenter="handleMouseenter($event)"
                 @mouseleave="handleMouseleave($event)"
                 style="min-height: 60px"
+                :language="language"
               ></zone-component>
             </div>
           </div>
@@ -381,6 +429,7 @@
                   @blur="handleBlur($event)"
                   @mouseenter="handleMouseenter($event)"
                   @mouseleave="handleMouseleave($event)"
+                  :language="language"
                 ></P-ZR>
               </div>
               <zone-component
@@ -398,11 +447,11 @@
                 @mouseenter="handleMouseenter($event)"
                 @mouseleave="handleMouseleave($event)"
                 style="min-height: 60px"
+                :language="language"
               ></zone-component>
             </div>
           </div>
         </div>
-
         <zone-component
           :isRTL="isRTL"
           @AppRefs="handleRefs($event)"
@@ -416,6 +465,7 @@
           @blur="handleBlur($event)"
           @mouseenter="handleMouseenter($event)"
           @mouseleave="handleMouseleave($event)"
+          :language="language"
         ></zone-component>
       </div>
     </div>
@@ -448,8 +498,9 @@ import {
 } from "@/api/api";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
 import { useAppStore } from "@/store/app.store";
-import ZoneComponent from "./ZoneComponent.vue";
+import ZoneComponent from "../Zone/ZoneComponent.vue";
 import { useRoute, useRouter } from "vue-router";
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { AifileUpload } from "@/api/api";
@@ -458,8 +509,9 @@ import { AifileUpload } from "@/api/api";
 import { storeToRefs } from "pinia";
 import { localize } from "@vee-validate/i18n";
 import { useI18n } from "vue-i18n";
+import { cloneDeep } from "lodash";
 import { executeCodeAsync } from "@/utils/codeExecutor";
-
+import { validateByRule } from "@/utils/fieldValidator";
 // Import Blockly utilities for code execution context
 import {
   fieldUtility,
@@ -473,6 +525,78 @@ import {
   initializeBlocklyUtilities,
 } from "@/utils/blocklyUtilities";
 
+// Utility class for query parameter decryption
+class QueryParameterDecryptor {
+  private static readonly SECRET_KEY = "neoform-query-secret-2025";
+
+  static async decryptQueryParams(encryptedData: string): Promise<string> {
+    try {
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      // Convert from base64
+      const combined = new Uint8Array(
+        atob(encryptedData)
+          .split("")
+          .map((c) => c.charCodeAt(0))
+      );
+
+      // Extract IV and encrypted data
+      const iv = combined.slice(0, 12);
+      const encrypted = combined.slice(12);
+
+      // Import the key
+      const key = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(this.SECRET_KEY.padEnd(32, "0").substring(0, 32)),
+        { name: "AES-GCM" },
+        false,
+        ["decrypt"]
+      );
+
+      // Decrypt the data
+      const decrypted = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        key,
+        encrypted
+      );
+
+      return decoder.decode(decrypted);
+    } catch (error) {
+      console.error("Decryption failed:", error);
+      throw error;
+    }
+  }
+
+  static async decryptQueryParameters(queryParams: any): Promise<any> {
+    const decryptedParams: any = {};
+
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (key === "code") {
+        // Don't decrypt the 'code' parameter
+        decryptedParams[key] = value;
+      } else if (typeof value === "string" && value) {
+        try {
+          // Try to decrypt the parameter
+          decryptedParams[key] = await this.decryptQueryParams(value);
+        } catch (error) {
+          console.warn(
+            `Failed to decrypt parameter ${key}, using original value:`,
+            error
+          );
+          // If decryption fails, use the original value
+          decryptedParams[key] = value;
+        }
+      } else {
+        // Handle non-string values or empty values
+        decryptedParams[key] = value;
+      }
+    }
+
+    return decryptedParams;
+  }
+}
+
 // export default {
 const props = defineProps({
   modelValue: {
@@ -485,6 +609,7 @@ const props = defineProps({
     default: {
       value: false,
       objectId: "",
+      objectGuid: "",
     },
   },
   isSubmit: {
@@ -538,6 +663,24 @@ const props = defineProps({
   tableFields: {
     type: Object,
     required: false,
+    default: () => ({
+      label_AR: "",
+      label_ENG: "",
+    }),
+  },
+  language: {
+    type: String,
+    required: false,
+    default: "FR",
+  },
+  showLoader: {
+    type: Boolean,
+    required: false,
+    default: true,
+  },
+  systemVariables: {
+    type: Object,
+    required: false,
     default: () => ({}),
   },
 });
@@ -573,9 +716,14 @@ const fiel = ref({} as any);
 const duplicateClick = ref(0);
 const copy = ref({ copy: [] } as any);
 const toast = useToast();
-const internalFormConfig = ref({} as any);
+const showToastBackdrop = ref(false);
+const internalFormConfig = computed(() => {
+  return props.configForm;
+});
+const systemVariables = computed(() => {
+  return props.systemVariables;
+});
 const Variables = ref({} as any);
-const loading = ref(false);
 // const showPageNum = ref(1);
 
 const showPageNum = computed({
@@ -603,23 +751,16 @@ watch(executeNavigateNext, (newVal) => {
 watch(showPageNum, (newVal) => {
   calculatePagesStyle();
 });
-const router = useRouter();
-
-const cancel = () => {
-  if (window.self === window.top) {
-    router.go(-1);
-  } else {
-    window.parent.postMessage("EliseCustomActionDone", "*");
-    parent.location.reload();
-  }
-};
 const User = ref({ displayName: "" } as any);
 const Version = ref({} as any);
-const QueryParameters = ref({} as any);
 const GlobalVariables = ref({} as any);
+const QueryParameters = ref({} as any);
 const disabledNextButton = ref(false);
 const disabledPreviousButton = ref(false);
-const newNotice = {
+
+// Make `newNotice` a reactive-backed proxy so executed code can do
+// `newNotice.mapping = { ... }` and have changes persist.
+const _newNotice = ref({
   Lang: "fr",
   mapping: {},
   data: {},
@@ -635,6 +776,95 @@ const newNotice = {
   uploadTable: {},
   mappingName: "",
   rackCode: "",
+});
+
+// Proxy forwards property get/set to the reactive ref object so existing
+// code that uses `newNotice.xxx` continues to work without `.value`.
+const newNotice = new Proxy(_newNotice.value as Record<string, any>, {
+  get(_target, prop: string) {
+    return (_newNotice.value as any)[prop as any];
+  },
+  set(_target, prop: string, value) {
+    // write through to the ref's inner object to preserve reactivity
+    (_newNotice.value as any)[prop as any] = value;
+    return true;
+  },
+  ownKeys() {
+    return Reflect.ownKeys(_newNotice.value);
+  },
+  getOwnPropertyDescriptor(_target, prop: string) {
+    const desc = Object.getOwnPropertyDescriptor(_newNotice.value, prop);
+    if (desc) return desc;
+    return {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: (_newNotice.value as any)[prop as any],
+    } as PropertyDescriptor;
+  },
+});
+
+// Watch for changes in systemVariables MAPPING_NAME and RACK_CODE
+watch(
+  () => systemVariables.value.MAPPING_NAME,
+  (newMappingName) => {
+    if (newMappingName !== undefined) {
+      console.log("[ComponentForm] MAPPING_NAME updated:", newMappingName);
+      newNotice.mappingName = newMappingName;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => systemVariables.value.RACK_CODE,
+  (newRackCode) => {
+    if (newRackCode !== undefined) {
+      console.log("[ComponentForm] RACK_CODE updated:", newRackCode);
+      newNotice.rackCode = newRackCode;
+    }
+  },
+  { immediate: true }
+);
+
+// Remove the duplicate watch statements that appear later
+watch(
+  () => systemVariables.value.MAPPING_NAME,
+  (newMappingName) => {
+    if (newMappingName !== undefined) {
+      console.log(
+        "[ComponentForm] MAPPING_NAME updated (duplicate):",
+        newMappingName
+      );
+      newNotice.mappingName = newMappingName;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => systemVariables.value.RACK_CODE,
+  (newRackCode) => {
+    if (newRackCode !== undefined) {
+      console.log(
+        "[ComponentForm] RACK_CODE watcher - newRackCode:",
+        newRackCode
+      );
+      newNotice.rackCode = newRackCode;
+    }
+  },
+  { immediate: true }
+);
+
+const router = useRouter();
+
+const cancel = () => {
+  if (window.self === window.top) {
+    router.go(-1);
+  } else {
+    window.parent.postMessage("EliseCustomActionDone", "*");
+    parent.location.reload();
+  }
 };
 
 function useModel(modelGuid: string) {
@@ -724,6 +954,10 @@ const itemsForm = computed({
 const itemsFormCopy = ref(itemsForm.value);
 const fixedHeadersHeights = ref([] as any);
 
+watch(itemsForm, (newVal) => {
+  itemsFormCopy.value = newVal;
+});
+
 itemsForm.value.forEach((item: any) => {
   fixedHeadersHeights.value.push(0);
 });
@@ -743,13 +977,13 @@ watch(myWatchedVariable, (newVal) => {
   }
 });
 
-const uuidv4 = () => {
+function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0,
       v = c == "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
-};
+}
 
 const requiredFieldsNotEmpty = () => {
   for (let element in app.refs) {
@@ -771,256 +1005,403 @@ const notValidFieldsExists = () => {
   return false;
 };
 
-// Create execution context with all necessary variables and functions
-const createExecutionContext = () => ({
-  uuidv4,
-  navigatePrevious,
-  navigateNext,
-  navigate,
-  isEmpty,
-  showSection,
-  hideSection,
-  toggleSection,
-  disableNextButtonFunction,
-  disablePreviousButtonFunction,
-  enableNextButtonFunction,
-  enablePreviousButtonFunction,
-  requiredFieldsNotEmpty,
-  notValidFieldsExists,
-  submit,
-  submitNotice,
-  Fields,
-  User,
-  Version,
-  Variables,
-  GlobalVariables,
-  QueryParameters,
-  app,
-  store,
-  toast,
-  t,
-
-  // Blockly utility modules (sandboxed API) - with prefixes
-  field: fieldUtility,
-  string: stringUtility,
-  math: mathUtility,
-  array: arrayUtility,
-  elise: eliseUtility,
-  storePinia: storeUtility,
-  form: formUtility,
-  section: sectionUtility,
-
-  // Blockly utility modules (sandboxed API) - direct access for Blockly-generated code
-  fieldUtility,
-  stringUtility,
-  mathUtility,
-  arrayUtility,
-  eliseUtility,
-  storeUtility,
-  formUtility,
-  sectionUtility,
-});
-
 const submitStepper = () => {
   submitNow.value = true;
 };
 const NoticeFiles = ref();
 const NoticeUploadTable = ref();
-const submitNotice = async () => {
+// Helper function to process field data based on type
+const processFieldData = (element: string, options: any) => {
+  const fieldValue = Fields.value[element];
+  const related = options?.relatedToElise;
+  const fieldType = options?.type;
+
+  switch (fieldType) {
+    case "Upload":
+      console.log("Processing Upload field");
+      if (!options.useAILise && !options.returnBase64) {
+        const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
+        filesArr.forEach((file) => {
+          NoticeAttachements.value.push({
+            guid: file.guid,
+            fileName: file.fileName,
+          });
+        });
+      }
+
+      if (options.returnBase64) {
+        NoticeData.value[element] = mapFileField(fieldValue, true);
+      }
+      break;
+
+    case "PHOTO":
+      console.log("Processing PHOTO field");
+      if (!options.returnBase64) {
+        const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
+        filesArr.forEach((file) => {
+          NoticeAttachements.value.push({
+            guid: file.guid,
+            fileName: file.fileName,
+          });
+        });
+      } else {
+        NoticeData.value[element] = mapFileField(fieldValue, true);
+      }
+      break;
+
+    case "Editor":
+      NoticeHtml.value[element] = fieldValue ?? "";
+      break;
+
+    case "Table":
+      if (options?.isUploadTable) {
+        NoticeUploadTable.value[element] = fieldValue ?? "";
+        NoticeData.value[element] = fieldValue ?? "";
+      } else {
+        NoticeData.value[element] = fieldValue ?? "";
+      }
+      break;
+
+    case "TREEVIEW":
+      const keys = Object.keys(fieldValue || {});
+      const targetValue =
+        options.selectedType === "Organigramme" ? keys[0] ?? "" : keys;
+      NoticeData.value[element] = targetValue;
+      if (related) {
+        NoticeMapping.value[element] = targetValue;
+      }
+      break;
+
+    case "CUSTOM_TREEVIEW":
+      const treeKeys = Object.keys(fieldValue || {});
+      const treeValue =
+        options.selectionMode === "single" ? treeKeys[0] ?? "" : treeKeys;
+      NoticeData.value[element] = treeValue;
+      if (related) {
+        NoticeMapping.value[element] = treeValue;
+      }
+      break;
+
+    case "DATE":
+      const processedDateValue =
+        typeof fieldValue === "string" && fieldValue.includes("T")
+          ? fieldValue.split("T")[0]
+          : fieldValue;
+      NoticeData.value[element] = processedDateValue;
+      if (related) {
+        NoticeMapping.value[element] = processedDateValue;
+      }
+      break;
+
+    case "Time":
+      let timeOnly = "";
+      if (fieldValue) {
+        const fullDate = new Date(fieldValue);
+        const hours = fullDate.getHours().toString().padStart(2, "0");
+        const minutes = fullDate.getMinutes().toString().padStart(2, "0");
+        timeOnly = `${hours}:${minutes}`;
+      }
+      NoticeData.value[element] = timeOnly;
+      if (related) {
+        NoticeMapping.value[element] = timeOnly;
+      }
+      break;
+
+    case "FLOWCHART":
+      NoticeData.value[element] = fieldValue ?? "";
+      if (related) {
+        NoticeMapping.value[element] = fieldValue?.id ?? "";
+      }
+      break;
+
+    default:
+      if (fieldType !== "HTML" && options !== undefined) {
+        NoticeData.value[element] = fieldValue ?? "";
+        if (related && fieldType !== "FLOWCHART") {
+          NoticeMapping.value[element] = fieldValue ?? "";
+        }
+      }
+      break;
+  }
+};
+
+// Helper function to execute before save code
+const executeBeforeSaveCode = async () => {
+  const beforeSaveCode = internalFormConfig.value?.events.find(
+    (evnt: any) => evnt.rule.code == "beforeSave"
+  )?.code;
+
+  if (beforeSaveCode) {
+    try {
+      const context = createExecutionContext();
+      await executeCodeAsync(beforeSaveCode, context);
+      console.log(
+        "[ComponentForm] Before Save Code executed successfully.",
+        context
+      );
+    } catch (error) {
+      console.error("error", error);
+      logger.error(error);
+    }
+  }
+};
+
+// Helper function to execute after save code
+const executeAfterSaveCode = async (obj: any) => {
+  const afterSaveCode = internalFormConfig.value?.events.find(
+    (evnt: any) => evnt.rule.code == "afterSave"
+  )?.code;
+
+  if (afterSaveCode) {
+    store.setNotice(obj);
+    try {
+      await executeCodeAsync(afterSaveCode, createExecutionContext());
+    } catch (error) {
+      console.error("[ComponentForm] afterSave event execution failed:", error);
+      logger.error(`[ComponentForm] afterSave error: ${error}`);
+    }
+  }
+};
+
+// Helper function to handle navigation after save
+const handlePostSaveNavigation = (obj: any) => {
+  emit("done", true);
+  showToastBackdrop.value = true;
+  toast.add({
+    severity: "success",
+    summary: t("ComponentForm.successMessage"),
+    detail: obj.chrono,
+    group: "custom",
+    life: 0, // Make it sticky until user interacts
+  });
+};
+
+// Function to copy chrono and close toast
+const copyAndClose = async (text: string, slotProps: any) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    closeToast(slotProps);
+    // Reload after successful copy
+    setTimeout(() => {
+      parent.location.reload();
+    }, 500);
+  } catch (err) {
+    console.error("Failed to copy text: ", err);
+    closeToast(slotProps);
+  }
+};
+
+// Function to close specific toast
+const closeToast = (slotProps: any) => {
+  showToastBackdrop.value = false;
+  toast.removeGroup("custom");
+  // Reload after close
+  setTimeout(() => {
+    parent.location.reload();
+  }, 500);
+};
+
+// Function to close all toasts
+const closeAllToasts = () => {
+  showToastBackdrop.value = false;
+  toast.removeAllGroups();
+  setTimeout(() => {
+    parent.location.reload();
+  }, 500);
+};
+
+// Helper function to prepare notice data
+const prepareNoticeData = async () => {
+  // Capture current user-assigned mapping before we overwrite it
+  const currentUserMapping = { ...(_newNotice?.value?.mapping || {}) };
+
+  // Reset arrays
   Notice.value = [];
   NoticeAttachements.value = [];
   NoticeFiles.value = [];
   NoticeUploadTable.value = [];
-  for (let elem of itemRefs.value) {
+
+  // Process item refs
+  itemRefs.value.forEach((elem) => {
     const key = elem.dataset.key;
     NoticeData.value[key] = Fields.value[key] ?? "";
-  }
-
-  console.log("[ComponentFormTable] Application Ref object:", app.refs);
-  for (let element in app.refs) {
-    const options = app.refs[element][0]?.options;
-    const related = options?.relatedToElise;
-    const isEditor = options?.type == "Editor";
-    const isFile = options?.type == "Upload";
-    const isPhoto = options?.type == "PHOTO";
-    const isTable = options?.type == "Table";
-    const isUploadTable = isTable && options?.isUploadTable;
-    const isVHTML = options?.type == "HTML";
-    if (isFile) {
-      for (const elem of Fields.value[element]) {
-        // const result = await fileUpload(elem);
-        NoticeAttachements.value.push({
-          guid: elem.guid,
-          // isLinked: elem.isLinked,
-          fileName: elem.fileName,
-        });
-      }
-    } else if (isEditor) {
-      NoticeHtml.value[element] = Fields.value[element] ?? "";
-    } else if (related) {
-      NoticeMapping.value[element] = Fields.value[element] ?? "";
-      NoticeData.value[element] = Fields.value[element] ?? "";
-    } else if (isUploadTable) {
-      NoticeUploadTable.value[element] = Fields.value[element] ?? "";
-      NoticeData.value[element] = Fields.value[element] ?? "";
-    } else if (isPhoto) {
-      NoticeFiles.value = mapFileField(Fields.value[element]);
-    } else if (!isVHTML && options !== undefined) {
-      NoticeData.value[element] = Fields.value[element] ?? "";
-    }
-  }
-  newNotice.Attachements = NoticeAttachements.value;
-  newNotice.data = {
-    ...store.currentNotice?.noticeJson?.data,
-    ...NoticeData.value,
-  };
-  newNotice.html = NoticeHtml.value;
-
-  newNotice.mapping = {
-    ...store.currentNotice?.noticeJson?.mapping,
-    ...NoticeMapping.value,
-  };
-  newNotice.uploadTable = {
-    ...store.currentNotice?.noticeJson?.uploadTable,
-    ...NoticeUploadTable.value,
-  };
-  newNotice.files = NoticeFiles.value;
-
-  // Add MAPPING_NAME and RACK_CODE from system variables
-  const systemVariables = internalFormConfig.value?.systemVariables || {};
-  if (systemVariables.MAPPING_NAME) {
-    newNotice.mappingName = systemVariables.MAPPING_NAME;
-  }
-  if (systemVariables.RACK_CODE) {
-    newNotice.rackCode = systemVariables.RACK_CODE;
-  }
-  confirm.require({
-    message: t("ComponentForm.confirmMessage"),
-    header: t("ComponentForm.confirmHeader"),
-    rejectLabel: t("ComponentForm.confirmNo"),
-    rejectClass: "p-button-danger",
-    acceptLabel: t("ComponentForm.confirmYes"),
-    accept: async () => {
-      httpRequest.setLoading(true);
-      const beforeSaveCode = internalFormConfig.value.events.find(
-        (evnt: any) => evnt.rule.code == "beforeSave"
-      )?.code;
-      if (beforeSaveCode) {
-        try {
-          await executeCodeAsync(beforeSaveCode, createExecutionContext());
-        } catch (error) {
-          console.error(
-            "[ComponentFormTable] beforeSave event execution failed:",
-            error
-          );
-          logger.error(`[ComponentFormTable] beforeSave code error: ${error}`);
-        }
-      }
-      if (props.isGenerateModel) {
-        const ob = await generateXMLModel({
-          Data: newNotice.data,
-          Mapping: newNotice.mapping,
-          Html: newNotice.html,
-        });
-        await generateModel({
-          Data: newNotice.data,
-          Mapping: newNotice.mapping,
-          Html: newNotice.html,
-        });
-        if (ob) {
-          emit("emitXml", ob);
-          emit("done", true);
-        }
-      } else {
-        emit("done", false);
-        let obj;
-        // new document to be created
-        if (!store.currentNotice) {
-          obj = await saveNotice({
-            objectId: props.isFormDisplay.objectId,
-            objectGuid: props.isFormDisplay.objectGuid,
-            noticeJson: newNotice,
-            newDoc: !!route.query.newDoc,
-          });
-          if (obj) {
-            const afterSaveCode = internalFormConfig.value.events.find(
-              (evnt: any) => evnt.rule.code == "afterSave"
-            )?.code;
-            if (afterSaveCode) {
-              store.setNotice(obj);
-              try {
-                await executeCodeAsync(afterSaveCode, createExecutionContext());
-              } catch (error) {
-                console.error(
-                  "[ComponentFormTable] afterSave event execution failed (saveNotice success):",
-                  error
-                );
-                logger.error(
-                  `[ComponentFormTable] afterSave code error in saveNotice: ${error}`
-                );
-              }
-            }
-
-            emit("done", true);
-            // appStore.setLoading(false);
-            if (window.self === window.top) {
-              location.replace(obj.url);
-            } else {
-              if (!!route.query.newDoc) {
-                parent.location.replace(obj.url);
-                return;
-              }
-              window.parent.postMessage("EliseCustomActionDone", "*");
-              parent.location.reload();
-            }
-          }
-        } else {
-          obj = await updateNotice({
-            objectId: props.isFormDisplay.objectId,
-            noticeId: store.currentNotice.id,
-            noticeJson: newNotice,
-            newDoc: !!route.query.newDoc,
-          });
-          if (obj) {
-            const afterSaveCode = internalFormConfig.value.events.find(
-              (evnt: any) => evnt.rule.code == "afterSave"
-            )?.code;
-            if (afterSaveCode) {
-              store.setNotice(obj);
-              try {
-                await executeCodeAsync(afterSaveCode, createExecutionContext());
-              } catch (error) {
-                console.error(
-                  "[ComponentFormTable] afterSave event execution failed (updateNotice success):",
-                  error
-                );
-                logger.error(
-                  `[ComponentFormTable] afterSave code error in updateNotice: ${error}`
-                );
-              }
-            }
-            emit("done", true);
-            //appStore.setLoading(false);
-            // httpRequest.setLoading(false);
-            if (window.self === window.top) {
-              location.replace(obj.url);
-              parent.location.reload();
-            } else {
-              window.parent.postMessage("EliseCustomActionDone", "*");
-              parent.location.reload();
-            }
-          }
-        }
-        // }
-      }
-    },
-    reject: () => {
-      emit("done", false);
-    },
-    onHide: () => {
-      emit("done", false);
-    },
   });
+
+  // Process app refs
+  Object.keys(app.refs).forEach((element) => {
+    const options = app.refs[element][0]?.options;
+    if (options) {
+      processFieldData(element, options);
+    }
+  });
+
+  // Prepare final notice object
+  Object.assign(newNotice, {
+    Attachements: NoticeAttachements.value,
+    data: { ...store.currentNotice?.noticeJson?.data, ...NoticeData.value },
+    html: NoticeHtml.value,
+    mapping: {
+      ...store.currentNotice?.noticeJson?.mapping,
+      ...NoticeMapping.value,
+      // allow explicit user edits to `newNotice.mapping` (proxy -> _newNotice.value.mapping)
+      // preserve user assignments that were made before this prepareNoticeData call
+      ...currentUserMapping,
+    },
+    uploadTable: {
+      ...store.currentNotice?.noticeJson?.uploadTable,
+      ...NoticeUploadTable.value,
+    },
+    files: NoticeFiles.value,
+    mappingName: systemVariables.value.MAPPING_NAME || "",
+    rackCode: systemVariables.value.RACK_CODE || "",
+  });
+};
+
+// Make notice data reactive to Fields and NoticeMapping changes
+// so callers (including executed custom code) don't need to call
+// prepareNoticeData() explicitly after mutating those refs.
+let _prepareNoticeDataLock = false;
+const _triggerPrepareNoticeData = async () => {
+  if (_prepareNoticeDataLock) return;
+  _prepareNoticeDataLock = true;
+  try {
+    await prepareNoticeData();
+  } catch (e) {
+    console.error("[ComponentForm] prepareNoticeData (auto) failed:", e);
+    logger.error(e);
+  } finally {
+    _prepareNoticeDataLock = false;
+  }
+};
+
+// Watch Fields (all field value changes) and NoticeMapping (manual mapping edits)
+// and rebuild the notice automatically. deep: true ensures nested changes are tracked.
+watch(
+  Fields,
+  async () => {
+    await _triggerPrepareNoticeData();
+  },
+  { deep: true, immediate: true }
+);
+
+watch(
+  NoticeMapping,
+  async (newMapping) => {
+    // Synchronize NoticeMapping changes directly to _newNotice.value.mapping
+    // while preserving any existing user assignments
+    _newNotice.value.mapping = {
+      ..._newNotice.value.mapping,
+      ...newMapping,
+    };
+    await _triggerPrepareNoticeData();
+  },
+  { deep: true, immediate: false }
+);
+
+// Helper function to handle model generation
+const handleModelGeneration = async () => {
+  const modelData = {
+    Data: _newNotice.value.data,
+    Mapping: _newNotice.value.mapping,
+    Html: _newNotice.value.html,
+    Attachements: _newNotice.value.Attachements,
+  };
+
+  const ob = await generateXMLModel(modelData);
+  await generateModel(modelData);
+
+  if (ob) {
+    emit("emitXml", ob);
+    emit("done", true);
+  }
+};
+
+// Helper function to handle notice save/update
+const handleNoticeSaveUpdate = async () => {
+  emit("done", false);
+
+  const isNewDocument = !store.currentNotice || route.query.newDoc;
+  const noticePayload = {
+    objectId: props.isFormDisplay.objectId,
+    objectGuid: props.isFormDisplay.objectGuid,
+    noticeJson: _newNotice.value,
+    newDoc: !!route.query.newDoc,
+    disableNotice: Boolean(route.query.disableNotice),
+  };
+
+  console.log("[ComponentForm] newNotice payload:", _newNotice.value);
+
+  let obj;
+  if (isNewDocument) {
+    // put in in try catch and put taost on error
+    try {
+      obj = await saveNotice(noticePayload as any);
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: t("ComponentForm.errorMessage"),
+        detail:
+          error?.response?.data ??
+          error?.message ??
+          t("ComponentForm.unknownError"),
+        life: 3000,
+      });
+    }
+  } else {
+    obj = await updateNotice({
+      ...noticePayload,
+      noticeId: store.currentNotice.id,
+    });
+  }
+
+  if (obj) {
+    await executeAfterSaveCode(obj);
+    handlePostSaveNavigation(obj);
+  }
+};
+
+// Main submit notice function
+const submitNotice = async () => {
+  try {
+    const skipValidation =
+      systemVariables.value.DISPLAY_FORM_VALIDATION === false;
+
+    if (skipValidation) {
+      httpRequest.setLoading(true);
+      await executeBeforeSaveCode();
+
+      if (props.isGenerateModel) {
+        await handleModelGeneration();
+      } else {
+        await handleNoticeSaveUpdate();
+      }
+
+      emit("done", false);
+    } else {
+      confirm.require({
+        message: t("ComponentForm.confirmMessage"),
+        header: t("ComponentForm.confirmHeader"),
+        rejectLabel: t("ComponentForm.confirmNo"),
+        rejectClass: "p-button-danger",
+        acceptLabel: t("ComponentForm.confirmYes"),
+        accept: async () => {
+          httpRequest.setLoading(true);
+          await executeBeforeSaveCode();
+          if (props.isGenerateModel) {
+            await handleModelGeneration();
+          } else {
+            await handleNoticeSaveUpdate();
+          }
+        },
+        reject: () => emit("done", false),
+        onHide: () => emit("done", false),
+      });
+    }
+  } catch (error) {
+    console.error("Error in submitNotice:", error);
+    logger.error(error);
+    emit("done", false);
+  }
 };
 const httpRequest = useHttpRequest();
 const submit = async () => {
@@ -1058,24 +1439,29 @@ watch(submitNow, (newVal) => {
   }
 });
 // function to map the file field to the notice object
-const mapFileField = (field: any) => {
+const mapFileField = (field: any, base64Only?: boolean) => {
   if (!field) {
     return [];
   }
   const mappedFiles = [];
-  console.log("[ComponentFormTable] mapFileField input:", field);
+  console.log("[ComponentForm] mapFileField input:", field);
+  if (base64Only) {
+    const files = [];
+    for (let i = 0; i < field.length; i++) {
+      const file = field[i];
+      files.push(file.base64);
+    }
+    return { File: files };
+  }
   for (let i = 0; i < field.length; i++) {
     const file = field[i];
     mappedFiles.push({
-      FileB64: "",
+      FileB64: file.base64,
       Guid: file.guid,
       fileName: file.fileName,
     });
   }
-  console.log(
-    "[ComponentFormTable] mapFileField output mappedFiles:",
-    mappedFiles
-  );
+  console.log("[ComponentForm] mapFileField output mappedFiles:", mappedFiles);
   return mappedFiles;
 };
 
@@ -1228,13 +1614,122 @@ const setLocale = () => {
 const HeaderHeight = ref([] as any);
 onMounted(async () => {
   logBlockly.info("onMounted");
-  // Initialize Blockly utilities with app and store context
-  initializeBlocklyUtilities({ app, store: storeUtility });
+  GlobalVariables.value = {};
   setLocale();
-  // loading.value = true;
+
+  // Initialize Blockly utilities with the component context
+  try {
+    initializeBlocklyUtilities({
+      app: app,
+      store: store,
+    });
+  } catch (error) {
+    console.error("Failed to initialize Blockly utilities:", error);
+    logger.error(`Failed to initialize Blockly utilities: ${error}`);
+  }
+
+  if (props.showLoader) {
+    useHttpRequest().setLoading(true);
+  }
   setFields(itemsFormCopy.value, 0);
-  internalFormConfig.value = props.configForm;
-  QueryParameters.value = { ...route.query };
+
+  // Decrypt query parameters except 'code'
+  try {
+    QueryParameters.value =
+      await QueryParameterDecryptor.decryptQueryParameters(route.query);
+  } catch (error) {
+    console.error("Failed to decrypt query parameters:", error);
+    // Fallback to original query parameters if decryption fails
+    QueryParameters.value = { ...route.query };
+  }
+
+  if (!props.isEdit) {
+    isLoadingComponent.value = true;
+    try {
+      // i want to simulate a delay of an await function
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error("[ComponentForm] Delay simulation error:", error);
+      logger.error(`[ComponentForm] Delay error: ${error}`);
+    }
+    console.log("[ComponentForm] QueryParameters:", QueryParameters.value);
+    if (QueryParameters.value.fromDoc) {
+      try {
+        const n = await fetchNotice(QueryParameters.value.noticeType);
+        const {
+          id,
+          noticeJson: { data, mapping, Html, files },
+        } = n;
+        store.setNotice(n);
+        Object.keys(data)?.forEach((v) => {
+          Fields.value[v] = data[v];
+          if (Fields.value[v].length > 0) {
+            repeatableZoneChildrens.value[v] = Fields.value[v].length;
+          }
+        });
+        Object.keys(mapping)?.forEach((v) => {
+          Fields.value[v] = mapping[v];
+        });
+        Object.keys(Html)?.forEach((v) => {
+          Fields.value[v] = Html[v];
+        });
+        // Object.keys(files)?.forEach((v) => {
+        //   Fields.value[v] = files[v];
+        // });
+        // get the fiels with type file from app.refs
+        for (let element in app.refs) {
+          const options = app.refs[element][0]?.options;
+          if (options?.type == "PHOTO") {
+            Fields.value[element] = files;
+          }
+        }
+        try {
+          const { eliseDocument, metadatas } = await fetchMetadata(
+            route.params.guid + ""
+          );
+          store.setEliseDocument(eliseDocument);
+          if (metadatas && metadatas !== undefined) {
+            metadatas?.forEach((v: any) => {
+              Fields.value[v.key] = v.value;
+            });
+            isLoadingComponent.value = false;
+          }
+        } catch (error) {
+          console.error(
+            "[ComponentForm] Failed to fetch metadata for guid:",
+            route.params.guid,
+            error
+          );
+          logger.error(`[ComponentForm] fetchMetadata error: ${error}`);
+        }
+        isLoadingComponent.value = false;
+      } catch (e) {
+        try {
+          const { eliseDocument, metadatas } = await fetchMetadata(
+            route.params.guid + ""
+          );
+          store.setEliseDocument(eliseDocument);
+          if (metadatas && metadatas !== undefined) {
+            metadatas?.forEach((v: any) => {
+              Fields.value[v.key] = v.value;
+            });
+            isLoadingComponent.value = false;
+          }
+        } catch (error) {
+          console.error(
+            "[ComponentForm] Failed to fetch metadata (retry) for guid:",
+            route.params.guid,
+            error
+          );
+          logger.error(`[ComponentForm] fetchMetadata retry error: ${error}`);
+          isLoadingComponent.value = false;
+        }
+        isLoadingComponent.value = false;
+      } finally {
+        isLoadingComponent.value = false;
+      }
+    }
+  }
   internalFormConfig.value?.variables?.forEach((element: any) => {
     Variables.value[element.key] = element.value;
   });
@@ -1242,13 +1737,14 @@ onMounted(async () => {
   internalFormConfig.value?.events?.forEach(async (evnt: any) => {
     if (evnt.code != "" && evnt.rule.code == "beforeLoad") {
       try {
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await executeCodeAsync(evnt.code, createExecutionContext());
       } catch (error) {
         console.error(
-          "[ComponentFormTable] beforeLoad event execution failed:",
+          "[ComponentForm] beforeLoad event execution failed:",
           error
         );
-        logger.error(`[ComponentFormTable] beforeLoad code error: ${error}`);
+        logger.error(`[ComponentForm] beforeLoad error: ${error}`);
       }
     }
     if (evnt.code != "" && evnt.rule.code == "afterLoad") {
@@ -1256,16 +1752,13 @@ onMounted(async () => {
     }
   });
   isLoadingComponent.value = false;
-  loading.value = false;
+  useHttpRequest().setLoading(false);
   if (afterLoad.value) {
     try {
       await executeCodeAsync(afterLoad.value.code, createExecutionContext());
     } catch (error) {
-      console.error(
-        "[ComponentFormTable] afterLoad event execution failed:",
-        error
-      );
-      logger.error(`[ComponentFormTable] afterLoad code error: ${error}`);
+      console.error("[ComponentForm] afterLoad event execution failed:", error);
+      logger.error(`[ComponentForm] afterLoad error: ${error}`);
     }
   }
   const headerElement = document.querySelector(
@@ -1282,12 +1775,6 @@ onMounted(async () => {
   }
 
   calculatePagesStyle();
-  console.log("[ComponentFormTable] Application Ref object:", app.refs);
-  // setTimeout(() => {
-  //   console.log("app.refs.TBL_QSD[0].$refs", app.refs.TBL_QSD[0].TableRef);
-  //   console.log("app.refs.TBL_QSD[0].$refs.refs", app.refs.TBL_QSD[0].TableRef.refs.TEST[0]    );
-
-  // }, 1000);
 });
 
 const handleCollapsed = (event: any) => {
@@ -1310,13 +1797,11 @@ const handleInputChange = async (item: any) => {
   const selectedEvent = item.find((event: any) => event.rule.code === "change");
   if (selectedEvent) {
     try {
+      const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error(
-        "[ComponentFormTable] change event execution failed:",
-        error
-      );
-      logger.error(`[ComponentFormTable] change event error: ${error}`);
+      console.error("[ComponentForm] change event execution failed:", error);
+      logger.error(`[ComponentForm] change event error: ${error}`);
     }
   }
 };
@@ -1326,13 +1811,11 @@ const handleFocus = async (item: any) => {
   const selectedEvent = item.find((event: any) => event.rule.code === "focus");
   if (selectedEvent) {
     try {
+      const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error(
-        "[ComponentFormTable] focus event execution failed:",
-        error
-      );
-      logger.error(`[ComponentFormTable] focus event error: ${error}`);
+      console.error("[ComponentForm] focus event execution failed:", error);
+      logger.error(`[ComponentForm] focus event error: ${error}`);
     }
   }
 };
@@ -1342,10 +1825,11 @@ const handleBlur = async (item: any) => {
   const selectedEvent = item.find((event: any) => event.rule.code === "blur");
   if (selectedEvent) {
     try {
+      const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
-      console.error("[ComponentFormTable] blur event execution failed:", error);
-      logger.error(`[ComponentFormTable] blur event error: ${error}`);
+      console.error("[ComponentForm] blur event execution failed:", error);
+      logger.error(`[ComponentForm] blur event error: ${error}`);
     }
   }
 };
@@ -1357,13 +1841,14 @@ const handleMouseenter = async (item: any) => {
   );
   if (selectedEvent) {
     try {
+      const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error(
-        "[ComponentFormTable] mouseenter event execution failed:",
+        "[ComponentForm] mouseenter event execution failed:",
         error
       );
-      logger.error(`[ComponentFormTable] mouseenter event error: ${error}`);
+      logger.error(`[ComponentForm] mouseenter event error: ${error}`);
     }
   }
 };
@@ -1375,13 +1860,14 @@ const handleMouseleave = async (item: any) => {
   );
   if (selectedEvent) {
     try {
+      const store = useAppStore();
       await executeCodeAsync(selectedEvent.code, createExecutionContext());
     } catch (error) {
       console.error(
-        "[ComponentFormTable] mouseleave event execution failed:",
+        "[ComponentForm] mouseleave event execution failed:",
         error
       );
-      logger.error(`[ComponentFormTable] mouseleave event error: ${error}`);
+      logger.error(`[ComponentForm] mouseleave event error: ${error}`);
     }
   }
 };
@@ -1403,12 +1889,30 @@ const handleRefs = (event: any) => {
   }, {});
   app.refs = mergedObject;
 };
-const executeFun = async (code: string) => {
+const executeFun = async (event: any) => {
+  console.log("[ComponentForm] executeFun called for event:", event.id);
+  if (
+    !app.refs[event.id] ||
+    app.refs[event.id].length === 0 ||
+    event.id === undefined
+  ) {
+    console.warn("[ComponentForm] No reference found for event id:", event.id);
+    return;
+  }
+  app.refs[event.id][0].enableLoading();
   try {
-    await executeCodeAsync(code, createExecutionContext());
+    await eval(
+      "(async () => { const store = useAppStore(); " + event.code + "})()"
+    );
   } catch (error) {
-    console.error("[ComponentFormTable] executeFun execution failed:", error);
-    logger.error(`[ComponentFormTable] executeFun error: ${error}`);
+    console.error(
+      "[ComponentForm] executeFun execution failed for event:",
+      event.id,
+      error
+    );
+    logger.error(`[ComponentForm] executeFun error for ${event.id}: ${error}`);
+  } finally {
+    app.refs[event.id][0].disableLoading();
   }
 };
 const handleCodeselected = async (code: string) => {
@@ -1416,21 +1920,18 @@ const handleCodeselected = async (code: string) => {
     await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
     console.error(
-      "[ComponentFormTable] handleCodeselected execution failed:",
+      "[ComponentForm] handleCodeselected execution failed:",
       error
     );
-    logger.error(`[ComponentFormTable] handleCodeselected error: ${error}`);
+    logger.error(`[ComponentForm] handleCodeselected error: ${error}`);
   }
 };
 const searchItemFunc = async (code: string) => {
   try {
     await executeCodeAsync(code, createExecutionContext());
   } catch (error) {
-    console.error(
-      "[ComponentFormTable] searchItemFunc execution failed:",
-      error
-    );
-    logger.error(`[ComponentFormTable] searchItemFunc error: ${error}`);
+    console.error("[ComponentForm] searchItemFunc execution failed:", error);
+    logger.error(`[ComponentForm] searchItemFunc error: ${error}`);
   }
 };
 const repeatableZoneChildrens = ref({} as any);
@@ -1449,7 +1950,7 @@ const deleteDuplicated = (elem: any, index: any) => {
 };
 
 const navigatePrevious = (page: any) => {
-  console.log("[ComponentFormTable] navigatePrevious called for page:", page);
+  console.log("[ComponentForm] navigatePrevious called for page:", page);
   if (showPageNum.value > 1) {
     showPageNum.value--;
     calculatePagesStyle();
@@ -1465,12 +1966,12 @@ const navigateNext = (page: any) => {
       executeCodeAsync(codeBefore, createExecutionContext());
     } catch (error) {
       console.error(
-        "[ComponentFormTable] navigateNext beforeFollowing event failed for page:",
+        "[ComponentForm] navigateNext beforeFollowing event failed for page:",
         page,
         error
       );
       logger.error(
-        `[ComponentFormTable] beforeFollowing error for page ${page}: ${error}`
+        `[ComponentForm] beforeFollowing error for page ${page}: ${error}`
       );
     }
   } else {
@@ -1509,48 +2010,221 @@ function validatePageFields(page: any) {
   return valid;
 }
 
-const isEmpty = (value: any) => {
-  if (value === null || value === undefined) return true; // Null or undefined
-  if (
-    typeof value === "string" &&
-    (value.trim() === "" || value.trim() === "[]")
-  )
-    if (Array.isArray(value) && value.length === 0) return true; // Empty array
-  if (
-    typeof value === "object" &&
-    !Array.isArray(value) &&
-    Object.keys(value).length === 0
-  )
-    return true; // Empty object
-  return false; // Otherwise, not empty
+const isEmpty = (value: any): boolean => {
+  // Handle null and undefined
+  if (value === null || value === undefined) return true;
+
+  // Handle strings (including whitespace-only and JSON array strings)
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "" || trimmed === "[]" || trimmed === "{}";
+  }
+
+  // Handle numbers (0 is not considered empty, but NaN is)
+  if (typeof value === "number") {
+    return Number.isNaN(value);
+  }
+
+  // Handle booleans (both true and false are not considered empty)
+  if (typeof value === "boolean") {
+    return false;
+  }
+
+  // Handle arrays
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+
+  // Handle objects (including Date, but exclude functions)
+  if (typeof value === "object") {
+    // Handle Date objects - empty if invalid date
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime());
+    }
+
+    // Handle regular objects
+    return Object.keys(value).length === 0;
+  }
+
+  // Handle functions (not considered empty)
+  if (typeof value === "function") {
+    return false;
+  }
+
+  // Handle symbols (not considered empty)
+  if (typeof value === "symbol") {
+    return false;
+  }
+
+  // Handle BigInt (0n is not considered empty)
+  if (typeof value === "bigint") {
+    return false;
+  }
+
+  // Default case - not empty
+  return false;
 };
 
+function redirectTo(url: string) {
+  try {
+    const redirectUrl = url;
+    if (redirectUrl && redirectUrl.trim() !== "") {
+      window.open(redirectUrl, "_blank");
+    } else {
+      console.warn("Redirect URL is empty or invalid");
+      logger.warn("Redirect URL is empty or invalid");
+    }
+  } catch (error) {
+    console.error("Error opening URL in new tab:", error);
+    logger.error(`Error opening URL in new tab: ${error}`);
+  }
+}
+
+// Create a comprehensive context object for dynamic code execution
+// This bundles all component functions and state that need to be accessible to executeCodeAsync
+const createExecutionContext = () => ({
+  // Utility functions
+  uuidv4,
+  isEmpty,
+
+  // Navigation functions
+  navigatePrevious,
+  navigateNext,
+  navigate,
+
+  // Section control functions
+  showSection,
+  hideSection,
+  toggleSection,
+  disableNextButtonFunction,
+  enableNextButtonFunction,
+
+  // Validation functions
+  requiredFieldsNotEmpty,
+  notValidFieldsExists,
+
+  // Submit functions
+  submit,
+  submitNotice,
+  redirectTo,
+
+  // State and refs (reactive values)
+  Fields,
+  User,
+  Version,
+  Variables,
+  systemVariables,
+  GlobalVariables,
+  QueryParameters,
+  newNotice,
+
+  // App instance for refs access
+  app,
+
+  // Store access
+  store,
+
+  // Toast for notifications
+  toast,
+
+  // Translation function
+  t,
+
+  disabledNextButton,
+  disabledPreviousButton,
+  fetchTableData,
+  enablePreviousButtonFunction,
+  disablePreviousButtonFunction,
+  handleInputChange,
+  executeFun,
+  handleCollapsed,
+  handleRefs,
+  duplicate,
+  deleteDuplicated,
+  useModel,
+  validatePageFields,
+  initFields,
+
+  // Blockly utility modules (sandboxed API) - with prefixes
+  field: fieldUtility,
+  string: stringUtility,
+  math: mathUtility,
+  array: arrayUtility,
+  elise: eliseUtility,
+  section: sectionUtility,
+
+  // Blockly utility modules (sandboxed API) - direct access for Blockly-generated code
+  fieldUtility,
+  stringUtility,
+  mathUtility,
+  arrayUtility,
+  eliseUtility,
+  sectionUtility,
+  storeUtility,
+  formUtility,
+});
+
 const validateField = (pageItem: any, columnName: string, valid: boolean) => {
+  let fieldValid = valid;
   if (pageItem.zone === "ZS") {
-    return validateFieldSplitterZone(pageItem, columnName, valid);
+    return validateFieldSplitterZone(pageItem, columnName, fieldValid);
   } else if (pageItem.zone === "ZR") {
     Fields.value[pageItem.code] ??= [];
-    return validateFieldRepeatableZone(pageItem, columnName, valid);
+    return validateFieldRepeatableZone(pageItem, columnName, fieldValid);
   } else {
     for (let z = 0; z < pageItem.rows[columnName].length; z++) {
       const options = pageItem.rows[columnName][z]?.options;
       if (options && options.type === "HTML") {
-        if (options && options.required) {
-          return false;
+        if (options && options.required && options.hidden !== true) {
+          fieldValid = false;
         }
-      } else {
+      } else if (options) {
+        // Required check
         if (
-          options &&
           options.required &&
           options.hidden !== true &&
           isEmpty(Fields.value[options.name])
         ) {
-          return false;
+          app.refs[options.name]?.[0]?.setFieldError("Ce champ est requis.");
+          fieldValid = false;
+        }
+        // Rules check: use validateByRule for each rule
+        if (
+          Array.isArray(options.rules) &&
+          !isEmpty(Fields.value[options.name])
+        ) {
+          console.log(
+            "[ComponentForm] Validating rules for field:",
+            options.name,
+            options.rules
+          );
+
+          const val = Fields.value[options.name];
+          let messages: string[] = [];
+          for (const rule of options.rules) {
+            const result = validateByRule(
+              val ?? "",
+              rule,
+              options.label || options.name
+            );
+            console.log(
+              "[ComponentForm] Validation result for rule:",
+              rule.code,
+              result
+            );
+            if (!result.valid && result.msg) {
+              messages.push(result.msg);
+              fieldValid = false;
+            }
+          }
+          if (messages.length > 0) {
+            app.refs[options.name]?.[0]?.setFieldError(messages.join("\n"));
+          }
         }
       }
     }
   }
-  return valid; // Return valid if no changes
+  return fieldValid;
 };
 
 const validateFieldRepeatableZone = (
@@ -1559,6 +2233,7 @@ const validateFieldRepeatableZone = (
   valid: boolean
 ) => {
   const itemCol = pageItem.rows.column1;
+  let fieldValid = valid;
   if (pageItem.show === false) {
     return true;
   } else {
@@ -1569,25 +2244,51 @@ const validateFieldRepeatableZone = (
           Object.values(pageItem.rows[columnName][z].rows[columnNameZ]).forEach(
             (field: any) => {
               const options = field.options;
-              if (
-                options &&
-                options.required &&
-                isEmpty(Fields.value[options.name])
-              ) {
-                valid = false;
+              if (options && options.hidden !== true) {
+                // Required check
+                if (options.required && isEmpty(Fields.value[options.name])) {
+                  app.refs[options.name]?.[0]?.setFieldError(
+                    "Ce champ est requis."
+                  );
+                  fieldValid = false;
+                }
+                // Rules check: use validateByRule for each rule
+                if (
+                  Array.isArray(options.rules) &&
+                  !isEmpty(Fields.value[options.name])
+                ) {
+                  const val = Fields.value[options.name];
+                  let messages: string[] = [];
+                  for (const rule of options.rules) {
+                    const result = validateByRule(
+                      val,
+                      rule,
+                      options.label || options.name
+                    );
+                    if (!result.valid && result.msg) {
+                      messages.push(result.msg);
+                      fieldValid = false;
+                    }
+                  }
+                  if (messages.length > 0) {
+                    app.refs[options.name]?.[0]?.setFieldError(
+                      messages.join("\n")
+                    );
+                  }
+                }
               }
             }
           );
         });
-        if (!valid) {
+        if (!fieldValid) {
           break;
         }
       }
-      if (!valid) {
+      if (!fieldValid) {
         break;
       }
     }
-    return valid;
+    return fieldValid;
   }
 };
 
@@ -1596,26 +2297,49 @@ const validateFieldSplitterZone = (
   columnName: string,
   valid: boolean
 ) => {
+  let fieldValid = valid;
   for (let z = 0; z < pageItem.rows[columnName].length; z++) {
     const row = pageItem.rows[columnName][z];
     if (row.zone === "ZR") {
       Fields.value[row.code] ??= [];
-      valid = validateFieldRepeatableZone(row, columnName, valid);
+      fieldValid = validateFieldRepeatableZone(row, columnName, fieldValid);
     }
     Object.values(row.rows).forEach((col: any) => {
       Object.values(col).forEach((field: any) => {
         const options = field.options;
-        if (
-          options &&
-          options.required &&
-          isEmpty(Fields.value[options.name])
-        ) {
-          valid = false;
+        if (options && options.hidden !== true) {
+          // Required check
+          if (options.required && isEmpty(Fields.value[options.name])) {
+            app.refs[options.name]?.[0]?.setFieldError("Ce champ est requis.");
+            fieldValid = false;
+          }
+          // Rules check: use validateByRule for each rule
+          if (
+            Array.isArray(options.rules) &&
+            !isEmpty(Fields.value[options.name])
+          ) {
+            const val = Fields.value[options.name];
+            let messages: string[] = [];
+            for (const rule of options.rules) {
+              const result = validateByRule(
+                val,
+                rule,
+                options.label || options.name
+              );
+              if (!result.valid && result.msg) {
+                messages.push(result.msg);
+                fieldValid = false;
+              }
+            }
+            if (messages.length > 0) {
+              app.refs[options.name]?.[0]?.setFieldError(messages.join("\n"));
+            }
+          }
         }
       });
     });
   }
-  return valid;
+  return fieldValid;
 };
 const initFields = () => {
   Object.keys(Fields.value).forEach((key) => {
@@ -1694,10 +2418,7 @@ const computePageStyle = computed(() => (pg: any) => {
   };
 });
 const marginTop = computed(() => {
-  console.log(
-    "[ComponentFormTable] marginTop computed:",
-    fixedHeadersHeights.value
-  );
+  console.log("[ComponentForm] marginTop computed:", fixedHeadersHeights.value);
   return props.stepper.showPageNames
     ? fixedHeadersHeights.value[showPageNum.value] + 40 + "px"
     : calculateHeight("FIXED_HEADER") + "px";
@@ -1705,7 +2426,12 @@ const marginTop = computed(() => {
 
 async function calculatePagesStyle() {
   for (let pg = 1; pg <= props.stepper.steps; pg++) {
-    const page = itemsFormCopy.value[0].pages[`page${pg}`];
+    const page = itemsFormCopy.value[0]?.pages
+      ? itemsFormCopy.value[0].pages[`page${pg}`] ?? null
+      : null;
+    if (!page) {
+      return;
+    }
     const zones = page.filter((zone: any) => zone.zone === "ZR");
     const zonesWithFixedHeader = zones.filter((zone: any) =>
       zone.code.includes("FIXED_HEADER")
@@ -1714,7 +2440,6 @@ async function calculatePagesStyle() {
     const height = zonesWithFixedHeader.reduce((acc: number, zone: any) => {
       return acc + calculateHeight(zone.code);
     }, 0);
-
     fixedHeadersHeights.value[pg] = height;
   }
 }
@@ -1740,6 +2465,62 @@ const stickyHeaderClass = computed(() => {
       : "";
   };
 });
+async function executeWebService(webServiceName: String, parameters: any) {
+  try {
+    const result = await eliseUtility.executeWebService(
+      webServiceName as string,
+      parameters
+    );
+    return result;
+  } catch (error) {
+    console.error(
+      "[ComponentForm] executeWebService failed for service:",
+      webServiceName,
+      error
+    );
+    logger.error(
+      `[ComponentForm] executeWebService error for ${webServiceName}: ${error}`
+    );
+    return error;
+  }
+}
+
+// Validate all rules for a field, return { valid, messages[] }
+function validateFieldAllRules(
+  value: any,
+  rules: { code: string; expression: string }[],
+  fieldLabel?: string
+) {
+  let valid = true;
+  let messages: string[] = [];
+  for (const rule of rules) {
+    const result = validateByRule(value, rule, fieldLabel);
+    if (!result.valid && result.msg) {
+      valid = false;
+      messages.push(result.msg);
+    }
+  }
+  return { valid, messages };
+}
+
+async function showConfirmationDialog(
+  message: string,
+  header: string,
+  acceptLabel: string,
+  rejectLabel: string,
+  acceptFn: Function,
+  rejectFn: Function
+) {
+  confirm.require({
+    message: message,
+    header: header,
+    rejectLabel: rejectLabel,
+    acceptLabel: acceptLabel,
+    accept: () => acceptFn(),
+    reject: () => rejectFn(),
+  });
+}
+
 defineExpose({
   itemsForm,
   Fields,
@@ -1769,6 +2550,8 @@ defineExpose({
   navigate,
   toggleSection,
   initFields,
+  executeWebService,
+  showConfirmationDialog,
 });
 </script>
 <style lang="scss">
@@ -1818,17 +2601,32 @@ defineExpose({
     position: sticky;
     width: 200vw;
     top: 0;
-    background-color: #ffffff;
+    background-color: #f8f9fa;
     z-index: 1000;
+    margin-left: -50rem;
+    padding-left: 50rem;
   }
 }
+
+/* RTL adjustment for stepper headers */
+[dir="rtl"] .stepper .pages-headers {
+  margin-left: 0;
+  padding-left: 0;
+  padding-right: 50rem;
+  margin-right: -50rem;
+}
+
+.dark .stepper .pages-headers {
+  background-color: #121212;
+}
+
 .zone-page-sticky-header {
   // position: sticky;
   // top: 0;
   // width: 100%;
   // z-index: 1000;
   // background-color: white;
-  // left: 0;F
+  // left: 0;
   .zone-page-header {
     position: fixed;
     width: calc(100% - 100px);
@@ -1850,6 +2648,151 @@ defineExpose({
 
 .visibility-hidden {
   visibility: hidden;
+}
+
+/* Toast backdrop blur */
+.toast-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+  z-index: 9998;
+}
+
+/* Custom toast overlay */
+.custom-toast-overlay {
+  z-index: 9999 !important;
+}
+
+/* Custom toast content */
+.custom-toast-content {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e5e5;
+  min-width: 300px;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+/* Toast header */
+.toast-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.success-icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.toast-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Toast body */
+.toast-body {
+  padding: 20px;
+}
+
+.chrono-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #22c55e;
+}
+
+.chrono-label {
+  font-weight: 600;
+  color: #374151;
+  margin-right: 8px;
+}
+
+.chrono-value {
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  color: #22c55e;
+  font-size: 16px;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e5e5;
+}
+
+/* Toast actions */
+.toast-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.copy-btn {
+  background: #22c55e;
+  color: white;
+}
+
+.copy-btn:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.copy-btn i {
+  font-size: 14px;
+}
+.p-toast-center {
+  min-width: 20vw;
+  transform: translate(-50%, -50%);
+  width: fit-content !important;
+}
+.p-toast-close-button {
+  display: none !important;
 }
 ::-webkit-scrollbar-track {
   margin-top: var(--scrollbar-margin-top);

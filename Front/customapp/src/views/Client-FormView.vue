@@ -324,7 +324,16 @@ import {
 import { useI18n } from "vue-i18n";
 import { i18n } from "@/main"; // Import i18n from main.ts
 import { useAppStore } from "@/store/app.store";
-import { initFormUtility, formUtility } from "@/utils/blocklyUtilities";
+import {
+  initFormUtility,
+  formUtility,
+  fieldUtility,
+  stringUtility,
+  mathUtility,
+  arrayUtility,
+  eliseUtility,
+  storeUtility,
+} from "@/utils/blocklyUtilities";
 import { usePrimeVue } from "primevue/config";
 import { useHttpRequest } from "@/store/httpRequest.store";
 import { definePreset, palette } from "@primeuix/themes";
@@ -936,6 +945,12 @@ export default defineComponent({
                 "beforeInitCode",
                 "uuidv4",
                 "executeWebService",
+                "fieldUtility",
+                "stringUtility",
+                "mathUtility",
+                "arrayUtility",
+                "eliseUtility",
+                "storeUtility",
                 "formUtility",
                 `return (async () => {
                   ${beforeInitEvent.code}
@@ -953,6 +968,12 @@ export default defineComponent({
                 beforeInitEvent.code,
                 uuidv4,
                 executeWebService,
+                fieldUtility,
+                stringUtility,
+                mathUtility,
+                arrayUtility,
+                eliseUtility,
+                storeUtility,
                 formUtility
               );
             } catch (error) {

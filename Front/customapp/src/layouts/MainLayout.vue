@@ -12,35 +12,8 @@
             </div>
             <div class="navbar-title">NeoForm Externe</div>
           </div>
-
-          <!-- Right Section: Actions -->
-          <!-- <div class="navbar-right">
-            <Button
-              class="navbar-icon-btn"
-              text
-              rounded
-              v-tooltip.bottom="'Notifications'"
-            >
-              <span class="material-icons">notifications</span>
-            </Button>
-            <Button
-              class="navbar-icon-btn"
-              text
-              rounded
-              v-tooltip.bottom="'Paramètres'"
-            >
-              <span class="material-icons">settings</span>
-            </Button>
-            <Button
-              @click="onLogout"
-              label="Quitter"
-              icon="pi pi-sign-out"
-              class="navbar-logout-btn"
-            ></Button>
-          </div> -->
         </div>
       </div>
-
       <!-- Main Content Area -->
       <div
         :class="['main-container', { 'full-height': !isNavbarRendered }]"
@@ -56,28 +29,7 @@
             overflow-y: auto;
             max-height: calc(100vh - 100px);
           "
-        >
-          <Menu :model="items" class="menu-vertical">
-            <template #item="{ label, item, props }">
-              <router-link
-                v-slot="{ isActive, href, navigate }"
-                :to="item.route"
-                custom
-              >
-                <a :href="href" @click="navigate" v-bind="props.action">
-                  <span class="material-icons"> {{ item.icon }}</span>
-                  <span
-                    v-bind="props.label"
-                    style="margin-left: 7px"
-                    class="flex align-items-center"
-                  >
-                    {{ label }}
-                  </span>
-                </a>
-              </router-link>
-            </template>
-          </Menu>
-        </div>
+        ></div>
 
         <!-- Content Area -->
         <div class="form-container">
@@ -93,16 +45,14 @@
 
 <script lang="ts" setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { itemsMenu } from "@/data/itemsMenu";
 import { useRoute } from "vue-router";
 import { useAppStore } from "@/store/app.store";
 import { useHttpRequest } from "@/store/httpRequest.store";
-import Loader from "@/components/Loader.vue";
-import Version from "@/components/Version.vue";
+import Loader from "@/components/BasicComponents/Loader.vue";
+import Version from "@/components/BasicComponents/Version.vue";
 
 const app = useHttpRequest();
 const store = useAppStore();
-const items = ref(itemsMenu);
 const route = useRoute();
 
 const isMenuOpen = computed(() => {
@@ -187,8 +137,6 @@ watch(
   position: relative;
   overflow: hidden;
 }
-
-
 
 /* Left Section */
 .navbar-left {

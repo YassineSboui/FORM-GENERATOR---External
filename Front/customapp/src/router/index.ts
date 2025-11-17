@@ -9,20 +9,20 @@ const routes = [
   {
     path: "/",
     name: "home",
-    component: () => import("../views/HomeView.vue"),
+    component: () => import("../views/Admin-HomeView.vue"),
     meta: { fullMode: false },
     beforeEnter: requireAuth,
   },
   {
     path: "/form/:client/:guid",
     name: "form",
-    component: () => import("../views/Form.vue"),
+    component: () => import("../views/Client-FormView.vue"),
     meta: { fullMode: true },
   },
   {
     path: "/auth/callback",
     name: "auth-callback",
-    component: () => import("../views/AuthCallback.vue"),
+    component: () => import("../views/Client-AuthCallbackView.vue"),
     meta: { fullMode: true },
   },
   {
@@ -34,20 +34,20 @@ const routes = [
   {
     path: "/admin/login",
     name: "AdminLogin",
-    component: () => import("../views/AdminLogin.vue"),
+    component: () => import("../views/Admin-LoginView.vue"),
     meta: { fullMode: true },
   },
   {
     path: "/admin/change-password",
     name: "ChangePassword",
-    component: () => import("../views/ChangePassword.vue"),
+    component: () => import("../views/Admin-ChangePassword.vue"),
     meta: { fullMode: true },
     beforeEnter: requireAuth,
   },
   {
     path: "/admin/dashboard",
     name: "AdminDashboard",
-    component: () => import("../views/AdminDashboard.vue"),
+    component: () => import("../views/Admin-DashboardView.vue"),
     meta: { fullMode: true },
     beforeEnter: [requireAuth, requireSuperAdmin],
   },

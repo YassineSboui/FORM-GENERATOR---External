@@ -3,15 +3,19 @@
     <div class="dashboard-container">
       <div class="dashboard-header">
         <div class="header-layout">
-          <button class="back-button" @click="goBack" title="Back to Home">
+          <button
+            class="back-button"
+            @click="goBack"
+            title="Retour à l'accueil"
+          >
             <i class="pi pi-arrow-left"></i>
           </button>
           <div class="header-content">
             <h1>
               <i class="pi pi-users"></i>
-              Admin Dashboard
+              Tableau de bord Admin
             </h1>
-            <p>Manage administrators and system users</p>
+            <p>Gérer les administrateurs et les utilisateurs du système</p>
           </div>
         </div>
       </div>
@@ -21,7 +25,7 @@
         <div class="card create-admin-card">
           <h2>
             <i class="pi pi-user-plus"></i>
-            Create New Admin
+            Créer un nouvel administrateur
           </h2>
 
           <form @submit.prevent="handleCreateAdmin" class="create-form">
@@ -32,7 +36,7 @@
                   id="userName"
                   v-model="newAdmin.userName"
                   type="text"
-                  placeholder="Enter username"
+                  placeholder="Entrer le nom d'utilisateur"
                   :disabled="isCreating"
                   required
                 />
@@ -44,7 +48,7 @@
                   id="email"
                   v-model="newAdmin.email"
                   type="email"
-                  placeholder="Enter email address"
+                  placeholder="Entrer l'adresse email"
                   :disabled="isCreating"
                   required
                 />
@@ -53,29 +57,29 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label for="fullName">Full Name</label>
+                <label for="fullName">Nom complet</label>
                 <input
                   id="fullName"
                   v-model="newAdmin.fullName"
                   type="text"
-                  placeholder="Enter full name"
+                  placeholder="Entrer le nom complet"
                   :disabled="isCreating"
                   required
                 />
               </div>
 
               <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">Mot de passe</label>
                 <input
                   id="password"
                   v-model="newAdmin.password"
                   type="password"
-                  placeholder="Enter password"
+                  placeholder="Entrer le mot de passe"
                   :disabled="isCreating"
                   required
                 />
                 <small class="password-hint">
-                  Must contain: uppercase, lowercase, non-alphanumeric character
+                  Doit contenir : majuscule, minuscule, caractère spécial
                 </small>
               </div>
             </div>
@@ -88,11 +92,11 @@
             <button type="submit" class="create-button" :disabled="isCreating">
               <span v-if="!isCreating">
                 <i class="pi pi-plus"></i>
-                Create Admin
+                Créer l'administrateur
               </span>
               <span v-else class="loading">
                 <i class="pi pi-spinner pi-spin"></i>
-                Creating...
+                Création...
               </span>
             </button>
           </form>
@@ -102,12 +106,12 @@
         <div class="card users-card">
           <h2>
             <i class="pi pi-list"></i>
-            System Users
+            Utilisateurs du système
           </h2>
 
           <div v-if="isLoadingUsers" class="loading-state">
             <i class="pi pi-spinner pi-spin"></i>
-            Loading users...
+            Chargement des utilisateurs...
           </div>
 
           <div v-else-if="loadError" class="error-message">
@@ -117,18 +121,18 @@
 
           <div v-else-if="users.length === 0" class="empty-state">
             <i class="pi pi-inbox"></i>
-            <p>No users found</p>
+            <p>Aucun utilisateur trouvé</p>
           </div>
 
           <div v-else class="users-table-container">
             <table class="users-table">
               <thead>
                 <tr>
-                  <th>Username</th>
-                  <th>Full Name</th>
+                  <th>Nom d'utilisateur</th>
+                  <th>Nom complet</th>
                   <th>Email</th>
-                  <th>Role</th>
-                  <th>Created</th>
+                  <th>Rôle</th>
+                  <th>Créé le</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -154,14 +158,14 @@
                       class="delete-button"
                       @click="confirmDelete(user)"
                       :disabled="isDeleting"
-                      :title="`Delete ${user.userName}`"
+                      :title="`Supprimer ${user.userName}`"
                     >
                       <i class="pi pi-trash"></i>
                     </button>
                     <span
                       v-else
                       class="protected-label"
-                      title="SuperAdmin accounts cannot be deleted"
+                      title="Les comptes SuperAdmin ne peuvent pas être supprimés"
                     >
                       <i class="pi pi-lock"></i>
                     </span>
@@ -180,18 +184,18 @@
         <div class="modal-header">
           <h3>
             <i class="pi pi-exclamation-triangle"></i>
-            Confirm Delete
+            Confirmation de suppression
           </h3>
         </div>
         <div class="modal-body">
-          <p>Are you sure you want to delete the user:</p>
+          <p>Êtes-vous sûr de vouloir supprimer l'utilisateur :</p>
           <p class="user-info">
             <strong>{{ userToDelete?.userName }}</strong>
             <span v-if="userToDelete?.fullName"
               >({{ userToDelete.fullName }})</span
             >
           </p>
-          <p class="warning">This action cannot be undone.</p>
+          <p class="warning">Cette action est irréversible.</p>
         </div>
         <div class="modal-footer">
           <button
@@ -199,17 +203,17 @@
             @click="cancelDelete"
             :disabled="isDeleting"
           >
-            Cancel
+            Annuler
           </button>
           <button
             class="modal-button delete"
             @click="handleDelete"
             :disabled="isDeleting"
           >
-            <span v-if="!isDeleting">Delete</span>
+            <span v-if="!isDeleting">Supprimer</span>
             <span v-else>
               <i class="pi pi-spinner pi-spin"></i>
-              Deleting...
+              Suppression...
             </span>
           </button>
         </div>

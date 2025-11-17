@@ -11,7 +11,7 @@
       <div class="password-card">
         <div class="password-header">
           <div class="header-layout">
-            <button class="back-button" @click="goBack" title="Back to Home">
+            <button class="back-button" @click="goBack" title="Retour à l'accueil">
               <i class="pi pi-arrow-left"></i>
             </button>
             <div class="header-content">
@@ -256,7 +256,11 @@ async function handleChangePassword() {
   if (success) {
     // Mark that default password has been changed (hide credentials info box)
     localStorage.setItem('defaultPasswordChanged', 'true');
-    
+    // Login again to refresh session
+    await authStore.login(
+      authStore.user?.username || '',
+      newPassword.value,
+    );
     // Password changed successfully
     router.push('/');
   }
