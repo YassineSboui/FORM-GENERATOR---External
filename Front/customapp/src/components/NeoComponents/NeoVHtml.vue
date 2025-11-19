@@ -1,27 +1,5 @@
 <template>
   <div class="vhtml" v-show="!isHidden">
-    <!-- <div class="label" v-if="label">
-      <label class="label-container">
-        <span>{{ label }}</span>
-        <span
-          v-show="options.required"
-          style="color: red; margin-left: 5px; margin-right: 5px"
-        >
-          *
-        </span>
-        <i
-          v-if="options.tooltip"
-          class="pi pi-info-circle"
-          v-tooltip.top="options.tooltip"
-          style="
-            cursor: pointer;
-            font-size: 12px;
-            margin-left: 5px;
-            margin-right: 5px;
-          "
-        ></i
-      ></label>
-    </div> -->
     <div class="input-container" :class="{ 'disabled-wrapper': isDisabled }">
       <div v-html="internalValue" class="vhtml-wrapper"></div>
     </div>
@@ -33,6 +11,7 @@
 
 <script lang="ts">
 import { computed, defineComponent, reactive, ref, watch } from "vue";
+import { validateVHtml } from "@/utils/vhtmlValidator";
 
 interface OptionConfig {
   name: string;
@@ -72,17 +51,73 @@ export default defineComponent({
     },
   },
   emits: [
-    "update:options",
     "update:modelValue",
-    "focus",
-    "blur",
-    "mouseleave",
-    "mouseenter",
+    "update:options",
+    "disableField",
+    "enableField",
+    "hideField",
+    "showField",
+    "updateField",
   ],
   setup(props, { emit }) {
+    // =========================
+    // ÉTAT D'ERREUR GLOBAL
+    // =========================
+    const errorState = reactive({
+      errorMessage: "",
+    });
+
+    // Fonction pour définir un message d'erreur
+    const setFieldError = (errorMessage: string) => {
+      errorState.errorMessage = errorMessage;
+    };
+
+    // Fonction pour effacer le message d'erreur
+    const clearFieldError = () => {
+      errorState.errorMessage = "";
+    };
+
+    // =========================
+    // TRAITEMENT + VALIDATION DU HTML
+    // =========================
     // Function to process HTML and extract safe content
     const processHtmlContent = (htmlContent: string): string => {
-      if (!htmlContent) return "";
+      // Étape 1 : rien à valider si contenu vide
+      if (!htmlContent || !htmlContent.trim()) {
+        // On s'assure aussi d'effacer un ancien message d'erreur
+        if (errorState && errorState.errorMessage) {
+          clearFieldError();
+        }
+        return "";
+      }
+
+      // Étape 2 : validation de sécurité avant tout rendu via v-html
+      const validationResult = validateVHtml(htmlContent);
+
+      if (!validationResult.valid) {
+        // On bloque l'affichage du HTML potentiellement dangereux
+        const message =
+          "Le contenu HTML contient des éléments potentiellement dangereux : " +
+          validationResult.errors.join(" | ");
+        setFieldError(message);
+        // On retourne une chaîne vide pour éviter toute exécution via v-html
+        return "";
+      }
+
+      // On peut éventuellement journaliser les avertissements dans la console
+      if (validationResult.warnings && validationResult.warnings.length > 0) {
+        console.warn(
+          "[NeoVHtml] Avertissements pour le contenu v-html :",
+          validationResult.warnings
+        );
+      }
+
+      // Contenu considéré comme sûr côté client → on efface un éventuel ancien message
+      if (errorState && errorState.errorMessage) {
+        clearFieldError();
+      }
+
+      // Étape 3 : logique existante de traitement / scoping du HTML
 
       // If it's a full HTML document, extract and process it
       if (
@@ -98,112 +133,89 @@ export default defineComponent({
           .join("\n");
 
         // Extract body content
-        const bodyContent = doc.body ? doc.body.innerHTML : htmlContent;
+        const bodyContent = doc.body.innerHTML;
 
-        // Extract body styles if present
-        const bodyStyles = doc.body ? doc.body.getAttribute("style") : "";
-        const wrapperStyles = bodyStyles ? ` style="${bodyStyles}"` : "";
+        // Scope styles to the vhtml-content container
+        const scopedStyles = styles
+          .split("}")
+          .map((rule) => {
+            if (!rule.trim()) return "";
+            // Scope to .vhtml-content
+            return `.vhtml-content ${rule}}`;
+          })
+          .join("\n");
 
-        // Process styles: preserve @rules but scope regular selectors
-        let processedStyles = "";
-        let insideAtRule = false;
-        let braceDepth = 0;
-
-        // Split into tokens to properly handle nested @rules
-        const lines = styles.split("\n");
-        for (let line of lines) {
-          const trimmed = line.trim();
-
-          // Track @rule blocks
-          if (trimmed.startsWith("@")) {
-            processedStyles += line + "\n";
-            insideAtRule = true;
-            continue;
-          }
-
-          // Count braces to know when @rule ends
-          for (let char of line) {
-            if (char === "{") braceDepth++;
-            if (char === "}") {
-              braceDepth--;
-              if (braceDepth === 0) insideAtRule = false;
-            }
-          }
-
-          // If inside @rule (like @keyframes, @media), don't scope
-          if (insideAtRule) {
-            processedStyles += line + "\n";
-            continue;
-          }
-
-          // Scope regular CSS rules
-          if (trimmed && !trimmed.startsWith("}")) {
-            // Replace body, html, * with .vhtml-content
-            if (/^\s*(body|html|\*)/.test(line)) {
-              line = line.replace(/^\s*(body|html|\*)/, ".vhtml-content");
-            }
-            // Scope other selectors (but not closing braces or properties)
-            else if (trimmed.includes("{") && !trimmed.startsWith("@")) {
-              line = line.replace(
-                /([^{}]+)(\s*{)/g,
-                (match, selector, bracket) => {
-                  return ".vhtml-content " + selector.trim() + bracket;
-                }
-              );
-            }
-          }
-
-          processedStyles += line + "\n";
-        }
+        const wrapperStyles = ` style="all: initial; font-family: inherit; font-size: inherit; line-height: inherit;"`;
 
         // Return scoped content
-        return `<style>${processedStyles}</style><div class="vhtml-content"${wrapperStyles}>${bodyContent}</div>`;
+        return `<style>${scopedStyles}</style><div class="vhtml-content"${wrapperStyles}>${bodyContent}</div>`;
       }
 
-      // For non-full HTML documents, return as-is
+      // For non-full HTML documents, we still scope styles if there are <style> tags
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
+
+      const styles = Array.from(doc.querySelectorAll("style"))
+        .map((style) => style.textContent)
+        .join("\n");
+
+      let bodyContent = htmlContent;
+      if (styles) {
+        // Remove style tags from original HTML
+        Array.from(doc.querySelectorAll("style")).forEach((style) =>
+          style.remove()
+        );
+        bodyContent = doc.body.innerHTML;
+      }
+
+      if (styles) {
+        const scopedStyles = styles
+          .split("}")
+          .map((rule) => {
+            if (!rule.trim()) return "";
+            return `.vhtml-content ${rule}}`;
+          })
+          .join("\n");
+
+        const wrapperStyles = ` style="all: initial; font-family: inherit; font-size: inherit; line-height: inherit;"`;
+
+        return `<style>${scopedStyles}</style><div class="vhtml-content"${wrapperStyles}>${bodyContent}</div>`;
+      }
+
+      // For non-full HTML documents without separate styles, return as-is
       return htmlContent;
     };
 
     const internalValue = computed({
       get(): string {
-        const rawContent = props.options.content
+        const rawContent = props.options?.content
           ? props.options.content
           : props.modelValue;
         return processHtmlContent(rawContent);
       },
       set(value: string) {
-        props.options.content = value;
+        if (props.options) {
+          props.options.content = value;
+        }
         emit("update:modelValue", value);
       },
     });
 
-    // Create a local copy of options to manage mutability
-    const localOptions = reactive({ ...props.options });
+    const isDisabled = computed(() => !!props.options?.disabled);
+    const isHidden = computed(() => !!props.options?.hidden);
 
-    // Computed properties for disabled and hidden states
-    const isDisabled = computed(() => localOptions.disabled);
-    const isHidden = computed(() => localOptions.hidden);
-
-    const content = computed({
-      get(): string {
-        return props.options.content;
-      },
-      set(value: string) {
-        props.options.content = value;
-        emit("update:options", props.options);
-      },
+    const localOptions = reactive<OptionConfig>({
+      ...(props.options as OptionConfig),
     });
-    const isHTML = ref(
-      props.options.codeHTML !== null &&
-        props.options.codeHTML !== undefined &&
-        props.options.codeHTML !== ""
-        ? props.options.codeHTML
-        : false
-    );
-    // Function to update options
-    const updateOptions = (updates: Partial<OptionConfig>) => {
-      Object.assign(localOptions, updates);
-      emit("update:options", localOptions);
+
+    const content = ref(localOptions.content || "");
+    const isHTML = ref(!!localOptions.codeHTML);
+
+    const updateField = () => {
+      emit("updateField", {
+        name: localOptions.name,
+        value: internalValue.value,
+      });
     };
 
     // Function to disable field
@@ -221,18 +233,15 @@ export default defineComponent({
     // Function to update field
     const setValue = (value: string) => {
       internalValue.value = value;
-      emit("update:modelValue", value);
-    };
-    const updateField = (value: string) => {
-      internalValue.value = value;
-      props.options.content = value;
-      emit("update:options", props.options);
-      emit("update:modelValue", value);
     };
 
-    // Function to get current value
     const getValue = () => {
       return internalValue.value;
+    };
+
+    const updateOptions = (newOptions: Partial<OptionConfig>) => {
+      Object.assign(localOptions, newOptions);
+      emit("update:options", { ...localOptions });
     };
 
     // Watcher for modelValue changes
@@ -245,7 +254,7 @@ export default defineComponent({
 
     // Check if options.content is not empty and modelValue is empty, then set content to modelValue
     watch(
-      [() => props.options.content, () => props.modelValue],
+      [() => props.options?.content, () => props.modelValue],
       ([optionsContent, modelValue]) => {
         if (optionsContent && (!modelValue || modelValue.trim() === "")) {
           emit("update:modelValue", optionsContent);
@@ -263,7 +272,7 @@ export default defineComponent({
       { deep: true }
     );
 
-    // Validation rules computation
+    // Validation rules computation (déjà existant)
     const computedRules = computed(() => {
       if (Array.isArray(localOptions.rules)) {
         let expression = localOptions.rules
@@ -283,28 +292,13 @@ export default defineComponent({
       return "";
     });
 
-    // Error state
-    const errorState = reactive({
-      errorMessage: "",
-    });
-
-    // Function to set error
-    const setFieldError = (errorMessage: string) => {
-      errorState.errorMessage = errorMessage;
-    };
-
-    // Function to remove error
-    const clearFieldError = () => {
-      errorState.errorMessage = "";
-    };
-
-    // Watch for field validity and clear error if valid
+    // Watch for field validity and clear error if valid (existant)
     watch(
       () => internalValue.value,
       (newValue) => {
-        // If there is an error and the value is now valid, clear the error
+        // Si on avait une erreur "contenu vide" et que maintenant le champ n'est plus vide,
+        // on la nettoie (ça ne gère pas uniquement la sécurité, mais aussi le "required").
         if (errorState.errorMessage) {
-          // If required, not empty
           if (newValue && newValue.trim() !== "") {
             clearFieldError();
           }

@@ -333,6 +333,7 @@ import {
   arrayUtility,
   eliseUtility,
   storeUtility,
+  systemUtility,
 } from "@/utils/blocklyUtilities";
 import { usePrimeVue } from "primevue/config";
 import { useHttpRequest } from "@/store/httpRequest.store";
@@ -952,6 +953,8 @@ export default defineComponent({
                 "eliseUtility",
                 "storeUtility",
                 "formUtility",
+                "systemUtility",
+
                 `return (async () => {
                   ${beforeInitEvent.code}
                   console.log('[Form] Before Init Event Completed');
@@ -974,7 +977,8 @@ export default defineComponent({
                 arrayUtility,
                 eliseUtility,
                 storeUtility,
-                formUtility
+                formUtility,
+                systemUtility
               );
             } catch (error) {
               console.error("[Form] Error executing beforeInit event:", error);

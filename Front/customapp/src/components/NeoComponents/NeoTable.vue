@@ -766,6 +766,7 @@ import {
   arrayUtility,
   eliseUtility,
   initializeBlocklyUtilities,
+  systemUtility,
 } from "@/utils/blocklyUtilities";
 import { validateByRule } from "@/utils/fieldValidator";
 
@@ -1199,6 +1200,7 @@ const createExecutionContext = () => ({
   eliseUtility,
   storeUtility,
   formUtility,
+  systemUtility,
 });
 
 const computedOptions = (originalOptions: Record<string, any>) => {
