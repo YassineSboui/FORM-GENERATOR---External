@@ -1,10 +1,112 @@
 const frensh = {
+  ActionButtons: {
+    delete: "Supprimer",
+    reset: "Réinitialiser",
+  },
+
+  AuthCallback: {
+    processingAuthentication: "Traitement de l'authentification...",
+    pleaseWait:
+      "Veuillez patienter pendant que nous complétons le processus d'authentification.",
+  },
+
+  Authentication: {
+    authenticating: "Authentification...",
+    redirectingMessage:
+      "Veuillez patienter pendant que nous vous redirigeons vers le fournisseur d'authentification.",
+  },
+
   buttons: {
     cancel: "Annuler",
     previous: "Précédent",
     next: "Suivant",
     validate: "Valider",
   },
+
+  ComponentForm: {
+    confirmMessage: "Êtes-vous sûr de vouloir valider ce formulaire ?",
+    confirmHeader: "Confirmation",
+    confirmYes: "Oui",
+    confirmNo: "Annuler",
+    missingInformationsHeader: "Informations manquantes",
+    missingInformationsMessage:
+      "Veuillez remplir tous les champs obligatoires et vérifier que les valeurs saisies sont valides avant de soumettre le formulaire.",
+    invalidInformationsHeader: "Informations invalides",
+    invalidInformationsMessage:
+      "Veuillez vérifier les informations saisies. Certaines données ne sont pas valides.",
+    missingOrInvalidInformationsHeader: "Informations manquantes ou invalides",
+    missingOrInvalidInformationsMessage:
+      "Veuillez remplir tous les champs obligatoires et vérifier les informations saisies. Certaines données ne sont pas valides.",
+    successMessage: "Formulaire soumis avec succès ! | Référence : ",
+    errorMessage: "Échec de la soumission du formulaire.",
+    unknownError: "Une erreur inconnue s'est produite.",
+  },
+
+  ConfirmDialog: {
+    accept: "Oui",
+    reject: "Annuler",
+  },
+
+  Dialog: {
+    edit: "Modifier",
+    add: "Ajouter",
+    cancel: "Annuler",
+    validate: "Valider",
+  },
+
+  EmailAuth: {
+    accessVerification: "Vérification d'accès",
+    emailVerificationRequired: "Vérification de l'email requise",
+    enterEmailMessage:
+      "Veuillez saisir votre adresse email pour accéder à ce formulaire :",
+    emailAddress: "Adresse email",
+    enterEmailPlaceholder: "Saisissez votre email",
+    cancel: "Annuler",
+    continue: "Continuer",
+    verifyYourEmail: "Vérifiez votre email",
+    enterVerificationCode: "Saisissez le code de vérification",
+    codeSentTo: "Nous avons envoyé un code à 6 chiffres à :",
+    verificationCode: "Code de vérification",
+    didntReceiveCode: "Vous n'avez pas reçu le code ?",
+    resendCode: "Renvoyer le code",
+    back: "Retour",
+    verify: "Vérifier",
+    // Error messages
+    enterEmailAddress: "Veuillez saisir votre adresse email",
+    enterValidEmail: "Veuillez saisir une adresse email valide",
+    emailNotAuthorized: "Email non autorisé pour ce formulaire",
+    enterSixDigitCode: "Veuillez saisir le code à 6 chiffres",
+    codeMustBeSixDigits: "Le code doit contenir 6 chiffres",
+    invalidVerificationCode: "Code de vérification invalide",
+    failedToValidateEmail: "Échec de la validation de l'email",
+    failedToSendOTP: "Échec de l'envoi du code",
+    otpVerificationFailed: "Échec de la vérification du code",
+    validationFailed: "Échec de la validation",
+    verificationFailed: "Échec de la vérification",
+    failedToResendCode: "Échec du renvoi du code",
+    codeSentSuccessfully: "Code envoyé avec succès !",
+    // Detailed error messages
+    badRequest: "Demande invalide. Veuillez vérifier vos informations.",
+    unauthorized: "Accès non autorisé. Vérifiez vos permissions.",
+    notFound:
+      "Ressource non trouvée. Le formulaire ou l'invitation n'existe pas.",
+    tooManyRequests:
+      "Trop de tentatives. Veuillez attendre avant de réessayer.",
+    invalidEmailFormat: "Format d'email invalide.",
+    formNotFound: "Formulaire non trouvé ou n'existe pas.",
+    serverError: "Erreur serveur. Veuillez réessayer plus tard.",
+    networkError: "Erreur de connexion. Vérifiez votre connexion internet.",
+    unexpectedError: "Une erreur inattendue s'est produite.",
+    invalidOrExpiredCode: "Code invalide ou expiré.",
+  },
+
+  FormButtons: {
+    cancel: "Annuler",
+    previous: "Précédent",
+    next: "Suivant",
+    validate: "Valider",
+  },
+
   LocaleOptions: {
     startsWith: "Commence par",
     contains: "Contient",
@@ -155,86 +257,45 @@ const frensh = {
       rotateLeft: "Tourner à gauche",
     },
   },
-  ComponentForm: {
-    confirmMessage: "Êtes-vous sûr de vouloir valider ce formulaire ?",
-    confirmHeader: "Confirmation",
-    confirmYes: "Oui",
-    confirmNo: "Annuler",
-    missingInformationsHeader: "Informations manquantes",
-    missingInformationsMessage:
-      "Veuillez remplir tous les champs obligatoires et vérifier que les valeurs saisies sont valides avant de soumettre le formulaire.",
-    invalidInformationsHeader: "Informations invalides",
-    invalidInformationsMessage:
-      "Veuillez vérifier les informations saisies. Certaines données ne sont pas valides.",
-    missingOrInvalidInformationsHeader: "Informations manquantes ou invalides",
-    missingOrInvalidInformationsMessage:
-      "Veuillez remplir tous les champs obligatoires et vérifier les informations saisies. Certaines données ne sont pas valides.",
-    successMessage: "Formulaire soumis avec succès ! | Référence : ",
-    errorMessage: "Échec de la soumission du formulaire.",
-    unknownError: "Une erreur inconnue s'est produite.",
+
+  NeoMap: {
+    SearchPlaceholder: "Rechercher un lieu...",
   },
-  EmailAuth: {
-    accessVerification: "Vérification d'accès",
-    emailVerificationRequired: "Vérification de l'email requise",
-    enterEmailMessage:
-      "Veuillez saisir votre adresse email pour accéder à ce formulaire :",
-    emailAddress: "Adresse email",
-    enterEmailPlaceholder: "Saisissez votre email",
-    cancel: "Annuler",
-    continue: "Continuer",
-    verifyYourEmail: "Vérifiez votre email",
-    enterVerificationCode: "Saisissez le code de vérification",
-    codeSentTo: "Nous avons envoyé un code à 6 chiffres à :",
-    verificationCode: "Code de vérification",
-    didntReceiveCode: "Vous n'avez pas reçu le code ?",
-    resendCode: "Renvoyer le code",
-    back: "Retour",
-    verify: "Vérifier",
-    // Error messages
-    enterEmailAddress: "Veuillez saisir votre adresse email",
-    enterValidEmail: "Veuillez saisir une adresse email valide",
-    emailNotAuthorized: "Email non autorisé pour ce formulaire",
-    enterSixDigitCode: "Veuillez saisir le code à 6 chiffres",
-    codeMustBeSixDigits: "Le code doit contenir 6 chiffres",
-    invalidVerificationCode: "Code de vérification invalide",
-    failedToValidateEmail: "Échec de la validation de l'email",
-    failedToSendOTP: "Échec de l'envoi du code",
-    otpVerificationFailed: "Échec de la vérification du code",
-    validationFailed: "Échec de la validation",
-    verificationFailed: "Échec de la vérification",
-    failedToResendCode: "Échec du renvoi du code",
-    codeSentSuccessfully: "Code envoyé avec succès !",
-    // Detailed error messages
-    badRequest: "Demande invalide. Veuillez vérifier vos informations.",
-    unauthorized: "Accès non autorisé. Vérifiez vos permissions.",
-    notFound:
-      "Ressource non trouvée. Le formulaire ou l'invitation n'existe pas.",
-    tooManyRequests:
-      "Trop de tentatives. Veuillez attendre avant de réessayer.",
-    invalidEmailFormat: "Format d'email invalide.",
-    formNotFound: "Formulaire non trouvé ou n'existe pas.",
-    serverError: "Erreur serveur. Veuillez réessayer plus tard.",
-    networkError: "Erreur de connexion. Vérifiez votre connexion internet.",
-    unexpectedError: "Une erreur inattendue s'est produite.",
-    invalidOrExpiredCode: "Code invalide ou expiré.",
-  },
-  AuthCallback: {
-    processingAuthentication: "Traitement de l'authentification...",
-    pleaseWait:
-      "Veuillez patienter pendant que nous complétons le processus d'authentification.",
-  },
-  Authentication: {
-    authenticating: "Authentification...",
-    redirectingMessage:
-      "Veuillez patienter pendant que nous vous redirigeons vers le fournisseur d'authentification.",
-  },
+
   NeoPhotoProperties: {
     gallery: "Galerie",
     camera: "Caméra",
     uploading: "Téléchargement...",
   },
-  NeoMap: {
-    SearchPlaceholder: "Rechercher un lieu...",
+
+  NeoTable: {
+    empty: "Aucun objet trouvé.",
+    loading: "Chargement des objets...",
+    uniqueColumn: "La colonne doit être unique.",
+    uniqueId: "L'ID doit être unique.",
+    requiredFields: "Veuillez remplir les champs obligatoires.",
+    uniqueFields: "Veuillez vérifier les champs uniques.",
+    uniqueColumnName: "Le nom de la colonne doit être unique.",
+    search: "Recherche ...",
+    headersMismatch: "Les en-têtes ne correspondent pas.",
+    confirmAddData: "Êtes-vous sûr de vouloir ajouter les données au tableau ?",
+    confirmationHeader: "Confirmation",
+    duplicatesNotInserted: "doublons non insérés.",
+    success: "Succès",
+    deleteSelected: "Supprimer la sélection",
+    confirmDeleteSelected:
+      "Êtes-vous sûr de vouloir supprimer tous les éléments sélectionnés ?",
+    massDeleteSuccess:
+      "Les éléments sélectionnés ont été supprimés avec succès.",
+  },
+
+  Toast: {
+    success: "Succès",
+    error: "Erreur",
+    info: "Information",
+    warning: "Avertissement",
+    rejected: "Rejeté",
   },
 };
+
 export default frensh;

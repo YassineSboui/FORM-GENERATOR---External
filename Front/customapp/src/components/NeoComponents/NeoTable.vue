@@ -61,8 +61,8 @@
         </div>
       </template>
 
-      <template #empty>Aucun objet trouvé.</template>
-      <template #loading>Chargement des objets...</template>
+      <template #empty>{{ t("NeoTable.empty") }}</template>
+      <template #loading>{{ t("NeoTable.loading") }}</template>
 
       <template #expansion="{ data }">
         <div class="p-grid p-fluid">
@@ -330,8 +330,8 @@
           </Button>
         </div>
       </template>
-      <template #empty>Aucun objet trouvé.</template>
-      <template #loading>Chargement des objets...</template>
+      <template #empty>{{ t("NeoTable.empty") }}</template>
+      <template #loading>{{ t("NeoTable.loading") }}</template>
 
       <!-- :header="column.columnConfig.options.label" -->
       <!-- <Column
@@ -557,6 +557,7 @@
       :class="dialogClass"
       :style="dialogStyle"
       :closable="false"
+      :dir="isRTL ? 'rtl' : 'ltr'"
     >
       <!-- {{ configForm.Resolution }} -->
 
@@ -567,6 +568,7 @@
         :myWatchedVariable="myWatchedVariable"
         @fieldsValueChanged="handleFieldsValue"
         :tableFields="tableFields"
+        :isRTL="isRTL"
       ></component-form-table>
 
       <template #footer>
@@ -604,8 +606,8 @@
       v-model:expandedRows="expandedRows"
       v-model:selection="selectedObjects"
     >
-      <template #empty>{{ t("Table.empty") }}</template>
-      <template #loading>{{ t("Table.loading") }}</template>
+      <template #empty>{{ t("NeoTable.empty") }}</template>
+      <template #loading>{{ t("NeoTable.loading") }}</template>
       <Column
         v-if="config.objectConfig.formConfig.selectable"
         :selectionMode="config.objectConfig.formConfig.selectionMode"
@@ -1284,13 +1286,13 @@ const editCol = (slotProps: any) => {
 
 const Delete = async (obj: any) => {
   confirm.require({
-    message: "Êtes-vous sûr de vouloir continuer ?",
-    header: "Supprimer",
+    message: t("Setup.confirmImport"),
+    header: t("ActionButtons.delete"),
     icon: "pi pi-info-circle",
 
-    rejectLabel: "Non",
+    rejectLabel: t("ConfirmDialog.reject"),
     rejectClass: "p-button-danger",
-    acceptLabel: "Oui",
+    acceptLabel: t("ConfirmDialog.accept"),
     accept: async () => {
       const formConfig = props.config.objectConfig.formConfig;
       const onRowDeleteEvent = formConfig?.events?.find(
@@ -1345,13 +1347,12 @@ const Delete = async (obj: any) => {
 const deleteSelectedRows = () => {
   if (!selectedObjects.value || selectedObjects.value.length < 2) return;
   confirm.require({
-    message:
-      "Êtes-vous sûr de vouloir supprimer tous les éléments sélectionnés ?",
-    header: "Supprimer",
+    message: t("NeoTable.confirmDeleteSelected"),
+    header: t("ActionButtons.delete"),
     icon: "pi pi-info-circle",
-    rejectLabel: "Annuler",
+    rejectLabel: t("ConfirmDialog.reject"),
     rejectClass: "p-button-danger",
-    acceptLabel: "Supprimer",
+    acceptLabel: t("ConfirmDialog.accept"),
     accept: async () => {
       const formConfig = props.config.objectConfig.formConfig;
       const onRowDeleteEvent = formConfig?.events?.find(
@@ -1391,8 +1392,8 @@ const deleteSelectedRows = () => {
       }
       toast.add({
         severity: "success",
-        summary: "Succès",
-        detail: "Les éléments sélectionnés ont été supprimés avec succès.",
+        summary: t("Toast.success"),
+        detail: t("NeoTable.massDeleteSuccess"),
         life: 3000,
       });
       onRowEditCancel();
@@ -1523,8 +1524,8 @@ const onRowEditSave = async (event: any) => {
       }
       toast.add({
         severity: "error",
-        summary: "Erreur",
-        detail: "Le nom de la colonne doit être unique.",
+        summary: t("Toast.error"),
+        detail: t("NeoTable.uniqueColumnName"),
         life: 3000,
       });
       return;
@@ -1558,7 +1559,7 @@ const onRowEditSave = async (event: any) => {
         }
         toast.add({
           severity: "error",
-          summary: "Erreur",
+          summary: t("Toast.error"),
           detail: "L'ID doit être unique.",
           life: 3000,
         });
@@ -1578,18 +1579,19 @@ const onRowEditSave = async (event: any) => {
       if (!areObjectAttributesNotEmpty(newData)) {
         toast.add({
           severity: "error",
-          summary: "Erreur",
-          detail: "Veuillez remplir les champs obligatoires.",
+          summary: t("Toast.error"),
+          detail: t("NeoTable.requiredFields"),
           life: 3000,
         });
       } else {
         toast.add({
           severity: "error",
-          summary: "Erreur",
-          detail: "Veuillez vérifier les champs uniques.",
+          summary: t("Toast.error"),
+          detail: t("NeoTable.uniqueFields"),
           life: 3000,
         });
       }
+
       // Show error if fields are missing
     } else {
       // If the output format is JSON or local storage is used
@@ -1626,15 +1628,15 @@ const onRowEditSave = async (event: any) => {
       if (!areObjectAttributesNotEmpty(newData)) {
         toast.add({
           severity: "error",
-          summary: "Erreur",
-          detail: "Veuillez remplir les champs obligatoires.",
+          summary: t("Toast.error"),
+          detail: t("NeoTable.requiredFields"),
           life: 3000,
         });
       } else {
         toast.add({
           severity: "error",
-          summary: "Erreur",
-          detail: "Veuillez vérifier les champs uniques.",
+          summary: t("Toast.error"),
+          detail: t("NeoTable.uniqueFields"),
           life: 3000,
         });
       }
@@ -1729,15 +1731,15 @@ const handleFieldsValue = async (value: any) => {
     if (!areObjectAttributesNotEmpty(value)) {
       toast.add({
         severity: "error",
-        summary: "Erreur",
-        detail: "Veuillez remplir les champs obligatoires.",
+        summary: t("Toast.error"),
+        detail: t("NeoTable.requiredFields"),
         life: 3000,
       });
     } else {
       toast.add({
         severity: "error",
-        summary: "Erreur",
-        detail: "Veuillez vérifier les champs uniques.",
+        summary: t("Toast.error"),
+        detail: t("NeoTable.uniqueFields"),
         life: 3000,
       });
     }
@@ -1758,8 +1760,8 @@ const handleFieldsValue = async (value: any) => {
     if (!isColumnNameUnique) {
       toast.add({
         severity: "error",
-        summary: "Erreur",
-        detail: "Le nom de la colonne doit être unique.",
+        summary: t("Toast.error"),
+        detail: t("NeoTable.uniqueColumnName"),
         life: 3000,
       });
       myWatchedVariable.value = false; // Reset watched variable
@@ -1769,7 +1771,7 @@ const handleFieldsValue = async (value: any) => {
     if (!isIdUnique) {
       toast.add({
         severity: "error",
-        summary: "Erreur",
+        summary: t("Toast.error"),
         detail: "L'ID doit être unique.",
         life: 3000,
       });
@@ -2156,7 +2158,7 @@ const selectionModeButtons = computed(() => {
   return [
     {
       type: "Button",
-      label: "Exporter",
+      label: t("ActionButtons.export"),
       command: () => {
         downloadObjectAsJson(
           selectedRows.value,
@@ -2171,15 +2173,15 @@ const selectionModeButtons = computed(() => {
     },
     {
       type: "Button",
-      label: "Supprimer",
+      label: t("ActionButtons.delete"),
       command: () => {
         confirm.require({
           message: "Êtes-vous sur de vouloir continuer?",
-          header: "Supprimer",
+          header: t("ActionButtons.delete"),
           icon: "pi pi-info-circle",
 
-          acceptLabel: "Oui",
-          rejectLabel: "Non",
+          acceptLabel: t("ConfirmDialog.accept"),
+          rejectLabel: t("ConfirmDialog.reject"),
           rejectClass: "p-button-danger",
           accept: async () => {
             // isLoading.value = true;

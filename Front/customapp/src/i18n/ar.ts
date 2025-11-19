@@ -1,10 +1,108 @@
 const arabic = {
+  ActionButtons: {
+    delete: "حذف",
+    reset: "إعادة تعيين",
+  },
+
+  AuthCallback: {
+    processingAuthentication: "معالجة المصادقة...",
+    pleaseWait: "يرجى الانتظار بينما نكمل عملية المصادقة.",
+  },
+
+  Authentication: {
+    authenticating: "المصادقة...",
+    redirectingMessage: "يرجى الانتظار بينما نقوم بتوجيهك إلى مزود المصادقة.",
+  },
+
   buttons: {
     cancel: "إلغاء",
     previous: "السابق",
     next: "التالي",
     validate: "تأكيد",
   },
+
+  ComponentForm: {
+    confirmMessage: "هل أنت متأكد أنك تريد تأكيد هذا النموذج؟",
+    confirmHeader: "تأكيد",
+    confirmYes: "نعم",
+    confirmNo: "إلغاء",
+    missingInformationsHeader: "معلومات ناقصة",
+    missingInformationsMessage:
+      "يرجى ملء جميع الحقول الإلزامية قبل إرسال النموذج.",
+    invalidInformationsHeader: "معلومات غير صالحة",
+    invalidInformationsMessage:
+      "يرجى التحقق من المعلومات المدخلة. بعض البيانات غير صالحة.",
+    missingOrInvalidInformationsHeader: "معلومات ناقصة أو غير صالحة",
+    missingOrInvalidInformationsMessage:
+      "يرجى ملء جميع الحقول الإلزامية والتحقق من المعلومات المدخلة. بعض البيانات غير صالحة.",
+    successMessage: "تم إرسال النموذج بنجاح! | معرف: ",
+    errorMessage: "فشل في إرسال النموذج.",
+    unknownError: "حدث خطأ غير معروف.",
+  },
+
+  ConfirmDialog: {
+    accept: "نعم",
+    reject: "إلغاء",
+  },
+
+  Dialog: {
+    edit: "تعديل",
+    add: "إضافة",
+    cancel: "إلغاء",
+    validate: "تأكيد",
+  },
+
+  EmailAuth: {
+    accessVerification: "التحقق من الوصول",
+    emailVerificationRequired: "التحقق من البريد الإلكتروني مطلوب",
+    enterEmailMessage:
+      "يرجى إدخال عنوان بريدك الإلكتروني للوصول إلى هذا النموذج:",
+    emailAddress: "عنوان البريد الإلكتروني",
+    enterEmailPlaceholder: "أدخل بريدك الإلكتروني",
+    cancel: "إلغاء",
+    continue: "متابعة",
+    verifyYourEmail: "تحقق من بريدك الإلكتروني",
+    enterVerificationCode: "أدخل رمز التحقق",
+    codeSentTo: "لقد أرسلنا رمزاً من 6 أرقام إلى:",
+    verificationCode: "رمز التحقق",
+    didntReceiveCode: "لم تتلق الرمز؟",
+    resendCode: "إعادة إرسال الرمز",
+    back: "الرجوع",
+    verify: "تحقق",
+    // Error messages
+    enterEmailAddress: "يرجى إدخال عنوان بريدك الإلكتروني",
+    enterValidEmail: "يرجى إدخال عنوان بريد إلكتروني صالح",
+    emailNotAuthorized: "البريد الإلكتروني غير مخول لهذا النموذج",
+    enterSixDigitCode: "يرجى إدخال الرمز من 6 أرقام",
+    codeMustBeSixDigits: "يجب أن يحتوي الرمز على 6 أرقام",
+    invalidVerificationCode: "رمز التحقق غير صالح",
+    failedToValidateEmail: "فشل في التحقق من البريد الإلكتروني",
+    failedToSendOTP: "فشل في إرسال الرمز",
+    otpVerificationFailed: "فشل في التحقق من الرمز",
+    validationFailed: "فشل في التحقق",
+    verificationFailed: "فشل في التحقق",
+    failedToResendCode: "فشل في إعادة إرسال الرمز",
+    codeSentSuccessfully: "تم إرسال الرمز بنجاح!",
+    // Detailed error messages
+    badRequest: "طلب غير صحيح. يرجى التحقق من معلوماتك.",
+    unauthorized: "وصول غير مخول. تحقق من صلاحياتك.",
+    notFound: "المورد غير موجود. النموذج أو الدعوة غير موجودة.",
+    tooManyRequests: "محاولات كثيرة جداً. يرجى الانتظار قبل المحاولة مرة أخرى.",
+    invalidEmailFormat: "تنسيق البريد الإلكتروني غير صالح.",
+    serverError: "خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.",
+    formNotFound: "النموذج غير موجود أو غير متوفر.",
+    networkError: "خطأ في الاتصال. تحقق من اتصالك بالإنترنت.",
+    unexpectedError: "حدث خطأ غير متوقع.",
+    invalidOrExpiredCode: "رمز غير صالح أو منتهي الصلاحية.",
+  },
+
+  FormButtons: {
+    cancel: "إلغاء",
+    previous: "السابق",
+    next: "التالي",
+    validate: "تأكيد",
+  },
+
   LocaleOptions: {
     startsWith: "يبدأ بـ",
     contains: "يحتوي على",
@@ -110,6 +208,7 @@ const arabic = {
     medium: "متوسط",
     strong: "قوي",
     passwordPrompt: "أدخل كلمة المرور",
+    emptyFilterMessage: "لم يتم العثور على نتائج",
     searchMessage: "عدد النتائج المتاحة {0}",
     selectionMessage: "{0} عناصر محددة",
     emptySelectionMessage: "لا يوجد عناصر محددة",
@@ -168,82 +267,43 @@ const arabic = {
       rotateLeft: "تدوير لليسار",
     },
   },
-  ComponentForm: {
-    confirmMessage: "هل أنت متأكد أنك تريد تأكيد هذا النموذج؟",
-    confirmHeader: "تأكيد",
-    confirmYes: "نعم",
-    confirmNo: "إلغاء",
-    missingInformationsHeader: "معلومات ناقصة",
-    missingInformationsMessage:
-      "يرجى ملء جميع الحقول الإلزامية قبل إرسال النموذج.",
-    invalidInformationsHeader: "معلومات غير صالحة",
-    invalidInformationsMessage:
-      "يرجى التحقق من المعلومات المدخلة. بعض البيانات غير صالحة.",
-    missingOrInvalidInformationsHeader: "معلومات ناقصة أو غير صالحة",
-    missingOrInvalidInformationsMessage:
-      "يرجى ملء جميع الحقول الإلزامية والتحقق من المعلومات المدخلة. بعض البيانات غير صالحة.",
-    successMessage: "تم إرسال النموذج بنجاح! | معرف: ",
-    errorMessage: "فشل في إرسال النموذج.",
-    unknownError: "حدث خطأ غير معروف.",
+
+  NeoMap: {
+    SearchPlaceholder: "البحث عن موقع...",
   },
-  EmailAuth: {
-    accessVerification: "التحقق من الوصول",
-    emailVerificationRequired: "التحقق من البريد الإلكتروني مطلوب",
-    enterEmailMessage:
-      "يرجى إدخال عنوان بريدك الإلكتروني للوصول إلى هذا النموذج:",
-    emailAddress: "عنوان البريد الإلكتروني",
-    enterEmailPlaceholder: "أدخل بريدك الإلكتروني",
-    cancel: "إلغاء",
-    continue: "متابعة",
-    verifyYourEmail: "تحقق من بريدك الإلكتروني",
-    enterVerificationCode: "أدخل رمز التحقق",
-    codeSentTo: "لقد أرسلنا رمزاً من 6 أرقام إلى:",
-    verificationCode: "رمز التحقق",
-    didntReceiveCode: "لم تتلق الرمز؟",
-    resendCode: "إعادة إرسال الرمز",
-    back: "الرجوع",
-    verify: "تحقق",
-    // Error messages
-    enterEmailAddress: "يرجى إدخال عنوان بريدك الإلكتروني",
-    enterValidEmail: "يرجى إدخال عنوان بريد إلكتروني صالح",
-    emailNotAuthorized: "البريد الإلكتروني غير مخول لهذا النموذج",
-    enterSixDigitCode: "يرجى إدخال الرمز من 6 أرقام",
-    codeMustBeSixDigits: "يجب أن يحتوي الرمز على 6 أرقام",
-    invalidVerificationCode: "رمز التحقق غير صالح",
-    failedToValidateEmail: "فشل في التحقق من البريد الإلكتروني",
-    failedToSendOTP: "فشل في إرسال الرمز",
-    otpVerificationFailed: "فشل في التحقق من الرمز",
-    validationFailed: "فشل في التحقق",
-    verificationFailed: "فشل في التحقق",
-    failedToResendCode: "فشل في إعادة إرسال الرمز",
-    codeSentSuccessfully: "تم إرسال الرمز بنجاح!",
-    // Detailed error messages
-    badRequest: "طلب غير صحيح. يرجى التحقق من معلوماتك.",
-    unauthorized: "وصول غير مخول. تحقق من صلاحياتك.",
-    notFound: "المورد غير موجود. النموذج أو الدعوة غير موجودة.",
-    tooManyRequests: "محاولات كثيرة جداً. يرجى الانتظار قبل المحاولة مرة أخرى.",
-    invalidEmailFormat: "تنسيق البريد الإلكتروني غير صالح.",
-    serverError: "خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.",
-    formNotFound: "النموذج غير موجود أو غير متوفر.",
-    networkError: "خطأ في الاتصال. تحقق من اتصالك بالإنترنت.",
-    unexpectedError: "حدث خطأ غير متوقع.",
-    invalidOrExpiredCode: "رمز غير صالح أو منتهي الصلاحية.",
-  },
-  AuthCallback: {
-    processingAuthentication: "معالجة المصادقة...",
-    pleaseWait: "يرجى الانتظار بينما نكمل عملية المصادقة.",
-  },
-  Authentication: {
-    authenticating: "المصادقة...",
-    redirectingMessage: "يرجى الانتظار بينما نقوم بتوجيهك إلى مزود المصادقة.",
-  },
+
   NeoPhotoProperties: {
     gallery: "معرض الصور",
     camera: "الكاميرا",
     uploading: "جاري التحميل...",
   },
-  NeoMap: {
-    SearchPlaceholder: "البحث عن موقع...",
+
+  Table: {
+    empty: "لم يتم العثور على أي عنصر.",
+    loading: "جاري تحميل العناصر...",
+    uniqueColumn: "يجب أن يكون العمود فريداً.",
+    uniqueId: "يجب أن يكون المعرّف فريداً.",
+    requiredFields: "يرجى ملء الحقول الإلزامية.",
+    uniqueFields: "يرجى التحقق من الحقول الفريدة.",
+    uniqueColumnName: "يجب أن يكون اسم العمود فريداً.",
+    search: "بحث ...",
+    headersMismatch: "عناوين الأعمدة غير متطابقة.",
+    confirmAddData: "هل أنت متأكد أنك تريد إضافة البيانات إلى الجدول؟",
+    confirmationHeader: "تأكيد",
+    duplicatesNotInserted: "لم يتم إدراج العناصر المكررة.",
+    success: "نجاح",
+    deleteSelected: "حذف العناصر المحددة",
+    confirmDeleteSelected: "هل أنت متأكد أنك تريد حذف جميع العناصر المحددة؟",
+    massDeleteSuccess: "تم حذف العناصر المحددة بنجاح.",
+  },
+
+  Toast: {
+    success: "نجاح",
+    error: "خطأ",
+    info: "معلومة",
+    warning: "تحذير",
+    rejected: "مرفوض",
   },
 };
+
 export default arabic;

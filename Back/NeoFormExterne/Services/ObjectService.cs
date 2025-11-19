@@ -110,8 +110,6 @@ namespace NeoForm_Externe.Services
 
         public async Task<ObjectModels> PublishObject(JObject obj)
         {
-            _logger.LogInformation("PublishObject called with object: {Object}", obj.ToString(Formatting.None));
-
             var guid = obj["guid"]?.ToString();
 
             if (string.IsNullOrWhiteSpace(guid) || !Guid.TryParse(guid, out Guid parsedGuid))

@@ -28,7 +28,7 @@ const routes = [
   {
     path: "/unauthorized",
     name: "unauthorized",
-    component: () => import("@/views/UnauthorizedView.vue"),
+    component: () => import("@/views/Client-UnauthorizedView.vue"),
     meta: { fullMode: true },
   },
   {
@@ -53,7 +53,7 @@ const routes = [
   },
   {
     path: "/:pathMatch(.*)*",
-    component: () => import("@/views/UnauthorizedView.vue"),
+    component: () => import("@/views/Client-UnauthorizedView.vue"),
     meta: { fullMode: true },
   },
 ];
