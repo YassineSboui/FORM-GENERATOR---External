@@ -523,6 +523,7 @@ import {
   formUtility,
   sectionUtility,
   initializeBlocklyUtilities,
+  systemUtility,
 } from "@/utils/blocklyUtilities";
 
 // Utility class for query parameter decryption
@@ -1871,24 +1872,35 @@ const handleMouseleave = async (item: any) => {
     }
   }
 };
+
 const handleRefs = (event: any) => {
   ArrayRef.value.push(event);
+  console.log("ArrayRef", ArrayRef.value);
   ArrayRef.value.forEach((element: any) => {
     const exist = secondArray.value.find((el: any) => el == element);
     if (!exist) {
       secondArray.value.push(element);
     }
   });
+  console.log("secondArray", secondArray.value);
+
   const mergedObject = secondArray.value.reduce((result: any, obj: any) => {
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        result[key] = obj[key];
+    Object.keys(obj).forEach((key) => {
+      // If key doesn't exist, initialize it
+      if (!result[key]) {
+        result[key] = [];
       }
-    }
+
+      // Push all items from arrays
+      result[key].push(...obj[key]);
+    });
+
     return result;
   }, {});
+  console.log("mergedObject", mergedObject);
   app.refs = mergedObject;
 };
+
 const executeFun = async (event: any) => {
   console.log("[ComponentForm] executeFun called for event:", event.id);
   if (
@@ -2162,6 +2174,7 @@ const createExecutionContext = () => ({
   sectionUtility,
   storeUtility,
   formUtility,
+  systemUtility,
 });
 
 const validateField = (pageItem: any, columnName: string, valid: boolean) => {
@@ -2185,7 +2198,9 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
           options.hidden !== true &&
           isEmpty(Fields.value[options.name])
         ) {
-          app.refs[options.name]?.[0]?.setFieldError("Ce champ est requis.");
+          app.refs[options.name]?.[0]?.setFieldError(
+            props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+          );
           fieldValid = false;
         }
         // Rules check: use validateByRule for each rule
@@ -2205,7 +2220,8 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
             const result = validateByRule(
               val ?? "",
               rule,
-              options.label || options.name
+              options.label || options.name,
+              props.isRTL ? "ar" : "fr"
             );
             console.log(
               "[ComponentForm] Validation result for rule:",
@@ -2248,7 +2264,7 @@ const validateFieldRepeatableZone = (
                 // Required check
                 if (options.required && isEmpty(Fields.value[options.name])) {
                   app.refs[options.name]?.[0]?.setFieldError(
-                    "Ce champ est requis."
+                    props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
                   );
                   fieldValid = false;
                 }
@@ -2263,7 +2279,8 @@ const validateFieldRepeatableZone = (
                     const result = validateByRule(
                       val,
                       rule,
-                      options.label || options.name
+                      options.label || options.name,
+                      props.isRTL ? "ar" : "fr"
                     );
                     if (!result.valid && result.msg) {
                       messages.push(result.msg);
@@ -2310,7 +2327,9 @@ const validateFieldSplitterZone = (
         if (options && options.hidden !== true) {
           // Required check
           if (options.required && isEmpty(Fields.value[options.name])) {
-            app.refs[options.name]?.[0]?.setFieldError("Ce champ est requis.");
+            app.refs[options.name]?.[0]?.setFieldError(
+              props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+            );
             fieldValid = false;
           }
           // Rules check: use validateByRule for each rule
@@ -2324,7 +2343,8 @@ const validateFieldSplitterZone = (
               const result = validateByRule(
                 val,
                 rule,
-                options.label || options.name
+                options.label || options.name,
+                props.isRTL ? "ar" : "fr"
               );
               if (!result.valid && result.msg) {
                 messages.push(result.msg);
@@ -2494,7 +2514,12 @@ function validateFieldAllRules(
   let valid = true;
   let messages: string[] = [];
   for (const rule of rules) {
-    const result = validateByRule(value, rule, fieldLabel);
+    const result = validateByRule(
+      value,
+      rule,
+      fieldLabel,
+      props.isRTL ? "ar" : "fr"
+    );
     if (!result.valid && result.msg) {
       valid = false;
       messages.push(result.msg);

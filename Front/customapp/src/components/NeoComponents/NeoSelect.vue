@@ -99,7 +99,15 @@
 <script lang="ts">
 import { eliseEnumeration, fetchDataByTableGuid } from "@/api/api";
 import { useAppStore } from "@/store/app.store";
-import { ref, computed, onMounted, watch, reactive, nextTick } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  reactive,
+  nextTick,
+} from "vue";
 import { logger } from "@/api/api";
 interface OptionConfig {
   label_AR: string;
@@ -120,7 +128,8 @@ interface OptionConfig {
   value: string;
   selectedSource: string;
   selectedTable: string;
-  selectedColumn: string;
+  selectedColumnLabel: string;
+  selectedColumnValue: string;
   showClear: boolean;
   search: boolean;
   eliseEnumerate: string;
@@ -173,7 +182,8 @@ export default {
         hidden: false,
         selectedSource: "manual",
         selectedTable: "",
-        selectedColumn: "",
+        selectedColumnLabel: "",
+        selectedColumnValue: "",
         eliseEnumerate: "",
         selectedVariable: "",
         showClear: false,
@@ -210,6 +220,20 @@ export default {
     "mouseleave",
   ],
   setup(props, { emit }) {
+    // Module-level caches (shared across component instances) to avoid repeated fetches
+    // Note: kept here inside setup to keep patch minimal; these Maps are created per module import
+    // and will persist across component instances.
+    const enumCache: Map<string, any[]> =
+      (globalThis as any).__neo_enumCache || new Map();
+    const tableCache: Map<string, any[]> =
+      (globalThis as any).__neo_tableCache || new Map();
+    (globalThis as any).__neo_enumCache = enumCache;
+    (globalThis as any).__neo_tableCache = tableCache;
+
+    let isUnmounted = false;
+    onBeforeUnmount(() => {
+      isUnmounted = true;
+    });
     const store = useAppStore();
     const itemValue = computed({
       get() {
@@ -387,6 +411,7 @@ export default {
     const showField = () => updateOptions({ hidden: false });
 
     const setElements = (newElements: string | any[]) => {
+      console.log("[NeoSelect] Updating items...", newElements);
       let parsedElements: any[] = [];
       // Check if newElements is a string, and try to parse it
       if (typeof newElements === "string") {
@@ -514,6 +539,7 @@ export default {
     });
 
     const updateItems = async (newElements: string | any[]) => {
+      console.log("[NeoSelect] Updating items...", newElements);
       if (newElements === undefined || newElements === null) {
         console.warn("New elements are undefined or null, skipping update.");
         return;
@@ -588,8 +614,8 @@ export default {
           .filter((item) => item !== null); // Filter out null items (éléments vides)
       }
       console.log(
-        "[NeoSelect] fetchEnumerations - formatted elements count:",
-        formattedElements?.length
+        "[NeoSelect] Formatted elements ready, count:",
+        formattedElements.length
       );
       // Log the formatted elements for debugging
       internalItems.value = formattedElements;
@@ -669,24 +695,44 @@ export default {
       }
     );
     const fetchEnumerations = async () => {
-      let res: any = await eliseEnumeration(props.options.eliseEnumerate);
-      const tempArray = ref([] as any);
+      const key = props.options.eliseEnumerate;
+      if (!key) return;
+      // Return cached result when available
+      if (enumCache.has(key)) {
+        internalItems.value = enumCache.get(key) as any[];
+        return internalItems.value;
+      }
+      let res: any = await eliseEnumeration(key);
+      const tempArray: any[] = [];
       res.forEach((element: any) => {
-        tempArray.value.push({
+        tempArray.push({
           code: element.key,
           name: element.value,
         });
       });
-      internalItems.value = tempArray.value;
+      // store in cache
+      enumCache.set(key, tempArray);
+      if (!isUnmounted) internalItems.value = tempArray;
+      return tempArray;
     };
     onMounted(async () => {
       isLoading.value = true;
       if (props.options.selectedSource == "elise") {
-        await fetchEnumerations();
+        // only fetch if internalItems is empty or cache missing
+        if (!internalItems.value || internalItems.value.length === 0) {
+          await fetchEnumerations();
+        }
       }
 
       if (props.options.selectedTable) {
-        await handleSelectedTableChange(props.options.selectedTable);
+        // only fetch if cache missing
+        if (!tableCache.has(props.options.selectedTable)) {
+          await handleSelectedTableChange(props.options.selectedTable);
+        } else {
+          internalItems.value = tableCache.get(
+            props.options.selectedTable
+          ) as any[];
+        }
       }
       console.log("Mounted with modelValue:", props.modelValue);
       // Handle initial modelValue when component is mounted
@@ -731,56 +777,48 @@ export default {
     });
 
     async function handleSelectedTableChange(newTable: string) {
-      if (newTable) {
-        let res: any = await fetchDataByTableGuid(newTable as any);
-        const tempArray = [] as any;
-        res.forEach((element: any) => {
+      if (!newTable) return;
+      // return cached table values when available
+      if (tableCache.has(newTable)) {
+        internalItems.value = tableCache.get(newTable) as any[];
+        return internalItems.value;
+      }
+      let res: any = await fetchDataByTableGuid(newTable as any);
+      const tempArray: any[] = [];
+      res.forEach((element: any) => {
+        try {
           var elemJSON = JSON.parse(element.dataJson);
-          if (elemJSON.datas[props.options.selectedColumn]) {
-            if (elemJSON.datas["code"]) {
-              if (
-                tempArray.findIndex(
-                  (item: any) =>
-                    item.name == elemJSON.datas[props.options.selectedColumn]
-                ) == -1
-              ) {
-                tempArray.push({
-                  code: elemJSON.datas["code"],
-                  name: elemJSON.datas[props.options.selectedColumn],
-                });
-              } else {
-                return;
-              }
+        } catch (e) {
+          return;
+        }
+        if (elemJSON.datas[props.options.selectedColumnValue]) {
+          const candidateName =
+            elemJSON.datas[props.options.selectedColumnLabel] ||
+            elemJSON.datas[props.options.selectedColumnValue];
+          const candidateCode =
+            elemJSON.datas[props.options.selectedColumnValue];
+          const exists =
+            tempArray.findIndex(
+              (item: any) =>
+                item.code == candidateCode || item.name == candidateName
+            ) !== -1;
+          if (!exists) {
+            if (!props.options.returnObject) {
+              tempArray.push({ code: candidateCode, name: candidateName });
             } else {
-              if (
-                tempArray.findIndex(
-                  (item: any) =>
-                    item.code == elemJSON.datas[props.options.selectedColumn]
-                ) == -1
-              ) {
-                if (!props.options.returnObject) {
-                  tempArray.push({
-                    code: elemJSON.datas[props.options.selectedColumn],
-                    name: elemJSON.datas[props.options.selectedColumn],
-                  });
-                } else {
-                  tempArray.push({
-                    code: elemJSON.datas[props.options.selectedColumn],
-                    name: elemJSON.datas[props.options.selectedColumn],
-                    ...elemJSON.datas,
-                  });
-                }
-              } else {
-                return;
-              }
+              tempArray.push({
+                code: candidateCode,
+                name: candidateName,
+                ...elemJSON.datas,
+              });
             }
           }
-        });
-        // Only update internalItems if the new data is different
-        if (JSON.stringify(internalItems.value) !== JSON.stringify(tempArray)) {
-          internalItems.value = tempArray;
         }
-      }
+      });
+      // cache result and assign
+      tableCache.set(newTable, tempArray);
+      if (!isUnmounted) internalItems.value = tempArray;
+      return tempArray;
     }
     watch(
       () => props.options.selectedTable,
@@ -871,6 +909,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
 .input-select .p-select {
   padding: 0.1rem !important;

@@ -56,6 +56,7 @@ import {
   storeUtility,
   formUtility,
   initializeBlocklyUtilities,
+  systemUtility,
 } from "@/utils/blocklyUtilities";
 
 // export default {
@@ -208,6 +209,7 @@ const createExecutionContext = () => ({
   eliseUtility,
   storeUtility,
   formUtility,
+  systemUtility,
 });
 
 const submit = async () => {
@@ -436,20 +438,29 @@ const handleMouseleave = async (item: any) => {
 
 const handleRefs = (event: any) => {
   ArrayRef.value.push(event);
+  console.log("ArrayRef", ArrayRef.value);
   ArrayRef.value.forEach((element: any) => {
     const exist = secondArray.value.find((el: any) => el == element);
     if (!exist) {
       secondArray.value.push(element);
     }
   });
+  console.log("secondArray", secondArray.value);
+
   const mergedObject = secondArray.value.reduce((result: any, obj: any) => {
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        result[key] = obj[key];
+    Object.keys(obj).forEach((key) => {
+      // If key doesn't exist, initialize it
+      if (!result[key]) {
+        result[key] = [];
       }
-    }
+
+      // Push all items from arrays
+      result[key].push(...obj[key]);
+    });
+
     return result;
   }, {});
+  console.log("mergedObject", mergedObject);
   app.refs = mergedObject;
 };
 
@@ -544,7 +555,8 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
         const result = validateByRule(
           rule,
           Fields.value[options.name],
-          options.label
+          options.label,
+          props.isRTL ? "ar" : "fr"
         );
         if (!result.valid) {
           valid = false;

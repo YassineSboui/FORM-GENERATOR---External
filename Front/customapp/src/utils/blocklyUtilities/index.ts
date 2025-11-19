@@ -16,6 +16,7 @@ import { sectionUtility, initSectionUtility } from "./sectionUtility";
 import { eliseUtility, initEliseUtility } from "./eliseUtility";
 import { storeUtility, initStoreUtility } from "./storeUtility";
 import { formUtility, initFormUtility } from "./formUtility";
+import { systemUtility } from "./systemUtility";
 
 // Export all utilities
 export * from "./fieldUtility";
@@ -26,6 +27,7 @@ export * from "./sectionUtility";
 export * from "./eliseUtility";
 export * from "./storeUtility";
 export * from "./formUtility";
+export * from "./systemUtility";
 
 // Re-export utility instances
 export {
@@ -42,6 +44,7 @@ export {
   initStoreUtility,
   formUtility,
   initFormUtility,
+  systemUtility,
 };
 
 /**
@@ -85,5 +88,7 @@ export function getAllUtilities() {
     sectionUtility,
     eliseUtility,
     storeUtility,
+    formUtility,
+    systemUtility,
   };
 }

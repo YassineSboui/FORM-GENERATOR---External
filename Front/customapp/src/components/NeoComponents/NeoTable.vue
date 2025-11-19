@@ -767,6 +767,7 @@ import {
   eliseUtility,
   initializeBlocklyUtilities,
 } from "@/utils/blocklyUtilities";
+import { validateByRule } from "@/utils/fieldValidator";
 
 const props = defineProps({
   label: String,
@@ -1232,20 +1233,68 @@ const createEmptyObject = (data: Array<any>): Record<string, any> => {
   return result;
 };
 
-const areObjectAttributesNotEmpty = (obj: Record<string, any>): boolean => {
-  const requiredColumnNames = columns.value
-    .filter((column: any) => column.columnConfig.options.required)
-    .map((column: any) => column.columnConfig.options.name);
+const areObjectAttributesValid = (obj: Record<string, any>): boolean => {
+  // Helper isEmpty (mirrors logic used in fieldValidator)
+  const isEmpty = (val: any) => {
+    if (val === null || val === undefined) return true;
+    if (typeof val === "string" && val.trim() === "") return true;
+    if (Array.isArray(val) && val.length === 0) return true;
+    if (
+      typeof val === "object" &&
+      !Array.isArray(val) &&
+      Object.keys(val).length === 0
+    )
+      return true;
+    return false;
+  };
 
-  // Check if all required attributes are non-empty
-  return requiredColumnNames.every((key: any) => {
-    if (obj.hasOwnProperty(key)) {
-      const value = obj[key];
-      return !(typeof value === "string" && value.trim() === "");
-    }
-    return true; // If the key doesn't exist, treat it as valid
+  let fieldValid = true;
+
+  // Ensure we read Fields from the store (store.Fields is a ref)
+  const Fields = (store as any).Fields;
+
+  const formTemplate = props.config?.objectConfig?.formTemplate || [];
+
+  formTemplate.forEach((row: any) => {
+    Object.values(row.rows).forEach((col: any) => {
+      Object.values(col).forEach((field: any) => {
+        const options = field.options;
+        if (options && options.hidden !== true) {
+          // Required check
+          if (options.required && isEmpty(obj[options.name])) {
+            app.refs[options.name]?.[0]?.setFieldError(
+              props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+            );
+            fieldValid = false;
+          }
+          // Rules check: use validateByRule for each rule
+          if (Array.isArray(options.rules) && !isEmpty(obj[options.name])) {
+            const val = obj[options.name];
+            let messages: string[] = [];
+            for (const rule of options.rules) {
+              const result = validateByRule(
+                val,
+                rule,
+                options.label || options.name,
+                props.isRTL ? "ar" : "fr"
+              );
+              if (!result.valid && result.msg) {
+                messages.push(result.msg);
+                fieldValid = false;
+              }
+            }
+            if (messages.length > 0) {
+              app.refs[options.name]?.[0]?.setFieldError(messages.join("\n"));
+            }
+          }
+        }
+      });
+    });
   });
+
+  return fieldValid;
 };
+
 const checkDuplicateUniqueAttribute = (
   obj: Record<string, any>,
   uniqueKeys: any,
@@ -1286,7 +1335,7 @@ const editCol = (slotProps: any) => {
 
 const Delete = async (obj: any) => {
   confirm.require({
-    message: t("Setup.confirmImport"),
+    message: t("Client_SetupView.confirmImport"),
     header: t("ActionButtons.delete"),
     icon: "pi pi-info-circle",
 
@@ -1573,14 +1622,14 @@ const onRowEditSave = async (event: any) => {
   if (event.data?.id != undefined) {
     // Validate that all required fields are filled in
     if (
-      !areObjectAttributesNotEmpty(newData) ||
+      !areObjectAttributesValid(newData) ||
       checkDuplicateUniqueAttribute(newData, uniqueColumns.value, index)
     ) {
-      if (!areObjectAttributesNotEmpty(newData)) {
+      if (!areObjectAttributesValid(newData)) {
         toast.add({
           severity: "error",
           summary: t("Toast.error"),
-          detail: t("NeoTable.requiredFields"),
+          detail: t("NeoTable.notValidFields"),
           life: 3000,
         });
       } else {
@@ -1621,15 +1670,15 @@ const onRowEditSave = async (event: any) => {
   } else {
     // For new rows (without `id`), handle creation logic
     if (
-      !areObjectAttributesNotEmpty(newData) ||
+      !areObjectAttributesValid(newData) ||
       checkDuplicateUniqueAttribute(newData, uniqueColumns.value)
     ) {
       // Show error if required fields are missing
-      if (!areObjectAttributesNotEmpty(newData)) {
+      if (!areObjectAttributesValid(newData)) {
         toast.add({
           severity: "error",
           summary: t("Toast.error"),
-          detail: t("NeoTable.requiredFields"),
+          detail: t("NeoTable.notValidFields"),
           life: 3000,
         });
       } else {
@@ -1725,14 +1774,14 @@ const handleFieldsValue = async (value: any) => {
 
   // Check if the required fields are populated
   if (
-    !areObjectAttributesNotEmpty(value) ||
+    !areObjectAttributesValid(value) ||
     checkDuplicateUniqueAttribute(value, uniqueColumns.value, index.value)
   ) {
-    if (!areObjectAttributesNotEmpty(value)) {
+    if (!areObjectAttributesValid(value)) {
       toast.add({
         severity: "error",
         summary: t("Toast.error"),
-        detail: t("NeoTable.requiredFields"),
+        detail: t("NeoTable.notValidFields"),
         life: 3000,
       });
     } else {
@@ -1792,7 +1841,11 @@ const handleFieldsValue = async (value: any) => {
     "[NeoTable] BeforeRowSave function available:",
     !!beforeRowSaveFunction
   );
-  if (beforeRowSaveFunction != undefined) {
+  if (
+    beforeRowSaveFunction != undefined &&
+    beforeRowSaveFunction != null &&
+    beforeRowSaveFunction != ""
+  ) {
     try {
       // Store original data for comparison
       const originalData = JSON.stringify(fieldsValue.value);

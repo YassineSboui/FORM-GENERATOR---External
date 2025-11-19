@@ -278,12 +278,12 @@ const arabic = {
     uploading: "جاري التحميل...",
   },
 
-  Table: {
+  NeoTable: {
     empty: "لم يتم العثور على أي عنصر.",
     loading: "جاري تحميل العناصر...",
     uniqueColumn: "يجب أن يكون العمود فريداً.",
     uniqueId: "يجب أن يكون المعرّف فريداً.",
-    requiredFields: "يرجى ملء الحقول الإلزامية.",
+    notValidFields: "يرجى التحقق من الحقول غير الصالحة.",
     uniqueFields: "يرجى التحقق من الحقول الفريدة.",
     uniqueColumnName: "يجب أن يكون اسم العمود فريداً.",
     search: "بحث ...",
@@ -303,6 +303,10 @@ const arabic = {
     info: "معلومة",
     warning: "تحذير",
     rejected: "مرفوض",
+  },
+
+  Client_SetupView: {
+    confirmImport: "هل أنت متأكد أنك تريد المتابعة؟",
   },
 };
 

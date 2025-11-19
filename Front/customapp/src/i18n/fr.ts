@@ -273,7 +273,7 @@ const frensh = {
     loading: "Chargement des objets...",
     uniqueColumn: "La colonne doit être unique.",
     uniqueId: "L'ID doit être unique.",
-    requiredFields: "Veuillez remplir les champs obligatoires.",
+    notValidFields: "Veuillez vérifier les champs non valides.",
     uniqueFields: "Veuillez vérifier les champs uniques.",
     uniqueColumnName: "Le nom de la colonne doit être unique.",
     search: "Recherche ...",
@@ -295,6 +295,10 @@ const frensh = {
     info: "Information",
     warning: "Avertissement",
     rejected: "Rejeté",
+  },
+
+  Client_SetupView: {
+    confirmImport: "Êtes-vous sûr de vouloir continuer ?",
   },
 };
 
