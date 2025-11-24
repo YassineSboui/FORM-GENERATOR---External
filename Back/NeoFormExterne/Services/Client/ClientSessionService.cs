@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Client
 {
     public class ClientSessionService
     {

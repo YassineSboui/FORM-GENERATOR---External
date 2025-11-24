@@ -2,7 +2,7 @@ using NeoForm_Externe.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Configuration
 {
     /// <summary>
     /// Service that automatically encrypts sensitive configuration values on application startup

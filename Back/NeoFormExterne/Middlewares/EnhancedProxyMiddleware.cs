@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.WebUtilities;
 using NeoForm_Externe.Interfaces;
-using NeoForm_Externe.Services;
+using NeoForm_Externe.Services.Authentication;
+using NeoForm_Externe.Services.Client;
 using Serilog;
 using System.Net;
 

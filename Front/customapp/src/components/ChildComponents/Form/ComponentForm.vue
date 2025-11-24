@@ -1875,14 +1875,12 @@ const handleMouseleave = async (item: any) => {
 
 const handleRefs = (event: any) => {
   ArrayRef.value.push(event);
-  console.log("ArrayRef", ArrayRef.value);
   ArrayRef.value.forEach((element: any) => {
     const exist = secondArray.value.find((el: any) => el == element);
     if (!exist) {
       secondArray.value.push(element);
     }
   });
-  console.log("secondArray", secondArray.value);
 
   const mergedObject = secondArray.value.reduce((result: any, obj: any) => {
     Object.keys(obj).forEach((key) => {
@@ -1897,7 +1895,6 @@ const handleRefs = (event: any) => {
 
     return result;
   }, {});
-  console.log("mergedObject", mergedObject);
   app.refs = mergedObject;
 };
 

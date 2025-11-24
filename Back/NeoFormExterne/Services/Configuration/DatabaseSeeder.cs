@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using NeoForm_Externe.Models;
 using Microsoft.Extensions.Logging;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Configuration
 {
     public class DatabaseSeeder
     {

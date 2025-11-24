@@ -5,11 +5,14 @@ using NeoForm_Externe.Interfaces;
 using NeoForm_Externe.Middlewares;
 using NeoForm_Externe.Proxy;
 using NeoForm_Externe.Services;
+using NeoForm_Externe.Services.Authentication;
+using NeoForm_Externe.Services.Background;
+using NeoForm_Externe.Services.Client;
+using NeoForm_Externe.Services.Configuration;
 using Serilog;
 using Yarp.ReverseProxy.Configuration;
-using NeoForm_Externe.Filters;
 using NeoForm_Externe.Repositories;
-using NeoForm_Externe.Helpers;
+using NeoForm_Externe.Core;
 using Microsoft.AspNetCore.Identity;
 using NeoForm_Externe.Models;
 
@@ -232,8 +235,35 @@ app.MapReverseProxy(proxyPipeline =>
             return;
         }
 
+        // ✅ Validate session token for security
+        var sessionToken = context.Request.Headers["X-Auth-Session"].FirstOrDefault();
+
+        if (!string.IsNullOrEmpty(sessionToken))
+        {
+            var emailAuthService = context.RequestServices.GetRequiredService<IEmailAuthService>();
+            var validationResult = await emailAuthService.ValidateSessionTokenAsync(sessionToken, guid.ToString(), code.ToString(), clientId);
+
+            if (!validationResult.IsValid)
+            {
+                Log.Warning("Session token validation failed for guid: {guid}, clientId: {clientId}, error: {error}", guid, clientId, validationResult.Error);
+                context.Response.StatusCode = 401;
+                await context.Response.WriteAsync("Unauthorized: Invalid or expired session token");
+                return;
+            }
+
+            Log.Information("Session token validated successfully for guid: {guid}, clientId: {clientId}, auth_type: {authType}", guid, clientId, validationResult.AuthType);
+        }
+        else
+        {
+            // Session token is required for all proxied requests
+            Log.Warning("Missing session token for proxied request to client {clientId}", clientId);
+            context.Response.StatusCode = 401;
+            await context.Response.WriteAsync("Unauthorized: Session token required");
+            return;
+        }
+
         var tokenService = context.RequestServices.GetRequiredService<TokenService>();
-        var token = await tokenService.GetOrRefreshTokenAsync(clientId, baseUrl!, code.ToString(), guid.ToString());
+        var token = await tokenService.GetOrRefreshTokenAsync(clientId, baseUrl!, code.ToString(), guid.ToString(), sessionToken);
 
         // Clean the query
         var cleanQuery = query

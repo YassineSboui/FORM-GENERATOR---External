@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using NeoForm_Externe.Data;
 using NeoForm_Externe.Interfaces;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Configuration
 {
     /// <summary>
     /// Service to migrate existing plain-text API keys to encrypted format

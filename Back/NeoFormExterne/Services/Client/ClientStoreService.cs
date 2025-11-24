@@ -4,7 +4,7 @@ using NeoForm_Externe.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Client
 {
     public class ClientStoreService : IClientStoreService
     {
@@ -154,14 +154,14 @@ namespace NeoForm_Externe.Services
 
             // Normalize the input URL to lowercase
             var normalizedUrl = url.Trim().ToLowerInvariant();
-            
+
             // Get all clients and normalize their URLs for comparison
             var allClients = _context.Clients.ToList();
-            
+
             foreach (var client in allClients)
             {
                 var clientBaseUrl = client.BaseUrl.Trim().ToLowerInvariant();
-                
+
                 // Try exact match first
                 if (clientBaseUrl == normalizedUrl)
                 {
@@ -171,7 +171,7 @@ namespace NeoForm_Externe.Services
                     _logger.LogDebug("� Returning form URL: '{FormUrl}'", result);
                     return result;
                 }
-                
+
                 // Try matching input URL + "/neoform" with stored URL
                 if (clientBaseUrl == normalizedUrl + "/neoform")
                 {
@@ -181,7 +181,7 @@ namespace NeoForm_Externe.Services
                     _logger.LogDebug("🔗 Returning form URL: '{FormUrl}'", result);
                     return result;
                 }
-                
+
                 // Try matching stored URL with input URL (if input has /neoform)
                 if (normalizedUrl.EndsWith("/neoform") && clientBaseUrl == normalizedUrl[..^9]) // Remove "/neoform" from input
                 {
@@ -192,13 +192,13 @@ namespace NeoForm_Externe.Services
                     return result;
                 }
             }
-            
+
             // No match found - log all available clients for debugging
             _logger.LogWarning("❌ No client found matching URL: '{Url}'", url);
             _logger.LogDebug("📋 Available client URLs in database (normalized):");
             foreach (var c in allClients)
             {
-                _logger.LogDebug("   - Client '{ClientId}': '{BaseUrl}' (normalized: '{NormalizedUrl}')", 
+                _logger.LogDebug("   - Client '{ClientId}': '{BaseUrl}' (normalized: '{NormalizedUrl}')",
                     c.ClientId, c.BaseUrl, c.BaseUrl.Trim().ToLowerInvariant());
             }
 

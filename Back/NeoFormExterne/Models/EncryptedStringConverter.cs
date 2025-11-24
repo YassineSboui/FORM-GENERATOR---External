@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoForm_Externe.Interfaces;
 
-namespace NeoForm_Externe.Data.Converters
+namespace NeoForm_Externe.Models
 {
     /// <summary>
     /// EF Core Value Converter that automatically encrypts/decrypts values in the database

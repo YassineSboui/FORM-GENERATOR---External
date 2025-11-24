@@ -20,6 +20,16 @@ axios.interceptors.request.use(
       if (appStore.code) {
         config.params.code = appStore.code;
       }
+
+      // Include authentication JWT token if it exists (from OTP/OIDC authentication)
+      const authToken = sessionStorage.getItem("email_auth_token");
+      if (authToken) {
+        if (!config.headers) {
+          config.headers = {};
+        }
+        config.headers["X-Auth-Session"] = authToken;
+        console.log("[HTTP] Adding authentication session token to request");
+      }
     }
 
     if (import.meta.env.DEV) config.withCredentials = true;

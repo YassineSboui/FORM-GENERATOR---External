@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NeoForm_Externe.Interfaces;
 using NeoForm_Externe.Models.Dto;
-using NeoForm_Externe.Services;
-using NeoForm_Externe.Filters;
+using NeoForm_Externe.Middlewares;
 using Microsoft.AspNetCore.Authorization;
 
 namespace NeoFormExterne.Controllers

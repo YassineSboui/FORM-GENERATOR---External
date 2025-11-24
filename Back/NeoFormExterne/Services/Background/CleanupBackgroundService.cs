@@ -1,4 +1,7 @@
-namespace NeoForm_Externe.Services
+using NeoForm_Externe.Services.Authentication;
+using NeoForm_Externe.Services.Client;
+
+namespace NeoForm_Externe.Services.Background
 {
     public class CleanupBackgroundService : BackgroundService
     {

@@ -4,6 +4,110 @@
 
 **NeoForm External** is a sophisticated backend API service that acts as a **dynamic form generator and integration hub**. Think of it as a smart middleware that sits between your form applications and various data sources, making complex integrations simple and manageable.
 
+## 📁 **Project Structure - Clean & Organized**
+
+The project follows a feature-based architecture for maximum maintainability:
+
+```
+NeoFormExterne/
+├── Controllers/          # API endpoints for different functionalities
+│   ├── AdminController.cs
+│   ├── ClientsController.cs
+│   ├── EmailAuthController.cs
+│   ├── ExecuteExternalSourceController.cs
+│   ├── ObjectsController.cs
+│   ├── OidcController.cs
+│   └── SessionController.cs
+│
+├── Core/                 # Shared utilities and extensions
+│   ├── ConfigurationHelper.cs          # Automatic configuration decryption
+│   └── ConfigurationExtensions.cs      # Extension methods for IConfiguration
+│
+├── Data/                 # Database context and configuration
+│   └── ExternalNeoFormContext.cs       # EF Core DbContext with schema: AppNeoFormExt
+│
+├── Interfaces/           # Service contracts and abstractions
+│   ├── IClientStoreService.cs
+│   ├── IDynamicClientProvider.cs
+│   ├── IEmailAuthService.cs
+│   ├── IEmailService.cs
+│   ├── IEncryptionService.cs
+│   ├── IExternalSourceService.cs
+│   ├── IObjectService.cs
+│   ├── IOidcService.cs
+│   └── IUserAuthenticationRepository.cs
+│
+├── Middlewares/          # Request pipeline components
+│   ├── DynamicApiKeyAuthFilter.cs      # API key authentication filter
+│   ├── EnhancedProxyMiddleware.cs      # Intelligent proxy with health checks
+│   ├── GlobalExceptionMiddleware.cs    # Centralized error handling
+│   └── JwtAuthenticationExtension.cs   # JWT authentication setup
+│
+├── Models/               # Data models and DTOs
+│   ├── ApplicationUser.cs              # Identity user model
+│   ├── ClientInfo.cs                   # Client registration info
+│   ├── ObjectModels.cs                 # Dynamic form objects
+│   ├── SessionAudit.cs                 # Session tracking (planned)
+│   ├── EncryptedStringConverter.cs     # EF Core encryption converter
+│   └── Dto/                            # Data transfer objects
+│
+├── Repositories/         # Data access layer
+│   └── UserAuthenticationRepository.cs
+│
+├── Services/             # Business logic organized by feature
+│   ├── Authentication/   # Authentication & authorization services
+│   │   ├── EmailAuthService.cs         # OTP-based email authentication
+│   │   ├── EmailService.cs             # SMTP email delivery
+│   │   ├── OidcService.cs              # OpenID Connect integration
+│   │   └── TokenService.cs             # JWT token management with auto-refresh
+│   │
+│   ├── Background/       # Background jobs and cleanup tasks
+│   │   ├── AuthenticationCleanupService.cs
+│   │   ├── CleanupBackgroundService.cs # Token & session cleanup
+│   │   └── OtpCleanupService.cs        # OTP code cleanup (planned)
+│   │
+│   ├── Client/           # Multi-tenant client management
+│   │   ├── ClientSessionService.cs     # Session management per client
+│   │   ├── ClientStoreService.cs       # Client registration & API keys
+│   │   └── DynamicClientProvider.cs    # YARP dynamic client configuration
+│   │
+│   └── Configuration/    # System configuration & security
+│       ├── ApiKeyMigrationService.cs   # Encrypt existing API keys
+│       ├── ConfigurationEncryptionService.cs  # Auto-encrypt sensitive config
+│       ├── DatabaseSeeder.cs           # Initialize SuperAdmin user
+│       └── EncryptionService.cs        # AES encryption/decryption
+│
+├── Migrations/           # EF Core database migrations
+└── Program.cs            # Application startup & DI configuration
+```
+
+## 🗄️ **Database Schema - Unified Under AppNeoFormExt**
+
+All application tables are organized under the **`AppNeoFormExt`** schema for clean separation and easy management:
+
+### **Application Tables**
+
+- `AppNeoFormExt.Object` - Dynamic form templates and configurations
+- `AppNeoFormExt.Clients` - Client registrations with encrypted API keys
+- `AppNeoFormExt.UserAuthentications` - OIDC user authentication records
+
+### **Identity Tables** (ASP.NET Core Identity)
+
+- `AppNeoFormExt.AspNetUsers` - User accounts with custom fields
+- `AppNeoFormExt.AspNetRoles` - Role definitions (SuperAdmin, Admin, User)
+- `AppNeoFormExt.AspNetUserRoles` - User-role assignments
+- `AppNeoFormExt.AspNetUserClaims` - User claims
+- `AppNeoFormExt.AspNetUserLogins` - External login providers
+- `AppNeoFormExt.AspNetUserTokens` - Authentication tokens
+- `AppNeoFormExt.AspNetRoleClaims` - Role-based claims
+
+### **Schema Benefits**
+
+✅ Clear separation from other database objects  
+✅ Easy backup and restore of application data  
+✅ Simplified permission management  
+✅ Better organization in database tools
+
 ### **The Big Picture**
 
 Imagine you have multiple clients who need forms that connect to different databases, APIs, and services. Instead of building separate solutions for each client, NeoForm External provides a unified platform where:

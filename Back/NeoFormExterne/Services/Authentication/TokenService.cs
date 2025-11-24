@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Hosting;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Authentication
 {
     public class TokenService
     {
@@ -25,7 +25,7 @@ namespace NeoForm_Externe.Services
             _env = env;
         }
 
-        public async Task<string> GetOrRefreshTokenAsync(string clientId, string baseUrl, string code, string guid)
+        public async Task<string> GetOrRefreshTokenAsync(string clientId, string baseUrl, string code, string guid, string? sessionToken = null)
         {
             var tokenKey = $"{clientId}_{code}_{guid}";
 
@@ -47,7 +47,7 @@ namespace NeoForm_Externe.Services
                     return tokenInfo.Token;
                 }
 
-                return await RefreshTokenAsync(clientId, baseUrl, code, guid, tokenKey);
+                return await RefreshTokenAsync(clientId, baseUrl, code, guid, tokenKey, sessionToken);
             }
             finally
             {
@@ -85,7 +85,7 @@ namespace NeoForm_Externe.Services
             return true;
         }
 
-        private async Task<string> RefreshTokenAsync(string clientId, string baseUrl, string code, string guid, string tokenKey)
+        private async Task<string> RefreshTokenAsync(string clientId, string baseUrl, string code, string guid, string tokenKey, string? sessionToken = null)
         {
             _logger.LogInformation($"🔁 Refreshing token for client {clientId}...");
 
@@ -109,7 +109,16 @@ namespace NeoForm_Externe.Services
 
             try
             {
-                var response = await client.GetAsync(authUrl);
+                var request = new HttpRequestMessage(HttpMethod.Get, authUrl);
+
+                // Add session token header if provided
+                if (!string.IsNullOrEmpty(sessionToken))
+                {
+                    request.Headers.Add("X-Auth-Session", sessionToken);
+                    _logger.LogDebug("📝 Added X-Auth-Session header to auth request for client {ClientId}", clientId);
+                }
+
+                var response = await client.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                 {

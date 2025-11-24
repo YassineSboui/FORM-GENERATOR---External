@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Serilog;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Authentication
 {
     public class OidcService : IOidcService
     {

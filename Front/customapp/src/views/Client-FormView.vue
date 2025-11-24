@@ -320,6 +320,7 @@ import {
   sendEmailOTP,
   verifyEmailOTP,
   validateAuthToken,
+  createSessionToken,
 } from "@/api/api";
 import { useI18n } from "vue-i18n";
 import { i18n } from "@/main"; // Import i18n from main.ts
@@ -809,33 +810,54 @@ export default defineComponent({
     };
 
     const completeEmailAuthentication = async () => {
-      // Store secure authentication data based on auth type
-      if (authConfig.value?.authtype === "otp") {
-        sessionStorage.setItem("otp_authenticated", "true");
-      } else {
-        sessionStorage.setItem("email_authenticated", "true");
+      try {
+        // ✅ Create unified session token
+        const sessionResult = await createSessionToken({
+          guid: route.params.guid as string,
+          code: route.query.code as string,
+          authType: authConfig.value?.authtype || "otp",
+          clientId: route.params.client as string,
+          email: userEmail.value,
+        });
+
+        // Store session token (unified approach)
+        sessionStorage.setItem("email_auth_token", sessionResult.sessionToken);
+        sessionStorage.setItem("authenticated_email", userEmail.value);
+        sessionStorage.setItem("auth_type", sessionResult.authType);
+
+        // Legacy flags for backwards compatibility
+        if (authConfig.value?.authtype === "otp") {
+          sessionStorage.setItem("otp_authenticated", "true");
+        } else {
+          sessionStorage.setItem("email_authenticated", "true");
+        }
+
+        authToken.value = sessionResult.sessionToken;
+        isAuthenticated.value = true;
+
+        // Clear any existing error messages
+        emailValidationError.value = "";
+        otpValidationError.value = "";
+
+        // Clear input fields
+        emailInput.value = "";
+        otpInput.value = "";
+
+        // Ensure all dialogs are closed
+        showEmailDialog.value = false;
+        showOTPDialog.value = false;
+
+        console.log(
+          "✅ Session token created successfully for:",
+          userEmail.value
+        );
+
+        // Load the form data after authentication
+        await loadFormData();
+      } catch (error) {
+        console.error("Failed to create session token:", error);
+        emailValidationError.value = "Authentication failed. Please try again.";
       }
-
-      sessionStorage.setItem("authenticated_email", userEmail.value);
-      sessionStorage.setItem("email_auth_token", authToken.value); // Store secure token
-      isAuthenticated.value = true;
-
-      // Clear any existing error messages
-      emailValidationError.value = "";
-      otpValidationError.value = "";
-
-      // Clear input fields
-      emailInput.value = "";
-      otpInput.value = "";
-
-      // Ensure all dialogs are closed
-      showEmailDialog.value = false;
-      showOTPDialog.value = false;
-
-      console.log("Successfully authenticated with email:", userEmail.value);
-
-      // Load the form data after authentication
-      await loadFormData();
     };
 
     // Initialize form data and configuration
@@ -1252,7 +1274,33 @@ export default defineComponent({
               return; // Exit early, don't load form data
             }
           } else {
-            // No authentication required or different auth type
+            // No authentication required ("none" auth type)
+            console.log(
+              "No authentication required, creating anonymous session token"
+            );
+
+            try {
+              // ✅ Create session token for "none" auth type
+              const sessionResult = await createSessionToken({
+                guid: route.params.guid as string,
+                code: route.query.code as string,
+                authType: "none",
+                clientId: route.params.client as string,
+              });
+
+              sessionStorage.setItem(
+                "email_auth_token",
+                sessionResult.sessionToken
+              );
+              sessionStorage.setItem("auth_type", "none");
+              console.log("✅ Anonymous session token created successfully");
+            } catch (sessionError) {
+              console.error(
+                "Failed to create anonymous session token:",
+                sessionError
+              );
+            }
+
             isAuthenticated.value = true;
           }
         } catch (error) {

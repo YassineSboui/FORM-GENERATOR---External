@@ -1,6 +1,6 @@
 ﻿using NeoForm_Externe.Interfaces;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Background
 {
     public class AuthenticationCleanupService : BackgroundService
     {

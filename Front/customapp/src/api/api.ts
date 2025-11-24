@@ -1325,6 +1325,56 @@ export const validateAuthToken = async (
     throw error;
   }
 };
+// Create a unified session token for any authentication type
+export const createSessionToken = async ({
+  guid,
+  code,
+  authType,
+  clientId,
+  email,
+  oidcUserId,
+}: {
+  guid: string;
+  code: string;
+  authType: string;
+  clientId: string;
+  email?: string;
+  oidcUserId?: string;
+}) => {
+  const httpRequest = useHttpRequest();
+  try {
+    const apiUrl = `${httpRequest.externalUrl}local/api/Session/create`;
+    console.log(
+      "[API] createSessionToken for authType:",
+      authType,
+      "guid:",
+      guid,
+      "clientId:",
+      clientId
+    );
+
+    const response = await axios.post(apiUrl, {
+      guid,
+      code,
+      authType,
+      clientId,
+      email,
+      oidcUserId,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "[API] createSessionToken failed for authType:",
+      authType,
+      "clientId:",
+      clientId,
+      error
+    );
+    logger.error(error);
+    throw error;
+  }
+};
+
 export const getClientApiKey = async (clientId: string) => {
   const httpRequest = useHttpRequest();
   try {

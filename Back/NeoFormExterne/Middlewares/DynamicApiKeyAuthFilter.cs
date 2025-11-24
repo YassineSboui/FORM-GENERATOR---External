@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using NeoForm_Externe.Interfaces;
 
-namespace NeoForm_Externe.Filters
+namespace NeoForm_Externe.Middlewares
 {
     public class DynamicApiKeyAuthFilter : IAuthorizationFilter
     {

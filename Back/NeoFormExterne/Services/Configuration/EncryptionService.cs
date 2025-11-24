@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Configuration
 {
     public class EncryptionService : IEncryptionService
     {

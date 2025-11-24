@@ -8,6 +8,7 @@
  */
 
 import { logger } from "@/api/api";
+import { fetchDataByTableGuid } from "@/api/api";
 
 /**
  * Array Utility Class
@@ -382,6 +383,67 @@ export class ArrayUtility {
       throw new Error("Cannot get max of empty array");
     }
     return Math.max(...array);
+  }
+
+  /**
+   * Fetch and filter referential data
+   * @param parentId - Parent referential table ID
+   * @param childField - Child field to extract
+   * @param filterField - Field to filter by
+   * @param filterValue - Value to match in filter
+   * @param returnFullObject - If true, return full objects; if false, return only values
+   * @returns Filtered array of elements or values
+   */
+  async fetchReferentialData(
+    parentId: string,
+    childField: string,
+    filterField: string,
+    filterValue: any,
+    returnFullObject: boolean = false
+  ): Promise<any[]> {
+    const elements: any[] = [];
+
+    const resp: any = await fetchDataByTableGuid(parentId);
+    const respArray = Array.isArray(resp) ? resp : [resp];
+    respArray.forEach((res: any) => {
+      const internalParsed = JSON.parse(res.dataJson);
+
+      if (
+        childField === "all" &&
+        internalParsed.datas[filterField] === filterValue
+      ) {
+        elements.push(internalParsed.datas);
+      } else if (
+        internalParsed.datas[childField] &&
+        internalParsed.datas[filterField] === filterValue
+      ) {
+        if (returnFullObject) {
+          // Return full object with all attributes
+          elements.push(internalParsed.datas);
+        } else {
+          // Return only the value of the chosen column
+          elements.push(internalParsed.datas[childField]);
+        }
+      }
+    });
+
+    // Remove duplicates
+    if (childField === "all") {
+      return elements;
+    } else {
+      if (returnFullObject) {
+        // Remove duplicate objects based on code or first property
+        return elements.filter((v, i, a) => {
+          const key = v.code || Object.values(v)[0];
+          return (
+            a.findIndex((t) => (t.code || Object.values(t)[0]) === key) === i
+          );
+        });
+      } else {
+        // Remove duplicate values
+        return [...new Set(elements)];
+      }
+    }
   }
 }
 

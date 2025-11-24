@@ -1,5 +1,5 @@
 using NeoForm_Externe.Interfaces;
-using NeoForm_Externe.Services;
+using NeoForm_Externe.Services.Configuration;
 
 namespace NeoForm_Externe.Tools
 {

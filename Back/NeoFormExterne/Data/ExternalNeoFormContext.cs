@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using static NeoForm_Externe.Models.Dto.UserAuthenticationDto;
 using NeoForm_Externe.Interfaces;
-using NeoForm_Externe.Data.Converters;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace NeoForm_Externe.Data
@@ -36,10 +35,19 @@ namespace NeoForm_Externe.Data
         {
             base.OnModelCreating(modelBuilder); // Important: Call base for Identity
 
+            // Configure Identity tables to use AppNeoFormExt schema
+            modelBuilder.Entity<ApplicationUser>().ToTable("AspNetUsers", "AppNeoFormExt");
+            modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityRole>().ToTable("AspNetRoles", "AppNeoFormExt");
+            modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<string>>().ToTable("AspNetUserRoles", "AppNeoFormExt");
+            modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<string>>().ToTable("AspNetUserClaims", "AppNeoFormExt");
+            modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<string>>().ToTable("AspNetUserLogins", "AppNeoFormExt");
+            modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserToken<string>>().ToTable("AspNetUserTokens", "AppNeoFormExt");
+            modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>>().ToTable("AspNetRoleClaims", "AppNeoFormExt");
+
             // Object table configuration
             modelBuilder.Entity<ObjectModels>(entity =>
             {
-                entity.ToTable("Object", "AppNeoForm");
+                entity.ToTable("Object", "AppNeoFormExt");
 
                 entity.HasKey(e => e.Id).HasName("PK_Object");
 
@@ -73,7 +81,7 @@ namespace NeoForm_Externe.Data
 
             modelBuilder.Entity<ClientInfo>(entity =>
             {
-                entity.ToTable("Clients", "AppNeoForm");
+                entity.ToTable("Clients", "AppNeoFormExt");
 
                 entity.HasKey(e => e.Id);
 
@@ -101,6 +109,7 @@ namespace NeoForm_Externe.Data
 
             modelBuilder.Entity<UserAuthentication>(entity =>
             {
+                entity.ToTable("UserAuthentications", "AppNeoFormExt");
                 entity.HasIndex(e => e.Guid);
                 entity.HasIndex(e => new { e.Guid, e.IsActive });
             });

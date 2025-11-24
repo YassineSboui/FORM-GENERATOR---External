@@ -1,6 +1,6 @@
-using NeoForm_Externe.Services;
+using NeoForm_Externe.Services.Configuration;
 
-namespace NeoForm_Externe.Extensions
+namespace NeoForm_Externe.Core
 {
     /// <summary>
     /// Extension methods for IConfiguration to easily get decrypted values

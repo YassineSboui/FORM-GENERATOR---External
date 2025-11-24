@@ -1,7 +1,7 @@
 ﻿using NeoForm_Externe.Data;
 using NeoForm_Externe.Interfaces;
 
-namespace NeoForm_Externe.Services
+namespace NeoForm_Externe.Services.Client
 {
     public class DynamicClientProvider : IDynamicClientProvider
     {

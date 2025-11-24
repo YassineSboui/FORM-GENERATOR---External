@@ -1175,6 +1175,7 @@ const uuidv4 = () => {
 const createExecutionContext = () => ({
   // Helper functions
   uuidv4,
+  fetchTableData,
 
   // Data objects
   Fields: store.Fields,

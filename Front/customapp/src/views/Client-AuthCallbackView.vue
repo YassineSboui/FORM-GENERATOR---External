@@ -24,7 +24,7 @@ import { defineComponent, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import { useHttpRequest } from "@/store/httpRequest.store";
-import { validateOidcCode } from "@/api/api";
+import { validateOidcCode, createSessionToken } from "@/api/api";
 
 export default defineComponent({
   setup() {
@@ -153,11 +153,42 @@ export default defineComponent({
         );
         // Use our API service to validate the code
         validateOidcCode(code, state, originalGuid, clientId, personalCode)
-          .then((response) => {
+          .then(async (response) => {
             if (response.success) {
               console.log("[AuthCallback] Backend validation successful");
-              // Store authentication success flag
-              sessionStorage.setItem("oidc_authenticated", "true");
+
+              // ✅ Create unified session token for OIDC
+              try {
+                const sessionResult = await createSessionToken({
+                  guid: originalGuid,
+                  code: personalCode,
+                  authType: "oidc",
+                  clientId: clientId,
+                  oidcUserId: response.userId || "oidc-user",
+                  email: response.email,
+                });
+
+                // Store session token
+                sessionStorage.setItem(
+                  "email_auth_token",
+                  sessionResult.sessionToken
+                );
+                sessionStorage.setItem("auth_type", "oidc");
+                sessionStorage.setItem("oidc_authenticated", "true");
+
+                if (response.email) {
+                  sessionStorage.setItem("authenticated_email", response.email);
+                }
+
+                console.log("✅ OIDC session token created successfully");
+              } catch (sessionError) {
+                console.error(
+                  "Failed to create OIDC session token:",
+                  sessionError
+                );
+                // Fallback to old method
+                sessionStorage.setItem("oidc_authenticated", "true");
+              }
 
               // Clean up session storage
               sessionStorage.removeItem("oidc_state");

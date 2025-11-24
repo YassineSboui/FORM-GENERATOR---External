@@ -1,6 +1,6 @@
 using NeoForm_Externe.Interfaces;
 
-namespace NeoForm_Externe.Helpers
+namespace NeoForm_Externe.Core
 {
     /// <summary>
     /// Helper class to automatically decrypt configuration values that are prefixed with "ENC:"
