@@ -26,7 +26,7 @@ namespace NeoForm_Externe.Controllers
 
         [HttpPost("ExecuteApiByObjectName")]
         [ProducesResponseType(typeof(ObjectModels), 200)]
-        public async Task<IActionResult> ExecuteByObjectName([FromBody] executeApiRequestByObjectName req)
+        public async Task<IActionResult> ExecuteByObjectName([FromBody] ExecuteApiRequestByObjectName req)
         {
             var o = await _externalSourceService.ExecuteApiByObjectName(req);
             return Ok(o);

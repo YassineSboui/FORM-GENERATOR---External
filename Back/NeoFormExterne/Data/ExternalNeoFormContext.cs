@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using static NeoForm_Externe.Models.Dto.UserAuthenticationDto;
 using NeoForm_Externe.Interfaces;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using NeoFormExterne.Models;
 
 namespace NeoForm_Externe.Data
 {
@@ -30,6 +31,7 @@ namespace NeoForm_Externe.Data
         public DbSet<ObjectModels> Objects { get; set; }
         public DbSet<ClientInfo> Clients { get; set; } // ✅ Add ClientInfo DbSet
         public DbSet<UserAuthentication> UserAuthentications { get; set; }
+        public DbSet<SessionAudit> SessionAudits { get; set; } // ✅ Session audit tracking
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -112,6 +114,15 @@ namespace NeoForm_Externe.Data
                 entity.ToTable("UserAuthentications", "AppNeoFormExt");
                 entity.HasIndex(e => e.Guid);
                 entity.HasIndex(e => new { e.Guid, e.IsActive });
+            });
+
+            modelBuilder.Entity<SessionAudit>(entity =>
+            {
+                entity.ToTable("SessionAudits", "AppNeoFormExt");
+                entity.HasIndex(e => e.ClientId);
+                entity.HasIndex(e => e.Guid);
+                entity.HasIndex(e => e.CreatedAt);
+                entity.HasIndex(e => new { e.ClientId, e.CreatedAt });
             });
         }
     }

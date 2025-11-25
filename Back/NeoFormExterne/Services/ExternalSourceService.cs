@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using NeoForm_Externe.Interfaces;
 using NeoForm_Externe.Models;
+using NeoForm_Externe.Models.Dto;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
@@ -214,7 +215,7 @@ namespace NeoForm_Externe.Services
             }
         }
 
-        public async Task<string> ExecuteApiByObjectName(executeApiRequestByObjectName req)
+        public async Task<string> ExecuteApiByObjectName(ExecuteApiRequestByObjectName req)
         {
             if (string.IsNullOrEmpty(req.ObjectName))
             {

@@ -1,8 +1,8 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using NeoForm_Externe.Interfaces;
+using NeoForm_Externe.Models;
 using NeoForm_Externe.Models.Dto;
 using RestSharp;
-using static NeoForm_Externe.Models.OidcModels;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Serilog;

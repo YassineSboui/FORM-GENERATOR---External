@@ -6,7 +6,6 @@ using Serilog;
 using System.Net.Mail;
 using System.Security.Claims;
 using System.Text.Json;
-using static NeoForm_Externe.Models.OidcModels;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;

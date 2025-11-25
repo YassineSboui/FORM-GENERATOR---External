@@ -6,7 +6,7 @@ namespace NeoForm_Externe.Interfaces
     {
         Task<ExecuteQueryResponse> ExecuteDbqByObjectName(ExecuteQueryRequest req);
 
-        Task<string> ExecuteApiByObjectName(executeApiRequestByObjectName req);
+        Task<string> ExecuteApiByObjectName(ExecuteApiRequestByObjectName req);
 
     }
 }

@@ -99,6 +99,8 @@ builder.Services.AddAuthorization();
 
 // Services
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IObjectService, ObjectService>();
 builder.Services.AddScoped<IExternalSourceService, ExternalSourceService>();
 builder.Services.AddScoped<IClientStoreService, ClientStoreService>();

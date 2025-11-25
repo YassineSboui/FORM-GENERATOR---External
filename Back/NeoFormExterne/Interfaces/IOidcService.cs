@@ -1,4 +1,4 @@
-﻿using static NeoForm_Externe.Models.OidcModels;
+﻿using NeoForm_Externe.Models;
 
 namespace NeoForm_Externe.Interfaces
 {

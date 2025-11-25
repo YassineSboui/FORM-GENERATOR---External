@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using NeoForm_Externe.Models.Dto;
 
 namespace NeoForm_Externe.Models
 {
@@ -34,3 +34,4 @@ namespace NeoForm_Externe.Models
         }
     }
 }
+

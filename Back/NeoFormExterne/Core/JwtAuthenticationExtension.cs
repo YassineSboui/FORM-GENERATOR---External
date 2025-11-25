@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
-namespace NeoForm_Externe.Middlewares
+namespace NeoForm_Externe.Core
 {
     public static class JwtAuthenticationExtension
     {

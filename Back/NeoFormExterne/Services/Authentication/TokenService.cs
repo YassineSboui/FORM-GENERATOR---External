@@ -15,7 +15,7 @@ namespace NeoForm_Externe.Services.Authentication
         private readonly IWebHostEnvironment _env;
 
         // Use ConcurrentDictionary for thread safety
-        private readonly ConcurrentDictionary<string, TokenInfoModels> _tokens = new();
+        private readonly ConcurrentDictionary<string, TokenInfo> _tokens = new();
         private readonly SemaphoreSlim _semaphore = new(1, 1);
 
         public TokenService(IHttpClientFactory httpClientFactory, ILogger<TokenService> logger, IWebHostEnvironment env)
@@ -55,7 +55,7 @@ namespace NeoForm_Externe.Services.Authentication
             }
         }
 
-        private bool IsTokenValid(TokenInfoModels tokenInfo)
+        private bool IsTokenValid(TokenInfo tokenInfo)
         {
             if (tokenInfo.Expiration <= DateTime.UtcNow.AddMinutes(1)) // Add 1 minute buffer
             {
@@ -146,7 +146,7 @@ namespace NeoForm_Externe.Services.Authentication
                 var newToken = payload.Jwt;
                 var expiration = GetTokenExpiration(newToken);
 
-                _tokens[tokenKey] = new TokenInfoModels
+                _tokens[tokenKey] = new TokenInfo
                 {
                     Token = newToken,
                     Expiration = expiration
