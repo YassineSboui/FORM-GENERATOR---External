@@ -12,7 +12,7 @@ using System.Text;
 namespace NeoForm_Externe.Controllers
 {
     [ApiController]
-    [Route("neoformexternal/local/[controller]")]
+    [Route("neoformexternal/local/api/[controller]")]
     public class SessionController : ControllerBase
     {
         private readonly ClientSessionService _sessionService;
