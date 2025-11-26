@@ -1,23 +1,23 @@
 ﻿/**
  * Elise Utility Functions
- * 
+ *
  * Provides safe Elise-specific operations for Blockly-generated code.
  * Handles workflows, contacts, documents, and other Elise system operations.
- * 
+ *
  * All API calls are made directly through this utility - no need to pass functions from ComponentForm.
- * 
+ *
  * @module eliseUtility
  */
 
-import { 
-  logger, 
-  callEliseWebService, 
-  executeWorkflow as apiExecuteWorkflow, 
-  executeStandalone as apiExecuteStandalone, 
-  executeAsyncWorkflow as apiExecuteAsyncWorkflow, 
-  executeAsyncStandalone as apiExecuteAsyncStandalone, 
+import {
+  logger,
+  callEliseWebService,
+  executeWorkflow as apiExecuteWorkflow,
+  executeStandalone as apiExecuteStandalone,
+  executeAsyncWorkflow as apiExecuteAsyncWorkflow,
+  executeAsyncStandalone as apiExecuteAsyncStandalone,
   generateModelWithoutNotice,
-  publishFiles as apiPublishFiles
+  publishFiles as apiPublishFiles,
 } from "@/api/api";
 
 /**
@@ -105,7 +105,7 @@ export class EliseUtility {
    */
   async generateModel(parameters: any): Promise<any> {
     try {
-      logger.debug('Generating model without notice');
+      logger.debug("Generating model without notice");
       return await generateModelWithoutNotice(parameters);
     } catch (error) {
       logger.error(`Error generating model: ${error}`);
@@ -154,10 +154,10 @@ export class EliseUtility {
       if (this.store && this.store.eliseUrl) {
         return this.store.eliseUrl;
       }
-      return '';
+      return "";
     } catch (error) {
       logger.error(`Error getting Elise URL: ${error}`);
-      return '';
+      return "";
     }
   }
 
@@ -170,10 +170,10 @@ export class EliseUtility {
       if (this.store && this.store.instance) {
         return this.store.instance;
       }
-      return '';
+      return "";
     } catch (error) {
       logger.error(`Error getting instance name: ${error}`);
-      return '';
+      return "";
     }
   }
 
@@ -215,7 +215,9 @@ export class EliseUtility {
    */
   hasDocument(): boolean {
     try {
-      return this.store && this.store.document && this.store.document.id != null;
+      return (
+        this.store && this.store.document && this.store.document.id != null
+      );
     } catch (error) {
       logger.error(`Error checking document existence: ${error}`);
       return false;
@@ -231,10 +233,10 @@ export class EliseUtility {
       if (this.store && this.store.document && this.store.document.status) {
         return this.store.document.status;
       }
-      return '';
+      return "";
     } catch (error) {
       logger.error(`Error getting document status: ${error}`);
-      return '';
+      return "";
     }
   }
 
@@ -262,14 +264,14 @@ export class EliseUtility {
    */
   formatDate(date: Date | string): string {
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      const dateObj = typeof date === "string" ? new Date(date) : date;
       if (isNaN(dateObj.getTime())) {
-        throw new Error('Invalid date');
+        throw new Error("Invalid date");
       }
       return dateObj.toISOString();
     } catch (error) {
       logger.error(`Error formatting date: ${error}`);
-      return '';
+      return "";
     }
   }
 
@@ -291,23 +293,36 @@ export class EliseUtility {
 
   /**
    * Get Elise contacts
-   * @param payload - Search parameters
+   * @param isPerson - Search for persons
+   * @param isOrganization - Search for organizations
+   * @param options - Search options
+   * @param searchFilter - Search filter
+   * @param limit - Result limit
+   * @param addressBook - Address book ID
    * @returns List of contacts
    */
-  async getContacts(payload: {
-    isPerson: string;
-    isOrganization: string;
-    options: string;
-    searchFilter: string;
-    limit: number;
-    addressBook: string;
-  }): Promise<any> {
+  async getContacts(
+    isPerson: string,
+    isOrganization: string,
+    options: string,
+    searchFilter: string,
+    limit: number,
+    addressBook: string
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Getting Elise contacts');
+      logger.debug("Getting Elise contacts");
+      const payload = {
+        isPerson,
+        isOrganization,
+        options,
+        searchFilter,
+        limit,
+        addressBook,
+      };
       return await this.store.eliseGetContacts(payload);
     } catch (error) {
       logger.error(`Error getting contacts: ${error}`);
@@ -317,16 +332,77 @@ export class EliseUtility {
 
   /**
    * Add contact person
-   * @param payload - Person data
+   * @param addressBookId - Address book ID
+   * @param title - Title
+   * @param name - Name
+   * @param firstName - First name
+   * @param lastName - Last name
+   * @param email - Email
+   * @param building - Building
+   * @param street - Street
+   * @param locality - Locality
+   * @param postalCode - Postal code
+   * @param city - City
+   * @param country - Country
+   * @param phoneNumber - Phone number
+   * @param mobilePhoneNumber - Mobile phone
+   * @param faxNumber - Fax number
    * @returns Created person
    */
-  async addContactPerson(payload: any): Promise<any> {
+  async addContactPerson(
+    addressBookId: any,
+    title: any,
+    name: any,
+    firstName: any,
+    lastName: any,
+    email: any,
+    building: any,
+    street: any,
+    locality: any,
+    postalCode: any,
+    city: any,
+    country: any,
+    phoneNumber: any,
+    mobilePhoneNumber: any,
+    faxNumber: any
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Adding contact person');
+      logger.debug("Adding contact person");
+      const payload = {
+        AddressBookId: addressBookId,
+        ForceDuplicatesDetection: false,
+        ForceAddressValidation: false,
+        Person: {
+          Name: name,
+          Addresses: [
+            {
+              Building: building,
+              City: city,
+              Country: country,
+              FaxNumber: [{ Number: faxNumber }],
+              GeographicalArea: { IdesiaId: "", Label: "" },
+              Locality: locality,
+              PhoneNumber: [{ Number: phoneNumber }],
+              PostalCode: postalCode,
+              Street: street,
+            },
+          ],
+          Birth: { Date: null, Location: "", Country: "" },
+          Category: { Id: "PERS_DIVERS" },
+          CustomFields: ["", ""],
+          Email: email,
+          FirstName: firstName,
+          LastName: lastName,
+          FaxNumber: [{ Number: faxNumber }],
+          MobilePhoneNumber: [{ Number: mobilePhoneNumber }],
+          PhoneNumber: [{ Number: phoneNumber }],
+          Title: title,
+        },
+      };
       return await this.store.eliseAddContactPerson(payload);
     } catch (error) {
       logger.error(`Error adding contact person: ${error}`);
@@ -336,16 +412,80 @@ export class EliseUtility {
 
   /**
    * Update contact person
-   * @param payload - Updated person data
+   * @param addressBookId - Address book ID
+   * @param personId - Person ID
+   * @param title - Title
+   * @param name - Name
+   * @param firstName - First name
+   * @param lastName - Last name
+   * @param email - Email
+   * @param building - Building
+   * @param street - Street
+   * @param locality - Locality
+   * @param postalCode - Postal code
+   * @param city - City
+   * @param country - Country
+   * @param phoneNumber - Phone number
+   * @param mobilePhoneNumber - Mobile phone
+   * @param faxNumber - Fax number
    * @returns Updated person
    */
-  async updateContactPerson(payload: any): Promise<any> {
+  async updateContactPerson(
+    addressBookId: any,
+    personId: any,
+    title: any,
+    name: any,
+    firstName: any,
+    lastName: any,
+    email: any,
+    building: any,
+    street: any,
+    locality: any,
+    postalCode: any,
+    city: any,
+    country: any,
+    phoneNumber: any,
+    mobilePhoneNumber: any,
+    faxNumber: any
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Updating contact person');
+      logger.debug("Updating contact person");
+      const payload = {
+        AddressBookId: addressBookId,
+        ForceDuplicatesDetection: false,
+        ForceAddressValidation: false,
+        Person: {
+          Id: personId,
+          Name: name,
+          Addresses: [
+            {
+              Building: building,
+              City: city,
+              Country: country,
+              FaxNumber: [{ Number: faxNumber }],
+              GeographicalArea: { IdesiaId: "", Label: "" },
+              Locality: locality,
+              PhoneNumber: [{ Number: phoneNumber }],
+              PostalCode: postalCode,
+              Street: street,
+            },
+          ],
+          Birth: { Date: null, Location: "", Country: "" },
+          Category: { Id: "PERS_DIVERS" },
+          CustomFields: ["", ""],
+          Email: email,
+          FirstName: firstName,
+          LastName: lastName,
+          FaxNumber: [{ Number: faxNumber }],
+          MobilePhoneNumber: [{ Number: mobilePhoneNumber }],
+          PhoneNumber: [{ Number: phoneNumber }],
+          Title: title,
+        },
+      };
       return await this.store.eliseUpdateContactPerson(payload);
     } catch (error) {
       logger.error(`Error updating contact person: ${error}`);
@@ -355,16 +495,69 @@ export class EliseUtility {
 
   /**
    * Add contact organization
-   * @param payload - Organization data
+   * @param addressBookId - Address book ID
+   * @param category - Organization category
+   * @param name - Organization name
+   * @param email - Email
+   * @param building - Building
+   * @param street - Street
+   * @param locality - Locality
+   * @param postalCode - Postal code
+   * @param city - City
+   * @param country - Country
+   * @param phoneNumber - Phone number
+   * @param mobilePhoneNumber - Mobile phone
+   * @param faxNumber - Fax number
    * @returns Created organization
    */
-  async addContactOrganization(payload: any): Promise<any> {
+  async addContactOrganization(
+    addressBookId: any,
+    category: any,
+    name: any,
+    email: any,
+    building: any,
+    street: any,
+    locality: any,
+    postalCode: any,
+    city: any,
+    country: any,
+    phoneNumber: any,
+    mobilePhoneNumber: any,
+    faxNumber: any
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Adding contact organization');
+      logger.debug("Adding contact organization");
+      const payload = {
+        AddressBookId: addressBookId,
+        ForceDuplicatesDetection: false,
+        ForceAddressValidation: false,
+        Organization: {
+          Name: name,
+          Addresses: [
+            {
+              Building: building,
+              City: city,
+              Country: country,
+              FaxNumber: [{ Number: faxNumber }],
+              GeographicalArea: { IdesiaId: "", Label: "" },
+              Locality: locality,
+              PhoneNumber: [{ Number: phoneNumber }],
+              PostalCode: postalCode,
+              Street: street,
+            },
+          ],
+          Category: { Id: category },
+          CustomFields: ["", ""],
+          Email: email,
+          FaxNumber: [{ Number: faxNumber }],
+          MobilePhoneNumber: [{ Number: mobilePhoneNumber }],
+          PhoneNumber: [{ Number: phoneNumber }],
+        },
+      };
       return await this.store.eliseAddContactOrganization(payload);
     } catch (error) {
       logger.error(`Error adding contact organization: ${error}`);
@@ -374,16 +567,72 @@ export class EliseUtility {
 
   /**
    * Update contact organization
-   * @param payload - Updated organization data
+   * @param addressBookId - Address book ID
+   * @param organizationId - Organization ID
+   * @param category - Organization category
+   * @param name - Organization name
+   * @param email - Email
+   * @param building - Building
+   * @param street - Street
+   * @param locality - Locality
+   * @param postalCode - Postal code
+   * @param city - City
+   * @param country - Country
+   * @param phoneNumber - Phone number
+   * @param mobilePhoneNumber - Mobile phone
+   * @param faxNumber - Fax number
    * @returns Updated organization
    */
-  async updateContactOrganization(payload: any): Promise<any> {
+  async updateContactOrganization(
+    addressBookId: any,
+    organizationId: any,
+    category: any,
+    name: any,
+    email: any,
+    building: any,
+    street: any,
+    locality: any,
+    postalCode: any,
+    city: any,
+    country: any,
+    phoneNumber: any,
+    mobilePhoneNumber: any,
+    faxNumber: any
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Updating contact organization');
+      logger.debug("Updating contact organization");
+      const payload = {
+        AddressBookId: addressBookId,
+        ForceDuplicatesDetection: false,
+        ForceAddressValidation: false,
+        Organization: {
+          Id: organizationId,
+          Name: name,
+          Addresses: [
+            {
+              Building: building,
+              City: city,
+              Country: country,
+              FaxNumber: [{ Number: faxNumber }],
+              GeographicalArea: { IdesiaId: "", Label: "" },
+              Locality: locality,
+              PhoneNumber: [{ Number: phoneNumber }],
+              PostalCode: postalCode,
+              Street: street,
+            },
+          ],
+          Category: { Id: category },
+          CustomFields: ["", ""],
+          Email: email,
+          FaxNumber: [{ Number: faxNumber }],
+          MobilePhoneNumber: [{ Number: mobilePhoneNumber }],
+          PhoneNumber: [{ Number: phoneNumber }],
+        },
+      };
       return await this.store.eliseUpdateContactOrganization(payload);
     } catch (error) {
       logger.error(`Error updating contact organization: ${error}`);
@@ -393,16 +642,23 @@ export class EliseUtility {
 
   /**
    * Execute XML search
-   * @param payload - Search parameters
+   * @param limit - Result limit
+   * @param guid - Search GUID
+   * @param parameters - Search parameters array
    * @returns Search results
    */
-  async xmlSearch(payload: { limit: string; guid: string; parameters: any[] }): Promise<any> {
+  async xmlSearch(
+    limit: string,
+    guid: string,
+    parameters: any[]
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug(`Executing XML search: ${payload.guid}`);
+      logger.debug(`Executing XML search: ${guid}`);
+      const payload = { limit, guid, parameters };
       return await this.store.eliseXmlSearch(payload);
     } catch (error) {
       logger.error(`Error in XML search: ${error}`);
@@ -416,11 +672,14 @@ export class EliseUtility {
    * @param termName - Optional term name
    * @returns Thesaurus data
    */
-  async getFullThesaurus(thesaurusName: string, termName?: string): Promise<any> {
+  async getFullThesaurus(
+    thesaurusName: string,
+    termName?: string
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       logger.debug(`Getting full thesaurus: ${thesaurusName}`);
       return await this.store.eliseGetFullThesaurus(thesaurusName, termName);
@@ -432,20 +691,27 @@ export class EliseUtility {
 
   /**
    * Send email by template
-   * @param template - Template configuration
+   * @param guid - Template GUID
+   * @param smtpConfig - SMTP configuration
+   * @param parameters - Template parameters
    * @returns Send result
    */
-  async sendEmailByTemplate(template: {
-    Guid: string;
-    SmtpConfig: string;
-    Parameters: any[];
-  }): Promise<any> {
+  async sendEmailByTemplate(
+    guid: string,
+    smtpConfig: string,
+    parameters: any[]
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug(`Sending email by template: ${template.Guid}`);
+      logger.debug(`Sending email by template: ${guid}`);
+      const template = {
+        Guid: guid,
+        SmtpConfig: smtpConfig,
+        Parameters: parameters,
+      };
       return await this.store.sendEliseMailByTemplate(template);
     } catch (error) {
       logger.error(`Error sending email by template: ${error}`);
@@ -455,25 +721,50 @@ export class EliseUtility {
 
   /**
    * Send email
-   * @param emailPayload - Email data
+   * @param smtpConfig - SMTP configuration
+   * @param fromEmail - Sender email
+   * @param toEmail - Recipient emails
+   * @param subject - Email subject
+   * @param message - Email message
+   * @param ccEmail - CC recipients (optional)
+   * @param bccEmail - BCC recipients (optional)
+   * @param attachments - Email attachments (optional)
    * @returns Send result
    */
-  async sendEmail(emailPayload: {
-    smtpConfig: string;
-    fromEmail: any;
-    toEmail: any[];
-    subject: string;
-    message: string;
-    ccEmail?: any[];
-    bccEmail?: any[];
-    attachments?: any[];
-  }): Promise<any> {
+  async sendEmail(
+    smtpConfig: string,
+    fromEmail: any,
+    toEmail: any,
+    subject: string,
+    message: string,
+    ccEmail?: any,
+    bccEmail?: any,
+    attachments?: any[]
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Sending email');
+      logger.debug("Sending email");
+
+      // Helper function to normalize email addresses
+      const normalizeEmailAddresses = (input: any) => {
+        if (!input) return [];
+        if (Array.isArray(input)) return input;
+        return [input];
+      };
+
+      const emailPayload = {
+        smtpConfig,
+        fromEmail,
+        toEmail: normalizeEmailAddresses(toEmail),
+        subject,
+        message,
+        ccEmail: normalizeEmailAddresses(ccEmail),
+        bccEmail: normalizeEmailAddresses(bccEmail),
+        attachments: attachments || [],
+      };
       return await this.store.eliseSendEmail(emailPayload);
     } catch (error) {
       logger.error(`Error sending email: ${error}`);
@@ -483,22 +774,33 @@ export class EliseUtility {
 
   /**
    * Get flowchart items
-   * @param payload - Search parameters
+   * @param fullService - Full service identifier
+   * @param itemType - Item type
+   * @param ldapAttribute - LDAP attribute
+   * @param searchTerm - Search term
+   * @param searchType - Search type
    * @returns Flowchart items
    */
-  async getFlowchartItems(payload: {
-    fullService: string;
-    itemType: string;
-    ldapAttribute: string;
-    searchTerm: string;
-    searchType: string;
-  }): Promise<any> {
+  async getFlowchartItems(
+    fullService: string,
+    itemType: string,
+    ldapAttribute: string,
+    searchTerm: string,
+    searchType: string
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Getting flowchart items');
+      logger.debug("Getting flowchart items");
+      const payload = {
+        fullService,
+        itemType,
+        ldapAttribute,
+        searchTerm,
+        searchType,
+      };
       return await this.store.eliseGetFlowchartItems(payload);
     } catch (error) {
       logger.error(`Error getting flowchart items: ${error}`);
@@ -508,20 +810,27 @@ export class EliseUtility {
 
   /**
    * Apply tracking path
-   * @param payload - Tracking path data
+   * @param documentId - Document ID
+   * @param trackingPathId - Tracking path ID
+   * @param trackingPathMotherId - Tracking path mother ID
    * @returns Result
    */
-  async applyTrackingPath(payload: {
-    documentId: string;
-    trackingPathId: string;
-    trackingPathMotherId: string;
-  }): Promise<any> {
+  async applyTrackingPath(
+    documentId: string,
+    trackingPathId: string,
+    trackingPathMotherId: string
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Applying tracking path');
+      logger.debug("Applying tracking path");
+      const payload = {
+        documentId,
+        trackingPathId,
+        trackingPathMotherId,
+      };
       return await this.store.eliseApplyTrackingPath(payload);
     } catch (error) {
       logger.error(`Error applying tracking path: ${error}`);
@@ -535,9 +844,9 @@ export class EliseUtility {
    */
   getCurrentNotice(): any {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       return this.store.currentNotice;
     } catch (error) {
@@ -552,9 +861,9 @@ export class EliseUtility {
    */
   getCurrentEliseDocument(): any {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       return this.store.currentEliseDocument;
     } catch (error) {
@@ -565,20 +874,27 @@ export class EliseUtility {
 
   /**
    * Generate documents by thesaurus
-   * @param payload - Generation parameters
+   * @param thesaurusID - Thesaurus ID
+   * @param parentID - Parent ID
+   * @param reference - Reference
    * @returns Result
    */
-  async generateDocuments(payload: {
-    thesaurusID: string;
-    parentID: string;
-    reference: string;
-  }): Promise<any> {
+  async generateDocuments(
+    thesaurusID: string,
+    parentID: string,
+    reference: string
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Generating documents');
+      logger.debug("Generating documents");
+      const payload = {
+        thesaurusID,
+        parentID,
+        reference,
+      };
       return await this.store.businessGenerateDocuments(payload);
     } catch (error) {
       logger.error(`Error generating documents: ${error}`);
@@ -588,16 +904,41 @@ export class EliseUtility {
 
   /**
    * Post AI chat message
-   * @param payload - Message payload
+   * @param prompt - User prompt
+   * @param files - Files to include
    * @returns AI response
    */
-  async postAiChatMessage(payload: { Prompt: string; Files: any[] }): Promise<any> {
+  async postAiChatMessage(prompt: string, files: any): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Posting AI chat message');
+      logger.debug("Posting AI chat message");
+
+      // Map files to the expected format
+      const mappedFiles = files
+        ? files.map((file: any) => {
+            if (file.ecsAi) {
+              return file.ecsAi;
+            } else if (file.id && file.name) {
+              return {
+                id: file.id,
+                name: file.name,
+              };
+            } else {
+              return {
+                id: file.guid,
+                name: file.fileName,
+              };
+            }
+          })
+        : [];
+
+      const payload = {
+        Prompt: prompt,
+        Files: mappedFiles,
+      };
       return await this.store.storePostAiChatMessage(payload);
     } catch (error) {
       logger.error(`Error posting AI message: ${error}`);
@@ -612,9 +953,9 @@ export class EliseUtility {
    */
   async getObjectByLexicon(lexiconId: string): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       logger.debug(`Getting object by lexicon: ${lexiconId}`);
       return await this.store.getObjectByLexicon(lexiconId);
@@ -630,13 +971,16 @@ export class EliseUtility {
    * @param parameters - Web service parameters
    * @returns Web service result
    */
-  async executeWebService(webServiceName: string, parameters: any): Promise<any> {
+  async executeWebService(
+    webServiceName: string,
+    parameters: any
+  ): Promise<any> {
     try {
       const payload = {
         eliseWsInputType: webServiceName,
         objet: parameters,
       };
-      
+
       logger.debug(`Executing web service: ${webServiceName}`);
       const result = await callEliseWebService(payload);
       return result;
@@ -653,7 +997,7 @@ export class EliseUtility {
    */
   async publishFiles(parameters: any): Promise<any> {
     try {
-      logger.debug('Publishing files');
+      logger.debug("Publishing files");
       return await apiPublishFiles(parameters);
     } catch (error) {
       logger.error(`Error publishing files: ${error}`);
@@ -675,18 +1019,20 @@ export class EliseUtility {
         console.warn("Object is null or undefined:", object);
         return undefined;
       }
-      
+
       // Handle array notation like datas[0].COL_VALEUR
-      const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
-      const keys = normalizedPath.split('.');
+      const normalizedPath = path.replace(/\[(\d+)\]/g, ".$1");
+      const keys = normalizedPath.split(".");
       let current = object;
-      
+
       for (const key of keys) {
         if (current == null) {
-          console.warn("Cannot access property '" + key + "' of null or undefined");
+          console.warn(
+            "Cannot access property '" + key + "' of null or undefined"
+          );
           return undefined;
         }
-        
+
         // Check if key is numeric (array index)
         const numericKey = parseInt(key, 10);
         if (!isNaN(numericKey) && Array.isArray(current)) {
@@ -696,14 +1042,17 @@ export class EliseUtility {
           }
           current = current[numericKey];
         } else {
-          if (typeof current !== 'object' || !(key in current)) {
-            console.warn("Property '" + key + "' does not exist in object:", current);
+          if (typeof current !== "object" || !(key in current)) {
+            console.warn(
+              "Property '" + key + "' does not exist in object:",
+              current
+            );
             return undefined;
           }
           current = current[key];
         }
       }
-      
+
       return current;
     } catch (error) {
       console.error("Error accessing nested property:", error);
@@ -717,11 +1066,14 @@ export class EliseUtility {
    * @param parameters - Array of parameters with key/value pairs
    * @returns Function execution result
    */
-  async executeFunctionByName(functionName: string, parameters: Array<{ key: string; value: any }>): Promise<any> {
+  async executeFunctionByName(
+    functionName: string,
+    parameters: Array<{ key: string; value: any }>
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       logger.debug(`Executing function by name: ${functionName}`);
       return await this.store.executeFunctionByName(functionName, parameters);
