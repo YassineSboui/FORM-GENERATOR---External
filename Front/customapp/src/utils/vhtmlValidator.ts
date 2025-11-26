@@ -59,6 +59,31 @@ export function validateVHtml(content: string): VhtmlValidationResult {
 
   // 5) (AUCUN contrôle sur style, animations, etc.)
   //    Tu peux écrire du CSS librement dans style= ou dans des <style>, keyframes, transitions, etc.
+  //    Cependant: block global root selectors inside <style> because they affect the whole app.
+  //    We consider selectors targeting `html`, `body` or `:root` in <style> blocks as unsafe.
+  const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+  let styleMatch: RegExpExecArray | null;
+  while ((styleMatch = styleTagRegex.exec(content))) {
+    const styleContent = styleMatch[1] || "";
+    // Detect use of html, body or :root selectors (as standalone selectors)
+    const globalSelectorRegex =
+      /(^|[^a-zA-Z0-9_-])(:root|html|body)([^a-zA-Z0-9_-]|$)/i;
+    if (globalSelectorRegex.test(styleContent)) {
+      errors.push(
+        "Le contenu CSS contient des sélecteurs globaux (html/body/:root) dans une balise <style> — interdits."
+      );
+      break;
+    }
+    // Also detect selectors that start with these names followed by combinators or commas
+    const globalSelectorStartRegex =
+      /(?:^|\s)(html|body|:root)\s*[\>\+\~\,\{\.\[:]/i;
+    if (globalSelectorStartRegex.test(styleContent)) {
+      errors.push(
+        "Le contenu CSS contient des sélecteurs globaux (html/body/:root) dans une balise <style> — interdits."
+      );
+      break;
+    }
+  }
 
   // 6) Optionnel : très gros contenu → juste un warning de perf
   const MAX_LENGTH = 20000;
