@@ -132,7 +132,7 @@
               @executeFun="executeFun($event)"
               @handleRefs="handleRefs($event)"
               @duplicate="duplicate($event)"
-              @deleteDuplicated="deleteDuplicated($event)""
+              @deleteDuplicated="deleteDuplicated($event)"
               @focus="handleFocus($event)"
               @blur="handleBlur($event)"
               @mouseenter="handleMouseenter($event)"
@@ -192,7 +192,7 @@
                     @executeFun="executeFun($event)"
                     @handleRefs="handleRefs($event)"
                     @duplicate="duplicate($event)"
-              @deleteDuplicated="deleteDuplicated($event)""
+                    @deleteDuplicated="deleteDuplicated($event)"
                     @focus="handleFocus($event)"
                     @blur="handleBlur($event)"
                     @mouseenter="handleMouseenter($event)"
@@ -271,7 +271,7 @@
                     @executeFun="executeFun($event)"
                     @handleRefs="handleRefs($event)"
                     @duplicate="duplicate($event)"
-              @deleteDuplicated="deleteDuplicated($event)""
+                    @deleteDuplicated="deleteDuplicated($event)"
                     @focus="handleFocus($event)"
                     @blur="handleBlur($event)"
                     @mouseenter="handleMouseenter($event)"
@@ -351,7 +351,7 @@
             @executeFun="executeFun($event)"
             @handleRefs="handleRefs($event)"
             @duplicate="duplicate($event)"
-              @deleteDuplicated="deleteDuplicated($event)""
+            @deleteDuplicated="deleteDuplicated($event)"
             @focus="handleFocus($event)"
             @blur="handleBlur($event)"
             @mouseenter="handleMouseenter($event)"
@@ -383,7 +383,7 @@
                   @executeFun="executeFun($event)"
                   @handleRefs="handleRefs($event)"
                   @duplicate="duplicate($event)"
-              @deleteDuplicated="deleteDuplicated($event)""
+                  @deleteDuplicated="deleteDuplicated($event)"
                   @focus="handleFocus($event)"
                   @blur="handleBlur($event)"
                   @mouseenter="handleMouseenter($event)"
@@ -430,7 +430,7 @@
                   @executeFun="executeFun($event)"
                   @handleRefs="handleRefs($event)"
                   @duplicate="duplicate($event)"
-              @deleteDuplicated="deleteDuplicated($event)""
+                  @deleteDuplicated="deleteDuplicated($event)"
                   @focus="handleFocus($event)"
                   @blur="handleBlur($event)"
                   @mouseenter="handleMouseenter($event)"
@@ -963,7 +963,7 @@ const fixedHeadersHeights = ref([] as any);
 
 watch(itemsForm, (newVal) => {
   itemsFormCopy.value = newVal;
-  setFields(newVal, 0)
+  setFields(newVal, 0);
 });
 
 itemsForm.value.forEach((item: any) => {
@@ -1241,7 +1241,7 @@ const prepareNoticeData = async () => {
   NoticeFiles.value = [];
   NoticeUploadTable.value = [];
 
-   // Process item refs
+  // Process item refs
   itemRefs.value.forEach((elem) => {
     const key = elem.dataset.key;
     NoticeData.value[key] = {
@@ -1513,14 +1513,17 @@ const handleFieldSettingSplitterZone = (pageItem: any) => {
       if (row.zone === "ZR" && row.isSection === false) {
         localFields.value[row.code] ??= [];
         handleFieldSettingRepeatableZone(row);
-         // Always ensure repeatable zones start with at least one element
+        // Always ensure repeatable zones start with at least one element
         if (localFields.value[row.code].length === 0) {
           // No elements were added, so we need to ensure at least one exists
           repeatableZoneChildrens.value[row.code] = 1;
           // Initialize Fields.value to ensure the zone shows up
           Fields.value[row.code] = [{}];
         } else {
-          repeatableZoneChildrens.value[row.code] = Math.max(1, localFields.value[row.code].length);
+          repeatableZoneChildrens.value[row.code] = Math.max(
+            1,
+            localFields.value[row.code].length
+          );
         }
       } else if (row.zone === "ZR" && row.isSection) {
         const columns = ["column1", "column2", "column3", "column4"];
@@ -1584,7 +1587,10 @@ const handleFieldSetting = (pageItem: any, clear = false) => {
       // Initialize Fields.value to ensure the zone shows up
       Fields.value[pageItem.code] = [{}];
     } else {
-      repeatableZoneChildrens.value[pageItem.code] = Math.max(1, localFields.value[pageItem.code].length);
+      repeatableZoneChildrens.value[pageItem.code] = Math.max(
+        1,
+        localFields.value[pageItem.code].length
+      );
     }
   } else if (pageItem.zone === "ZR" && pageItem.isSection) {
     const columnNames = ["column1", "column2", "column3", "column4"];
@@ -1716,7 +1722,7 @@ onMounted(async () => {
         const n = await fetchNotice(QueryParameters.value.noticeType);
         const {
           id,
-          noticeJson: { data, mapping, Html, files },
+          noticeJson: { data, mapping, html, files },
         } = n;
         store.setNotice(n);
         Object.keys(data)?.forEach((v) => {
@@ -1739,12 +1745,28 @@ onMounted(async () => {
             repeatableZoneChildrens.value[v] = Fields.value[v].row.length;
           }
         });
+        itemRefs.value.forEach((elem) => {
+          const key = elem.dataset.key;
+          Fields.value[key] = data[key]?.row || [];
+          if (
+            Array.isArray(Fields.value[key]) &&
+            Fields.value[key].length > 0
+          ) {
+            repeatableZoneChildrens.value[key] = Fields.value[key].length;
+          } else {
+            repeatableZoneChildrens.value[key] = 0;
+          }
+        });
         Object.keys(mapping)?.forEach((v) => {
           Fields.value[v] = mapping[v];
         });
-        Object.keys(Html)?.forEach((v) => {
-          Fields.value[v] = Html[v];
+        Object.keys(html)?.forEach((v) => {
+          Fields.value[v] = html[v];
         });
+        // Object.keys(files)?.forEach((v) => {
+        //   Fields.value[v] = files[v];
+        // });
+        // get the fiels with type file from app.refs
         for (let element in app.refs) {
           const options = app.refs[element][0]?.options;
           if (options?.type == "PHOTO") {
@@ -1763,12 +1785,8 @@ onMounted(async () => {
             isLoadingComponent.value = false;
           }
         } catch (error) {
-          console.error(
-            "[ComponentForm] Failed to fetch metadata for guid:",
-            route.params.guid,
-            error
-          );
-          logger.error(`[ComponentForm] fetchMetadata error: ${error}`);
+          console.error("error", error);
+          logger.error(error);
         }
         isLoadingComponent.value = false;
       } catch (e) {
@@ -2020,10 +2038,10 @@ watch(
   (newFields) => {
     // Skip processing if we're in the middle of duplication
     if (isDuplicating.value) return;
-    
+
     Object.keys(newFields).forEach((fieldKey) => {
       const fieldValue = newFields[fieldKey];
-      
+
       // Check if this field corresponds to a repeatable zone
       if (Array.isArray(fieldValue)) {
         // For regular array fields (repeatable zones)
@@ -2052,25 +2070,25 @@ watch(
 const duplicate = (event: any) => {
   // Set flag to prevent Fields watcher interference
   isDuplicating.value = true;
-  
+
   try {
     const prevRepeatableZoneChildrens = { ...repeatableZoneChildrens.value };
-    
+
     // Update the repeatable zone children count
     repeatableZoneChildrens.value = event;
-    
+
     // Find which field was duplicated by comparing the counts
     Object.keys(event).forEach((fieldKey) => {
       const newCount = event[fieldKey];
       const prevCount = prevRepeatableZoneChildrens[fieldKey] || 0;
-      
+
       // Only add if this specific field's count increased by exactly 1
       if (newCount === prevCount + 1) {
         // This field was duplicated, create a properly structured object
         if (!Fields.value[fieldKey]) {
           Fields.value[fieldKey] = [];
         }
-        
+
         if (Array.isArray(Fields.value[fieldKey])) {
           // Get the structure from the first existing element or create empty structure
           let newElement = {};
@@ -2084,7 +2102,10 @@ const duplicate = (event: any) => {
           }
           // Regular repeatable zone - add properly structured object
           Fields.value[fieldKey].push(newElement);
-        } else if (Fields.value[fieldKey]?.row && Array.isArray(Fields.value[fieldKey].row)) {
+        } else if (
+          Fields.value[fieldKey]?.row &&
+          Array.isArray(Fields.value[fieldKey].row)
+        ) {
           // Get the structure from the first existing row element
           let newElement = {};
           if (Fields.value[fieldKey].row.length > 0) {
@@ -2406,66 +2427,73 @@ const validateFieldRepeatableZone = (
 ) => {
   const itemCol = pageItem.rows.column1;
   let fieldValid = valid;
-  
+
   if (pageItem.show === false) {
     return true;
   } else {
     // Get the number of repeatable zone items
     const repeatableCount = repeatableZoneChildrens.value[pageItem.code] || 0;
-    
+
     // Validate each repeatable zone item
     for (let repeatIndex = 0; repeatIndex < repeatableCount; repeatIndex++) {
       for (let k = 0; k < itemCol.length; k++) {
         for (let z = 0; z < pageItem.rows[columnName].length; z++) {
           const columnNames = ["column1", "column2", "column3", "column4"];
           columnNames.forEach((columnNameZ) => {
-            Object.values(pageItem.rows[columnName][z].rows[columnNameZ]).forEach(
-              (field: any) => {
-                const options = field.options;
-                if (options && options.hidden !== true) {
-                  // Get the field value for this specific repeatable zone item
-                  let fieldValue = null;
-                  if (Fields.value[pageItem.code] && Array.isArray(Fields.value[pageItem.code])) {
-                    fieldValue = Fields.value[pageItem.code][repeatIndex]?.[options.name];
-                  } else if (Fields.value[pageItem.code]?.row && Array.isArray(Fields.value[pageItem.code].row)) {
-                    fieldValue = Fields.value[pageItem.code].row[repeatIndex]?.[options.name];
-                  }
+            Object.values(
+              pageItem.rows[columnName][z].rows[columnNameZ]
+            ).forEach((field: any) => {
+              const options = field.options;
+              if (options && options.hidden !== true) {
+                // Get the field value for this specific repeatable zone item
+                let fieldValue = null;
+                if (
+                  Fields.value[pageItem.code] &&
+                  Array.isArray(Fields.value[pageItem.code])
+                ) {
+                  fieldValue =
+                    Fields.value[pageItem.code][repeatIndex]?.[options.name];
+                } else if (
+                  Fields.value[pageItem.code]?.row &&
+                  Array.isArray(Fields.value[pageItem.code].row)
+                ) {
+                  fieldValue =
+                    Fields.value[pageItem.code].row[repeatIndex]?.[
+                      options.name
+                    ];
+                }
 
-                  // Required check
-                  if (options.required && isEmpty(fieldValue)) {
-                    app.refs[options.name]?.[repeatIndex]?.setFieldError(
-                      props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+                // Required check
+                if (options.required && isEmpty(fieldValue)) {
+                  app.refs[options.name]?.[repeatIndex]?.setFieldError(
+                    props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+                  );
+                  fieldValid = false;
+                }
+
+                // Rules check: use validateByRule for each rule
+                if (Array.isArray(options.rules) && !isEmpty(fieldValue)) {
+                  let messages: string[] = [];
+                  for (const rule of options.rules) {
+                    const result = validateByRule(
+                      fieldValue,
+                      rule,
+                      options.label || options.name,
+                      props.isRTL ? "ar" : "fr"
                     );
-                    fieldValid = false;
+                    if (!result.valid && result.msg) {
+                      messages.push(result.msg);
+                      fieldValid = false;
+                    }
                   }
-                  
-                  // Rules check: use validateByRule for each rule
-                  if (
-                    Array.isArray(options.rules) &&
-                    !isEmpty(fieldValue)
-                  ) {
-                    let messages: string[] = [];
-                    for (const rule of options.rules) {
-                      const result = validateByRule(
-                        fieldValue,
-                        rule,
-                        options.label || options.name,
-                        props.isRTL ? "ar" : "fr"
-                      );
-                      if (!result.valid && result.msg) {
-                        messages.push(result.msg);
-                        fieldValid = false;
-                      }
-                    }
-                    if (messages.length > 0) {
-                      app.refs[options.name]?.[repeatIndex]?.setFieldError(
-                        messages.join("\n")
-                      );
-                    }
+                  if (messages.length > 0) {
+                    app.refs[options.name]?.[repeatIndex]?.setFieldError(
+                      messages.join("\n")
+                    );
                   }
                 }
               }
-            );
+            });
           });
           if (!fieldValid) {
             break;
