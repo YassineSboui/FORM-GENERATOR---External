@@ -39,29 +39,12 @@
           <Divider />
           <div class="duplicatable-zone-content mt-4 px-3">
             <div
-              v-for="i in Math.max(internalValue.rows.column1.length || 0)"
-              :key="i"
-            >
-              <zone-component
-                :isRTL="isRTL"
-                @AppRefs="handleRefs($event)"
-                v-model="internalValue.rows.column1[i - 1]"
-                v-model:fields="fields"
-                @handleInputChange="handleInputChange($event)"
-                @executeFun="executeFun($event)"
-                @focus="handleFocus($event)"
-                @blur="handleBlur($event)"
-                @mouseenter="handleMouseenter($event)"
-                @mouseleave="handleMouseleave($event)"
-                style="min-height: 60px"
-              ></zone-component>
-            </div>
-            <div
               v-for="i in internalrepeatableZone[internalValue.code] || 0"
               :key="i"
             >
-              <Divider />
+              <Divider v-if="i > 1" />
               <div
+                v-if="i > 1"
                 class="flex justify-content-end"
                 style="margin-bottom: -15px"
               >
@@ -182,6 +165,7 @@ const emit = defineEmits([
   "update:fields",
   "repeatableZoneChildrens",
   "duplicate",
+  "deleteDuplicated",
   "focus",
   "blur",
   "mouseleave",
@@ -239,18 +223,26 @@ const handleMouseenter = (e: any) => {
 const handleMouseleave = (e: any) => {
   emit("mouseleave", e);
 };
-const internalrepeatableZone = ref(props.repeatableZoneChildrens);
+const internalrepeatableZone = computed(() => props.repeatableZoneChildrens);
 const isRTL = ref(props.isRTL);
 
 const duplicate = (elem: any) => {
-  internalrepeatableZone.value = {
+  const newValue = {
     ...internalrepeatableZone.value,
     [elem.code]: (internalrepeatableZone.value[elem.code] || 0) + 1,
   };
-  emit("duplicate", internalrepeatableZone.value);
+  emit("duplicate", newValue);
 };
 const deleteDuplicated = (elem: any, index: any) => {
-  internalrepeatableZone.value[elem] = internalrepeatableZone.value[elem] - 1;
+  // First remove the item from fields by emitting to parent
+  emit("deleteDuplicated", { elem, index });
+
+  // Then update the count
+  const newValue = {
+    ...internalrepeatableZone.value,
+    [elem]: Math.max(1, (internalrepeatableZone.value[elem] || 1) - 1),
+  };
+  emit("duplicate", newValue);
 };
 </script>
 
@@ -265,5 +257,9 @@ const deleteDuplicated = (elem: any, index: any) => {
   padding: 0.5rem;
   // box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid #eaecee;
+}
+
+.p-panel-header {
+  cursor: pointer;
 }
 </style>

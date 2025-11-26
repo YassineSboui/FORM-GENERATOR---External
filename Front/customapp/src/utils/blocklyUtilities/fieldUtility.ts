@@ -85,7 +85,7 @@ export class FieldUtility {
     }
 
     // Only allow CF_, TBL_, or COL_ prefix + alphanumeric + underscore (case-insensitive)
-    if (!/^(CF_|TBL_|COL_)[A-Z0-9_]+$/i.test(fieldName)) {
+    if (!/^(ZR_|CF_|CTF_|TBL_|COL_)[A-Z0-9_]+$/i.test(fieldName)) {
       throw new Error(
         `Invalid field name format: ${fieldName}. Expected format: CF_FIELDNAME, TBL_FIELDNAME, or COL_FIELDNAME`
       );
@@ -227,6 +227,22 @@ export class FieldUtility {
       let processedValue = value;
       if (typeof value === "string") {
         processedValue = value.replace(/\\n/g, "\n");
+      }
+
+      // Special handling for ZR_ fields: extract row array if value is an object with row property
+      if (
+        fieldName.startsWith("ZR_") &&
+        value &&
+        typeof value === "object" &&
+        value.row &&
+        Array.isArray(value.row)
+      ) {
+        processedValue = value.row;
+        logger.debug(
+          `[FieldUtility] Extracted row array from ZR_ field ${fieldName}: ${this.stringifyForLog(
+            processedValue
+          )}`
+        );
       }
 
       // Try to get field reference and use component's setValue if available

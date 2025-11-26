@@ -106,7 +106,7 @@ export default defineComponent({
   emits: ["update:options", "update:modelValue"],
   setup(props, { emit }) {
     const convertData = (data: any) => {
-      if (data != "") {
+      if (Array.isArray(data) && data.length > 0) {
         const outputData = {
           row: data,
         };
