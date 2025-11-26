@@ -1,5 +1,5 @@
 <template>
-  <div class="neoFlowchartV2" v-show="!isHidden" :dir="isRTL ? 'rtl' : 'ltr'">
+  <div class="neoAutoComplete" v-show="!isHidden" :dir="isRTL ? 'rtl' : 'ltr'">
     <div class="label" v-if="!isParentNeoTable">
       <label class="label-container">
         {{
@@ -52,7 +52,7 @@
             :suggestions="items"
             :minLength="options.minLength"
             :placeholder="searchPlaceholder + (loading ? '...' : '')"
-            class="w-full neoFlowchartV2C"
+            class="w-full neoFlowChartC"
             :class="{
               'rtl-loader': isRTL,
               'p-invalid': errorMessage || errorState.errorMessage,
@@ -632,7 +632,7 @@ export default {
     right: 0.75rem;
   }
 }
-.neoFlowchartV2C {
+.neoFlowChartC {
   position: relative;
 
   .p-autocomplete-input {
