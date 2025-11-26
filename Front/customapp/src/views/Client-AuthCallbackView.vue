@@ -127,7 +127,13 @@ export default defineComponent({
 
       // Get the personal code from the original query parameter
       const originalQuery = sessionStorage.getItem("original_query") || "";
-      const personalCode = originalQuery.split("=")[1] || "";
+      let personalCode = "";
+      if (originalQuery) {
+        const params = new URLSearchParams(
+          originalQuery.startsWith("?") ? originalQuery : "?" + originalQuery
+        );
+        personalCode = params.get("code") || "";
+      }
       console.log(
         "[AuthCallback] Personal code extracted:",
         personalCode ? "yes" : "no"

@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace NeoForm_Externe.Models
@@ -90,9 +91,33 @@ namespace NeoForm_Externe.Models
         public string RefreshToken { get; set; } = string.Empty;
 
         [JsonPropertyName("expires_in")]
+        [JsonConverter(typeof(ParseStringToIntConverter))]
         public int ExpiresIn { get; set; }
 
         [JsonPropertyName("token_type")]
         public string TokenType { get; set; } = string.Empty;
+    }
+
+    // Custom converter to handle string or int for expires_in
+    public class ParseStringToIntConverter : JsonConverter<int>
+    {
+        public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var str = reader.GetString();
+                if (int.TryParse(str, out var value))
+                    return value;
+                throw new JsonException($"Cannot parse '{str}' to int.");
+            }
+            else if (reader.TokenType == JsonTokenType.Number)
+            {
+                return reader.GetInt32();
+            }
+            throw new JsonException("Invalid token type for int property.");
+        }
+
+        public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
+            => writer.WriteNumberValue(value);
     }
 }

@@ -3,6 +3,8 @@ using NeoForm_Externe.Interfaces;
 using NeoForm_Externe.Models;
 using NeoForm_Externe.Models.Dto;
 using RestSharp;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Serilog;
@@ -18,6 +20,37 @@ namespace NeoForm_Externe.Services.Authentication
         {
             _logger = logger;
             _authRepository = authRepository;
+        }
+
+        private RestClient CreateRestClient(string? baseUrl = null)
+        {
+            var options = new RestClientOptions();
+            if (!string.IsNullOrEmpty(baseUrl))
+            {
+                try
+                {
+                    options.BaseUrl = new Uri(baseUrl);
+                }
+                catch
+                {
+                    // ignore invalid base url here - we'll still create client
+                }
+            }
+
+            options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+            {
+                // Allow local development self-signed certificates for localhost and 127.0.0.1 only
+                var url = options.BaseUrl?.ToString() ?? baseUrl ?? string.Empty;
+                if (url.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase) ||
+                    url.StartsWith("https://127.0.0.1", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                return sslPolicyErrors == SslPolicyErrors.None;
+            };
+
+            return new RestClient(options);
         }
 
         public async Task<OidcValidationResult> ValidateOidcCodeAsync(string code, string state, string guid, string configUrl, string personalCode = "")
@@ -193,7 +226,7 @@ namespace NeoForm_Externe.Services.Authentication
         {
             try
             {
-                var client = new RestClient();
+                var client = CreateRestClient(configUrl);
                 var request = new RestRequest(configUrl);
                 request.AddQueryParameter("guid", guid);
                 request.AddQueryParameter("code", personalCode); // Use personal code instead of OIDC code
@@ -255,7 +288,7 @@ namespace NeoForm_Externe.Services.Authentication
                     return null;
                 }
 
-                var client = new RestClient(tokenEndpoint);
+                var client = CreateRestClient(tokenEndpoint);
                 var request = new RestRequest()
                 {
                     Method = Method.Post
@@ -323,7 +356,7 @@ namespace NeoForm_Externe.Services.Authentication
                     {
                         Log.Information("Attempting to get token endpoint from: {ConfigUrl}", configUrl);
 
-                        var client = new RestClient(configUrl);
+                        var client = CreateRestClient(configUrl);
                         var request = new RestRequest();
 
                         var response = await client.ExecuteGetAsync(request);
@@ -425,7 +458,7 @@ namespace NeoForm_Externe.Services.Authentication
                 {
                     try
                     {
-                        var client = new RestClient(discoveryUrl);
+                        var client = CreateRestClient(discoveryUrl);
                         var response = await client.ExecuteGetAsync(new RestRequest());
 
                         if (response.IsSuccessful)
@@ -453,7 +486,7 @@ namespace NeoForm_Externe.Services.Authentication
                 }
 
                 // Get JWKS
-                var jwksClient = new RestClient(config.JwksUri);
+                var jwksClient = CreateRestClient(config.JwksUri);
                 var jwksResponse = await jwksClient.ExecuteGetAsync(new RestRequest());
 
                 if (!jwksResponse.IsSuccessful)
