@@ -259,6 +259,82 @@ export default {
         }));
       }
     };
+    // Function to update items with robust parsing
+    const updateItems = async (newElements: string | any[]) => {
+      try {
+        let processedElements = [];
+
+        // Handle null or undefined
+        if (newElements == null || newElements == undefined) {
+          processedElements = [];
+        }
+        // Handle string input - try to parse as JSON
+        else if (typeof newElements === "string") {
+          if (newElements.trim() === "") {
+            processedElements = [];
+          } else {
+            try {
+              // Try to parse as JSON
+              const parsed = JSON.parse(newElements);
+              processedElements = Array.isArray(parsed) ? parsed : [parsed];
+            } catch (jsonError) {
+              // If JSON parsing fails, treat as a single string item
+              console.warn(
+                "Failed to parse JSON string, treating as single item:",
+                jsonError
+              );
+              processedElements = [{ key: newElements, label: newElements }];
+            }
+          }
+        }
+        // Handle array input
+        else if (Array.isArray(newElements)) {
+          processedElements = newElements.map((item) => {
+            // If item is already an object, return as is
+            if (typeof item === "object" && item !== null) {
+              return item;
+            }
+            // If item is a string, try to parse as JSON
+            else if (typeof item === "string") {
+              try {
+                const parsed = JSON.parse(item);
+                return typeof parsed === "object" && parsed !== null
+                  ? parsed
+                  : { key: item, label: item };
+              } catch (jsonError) {
+                // If parsing fails, create a simple object
+                return { key: item, label: item };
+              }
+            }
+            // For other primitive types, create a simple object
+            else {
+              return { key: String(item), label: String(item) };
+            }
+          });
+        }
+        // Handle object input
+        else if (typeof newElements === "object") {
+          processedElements = [newElements];
+        }
+        // Handle other primitive types
+        else {
+          processedElements = [
+            { key: String(newElements), label: String(newElements) },
+          ];
+        }
+
+        localOptions.elements = processedElements;
+        props.options.elements = processedElements;
+        emit("update:options", localOptions);
+      } catch (error) {
+        console.error("Error in updateItems:", error);
+        // Fallback to empty array in case of any unexpected error
+        localOptions.elements = [];
+        props.options.elements = [];
+        emit("update:options", localOptions);
+      }
+    };
+
     // Function to update options
     const updateOptions = (updates: Partial<OptionConfig>) => {
       Object.assign(localOptions, updates);
@@ -447,6 +523,7 @@ export default {
       generateRandomString,
       attachDropdownToParent,
       localOptions,
+      updateItems,
     };
   },
 };
