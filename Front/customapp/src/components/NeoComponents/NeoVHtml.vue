@@ -1,8 +1,10 @@
 <template>
   <div class="vhtml" v-show="!isHidden">
-    <div class="input-container" :class="{ 'disabled-wrapper': isDisabled }">
-      <div v-html="internalValue" class="vhtml-wrapper"></div>
-    </div>
+    <template v-if="!errorState.errorMessage">
+      <div class="input-container" :class="{ 'disabled-wrapper': isDisabled }">
+        <div v-html="internalValue" class="vhtml-wrapper"></div>
+      </div>
+    </template>
     <small class="p-error" id="text-error" v-if="errorState.errorMessage">
       {{ errorState.errorMessage || "\u00A0" }}
     </small>

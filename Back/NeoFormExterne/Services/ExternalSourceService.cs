@@ -71,7 +71,7 @@ namespace NeoForm_Externe.Services
                     throw new InvalidOperationException("Database configuration is missing");
                 }
 
-                return await ExecuteWithParams(databaseConfig, queryConfig, req.Params);
+                return await ExecuteWithParams(databaseConfig, queryConfig, req.Params ?? new List<Param>());
             }
             finally
             {
@@ -358,7 +358,30 @@ namespace NeoForm_Externe.Services
 
                 if (bodyRequest != null)
                 {
-                    request.AddJsonBody(bodyRequest.content);
+                    // If 'content' is provided (object), use AddJsonBody
+                    if (bodyRequest.content != null)
+                    {
+                        request.AddJsonBody(bodyRequest.content);
+                    }
+                    // Otherwise, try to use the string Body field
+                    else if (!string.IsNullOrWhiteSpace(bodyRequest.Body))
+                    {
+                        try
+                        {
+                            // If Body contains valid JSON, parse and send as JSON
+                            var parsed = JToken.Parse(bodyRequest.Body);
+                            request.AddJsonBody(parsed);
+                        }
+                        catch (JsonReaderException)
+                        {
+                            // Not valid JSON — send raw body with JSON content type
+                            request.AddParameter("application/json", bodyRequest.Body, ParameterType.RequestBody);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("bodyRequest provided but both 'content' and 'Body' are empty; no request body will be sent.");
+                    }
                 }
                 else if (formData != null)
                 {
