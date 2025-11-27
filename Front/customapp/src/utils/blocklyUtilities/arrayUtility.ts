@@ -405,44 +405,61 @@ export class ArrayUtility {
 
     const resp: any = await fetchDataByTableGuid(parentId);
     const respArray = Array.isArray(resp) ? resp : [resp];
-    respArray.forEach((res: any) => {
-      const internalParsed = JSON.parse(res.dataJson);
 
-      if (
-        childField === "all" &&
-        internalParsed.datas[filterField] === filterValue
-      ) {
-        elements.push(internalParsed.datas);
-      } else if (
-        internalParsed.datas[childField] &&
-        internalParsed.datas[filterField] === filterValue
-      ) {
-        if (returnFullObject) {
-          // Return full object with all attributes
-          elements.push(internalParsed.datas);
-        } else {
+    // If filterValue is null or undefined, return all
+    if (filterValue === null || filterValue === undefined) {
+      respArray.forEach((res: any) => {
+        const internalParsed = JSON.parse(res.dataJson);
+        if (childField === "all") {
+          // Ensure 'id' is present in the returned object, but do not overwrite if already present
+          let obj: any;
+          if (
+            Object.prototype.hasOwnProperty.call(internalParsed.datas, "id")
+          ) {
+            obj = { ...internalParsed.datas };
+          } else if (res.id !== undefined) {
+            obj = { ...internalParsed.datas, id: res.id };
+          } else {
+            obj = { ...internalParsed.datas };
+          }
+          elements.push(obj);
+        } else if (internalParsed.datas[childField]) {
+          elements.push(internalParsed.datas[childField]);
+        }
+      });
+    } else {
+      respArray.forEach((res: any) => {
+        const internalParsed = JSON.parse(res.dataJson);
+        if (
+          childField === "all" &&
+          internalParsed.datas[filterField] === filterValue
+        ) {
+          // Ensure 'id' is present in the returned object, but do not overwrite if already present
+          let obj: any;
+          if (
+            Object.prototype.hasOwnProperty.call(internalParsed.datas, "id")
+          ) {
+            obj = { ...internalParsed.datas };
+          } else if (res.id !== undefined) {
+            obj = { ...internalParsed.datas, id: res.id };
+          } else {
+            obj = { ...internalParsed.datas };
+          }
+          elements.push(obj);
+        } else if (
+          internalParsed.datas[childField] &&
+          internalParsed.datas[filterField] === filterValue
+        ) {
           // Return only the value of the chosen column
           elements.push(internalParsed.datas[childField]);
         }
-      }
-    });
-
+      });
+    }
     // Remove duplicates
     if (childField === "all") {
       return elements;
     } else {
-      if (returnFullObject) {
-        // Remove duplicate objects based on code or first property
-        return elements.filter((v, i, a) => {
-          const key = v.code || Object.values(v)[0];
-          return (
-            a.findIndex((t) => (t.code || Object.values(t)[0]) === key) === i
-          );
-        });
-      } else {
-        // Remove duplicate values
-        return [...new Set(elements)];
-      }
+      return [...new Set(elements)];
     }
   }
 }
