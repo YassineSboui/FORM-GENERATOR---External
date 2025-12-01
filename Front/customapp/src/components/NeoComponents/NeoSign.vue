@@ -373,17 +373,11 @@ export default {
     margin-bottom: 0.5rem;
 
     .label-container {
-      color: #495057;
       min-width: 150px;
       align-items: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        Helvetica, Arial, sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 1.5;
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      padding-bottom: 5px;
+      padding-top: 5px;
 
       .required-asterisk {
         color: var(--p-primary-color);
