@@ -1037,7 +1037,6 @@ watch(
       value.find((item: any) => item.key === key);
     try {
       // eval the code of the Last event
-      console.log("[NeoTable] App refs available:", Object.keys(app.refs));
       await nextTick();
       // app.refs.TEST[0].disableField();
       const events = props.config.objectConfig.formConfig.events;

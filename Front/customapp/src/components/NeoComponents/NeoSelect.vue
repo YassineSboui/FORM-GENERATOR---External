@@ -724,7 +724,10 @@ export default {
         }
       }
 
-      if (props.options.selectedTable) {
+      if (
+        props.options.selectedTable &&
+        props.options.selectedSource == "table"
+      ) {
         // only fetch if cache missing
         if (!tableCache.has(props.options.selectedTable)) {
           await handleSelectedTableChange(props.options.selectedTable);
@@ -734,7 +737,6 @@ export default {
           ) as any[];
         }
       }
-      console.log("Mounted with modelValue:", props.modelValue);
       // Handle initial modelValue when component is mounted
       if (props.modelValue && props.options.returnObject) {
         // Check if modelValue is just a value that needs to be converted to object

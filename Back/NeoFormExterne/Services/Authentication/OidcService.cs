@@ -8,6 +8,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Serilog;
+using System.Security.Cryptography;
+using System.IO;
+using System.Text;
 
 namespace NeoForm_Externe.Services.Authentication
 {
@@ -15,11 +18,13 @@ namespace NeoForm_Externe.Services.Authentication
     {
         private readonly ILogger<OidcService> _logger;
         private readonly IUserAuthenticationRepository _authRepository;
+        private readonly IEncryptionService _encryption;
 
-        public OidcService(ILogger<OidcService> logger, IUserAuthenticationRepository authRepository)
+        public OidcService(ILogger<OidcService> logger, IUserAuthenticationRepository authRepository, IEncryptionService encryption)
         {
             _logger = logger;
             _authRepository = authRepository;
+            _encryption = encryption;
         }
 
         private RestClient CreateRestClient(string? baseUrl = null)
@@ -256,11 +261,27 @@ namespace NeoForm_Externe.Services.Authentication
 
                 if (authResponse?.Valid == true && authResponse.AuthType == "oidc" && authResponse.AuthConfig != null)
                 {
+                    // Decrypt client secret if provider returned an encrypted value using the specific legacy scheme
+                    string clientSecret = authResponse.AuthConfig.ClientSecret ?? string.Empty;
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(clientSecret))
+                        {
+                            // Try to decrypt with the legacy encryptor used by the other repo
+                            // That encryptor uses AES CBC with a 16-char key "YourSecretKey123" and IV "HR$2pIjHR$2pIj12"
+                            clientSecret = TryDecryptLegacyClientSecret(clientSecret) ?? clientSecret;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to decrypt client secret for GUID: {Guid}. Using raw value.", guid);
+                    }
+
                     return new OidcConfiguration
                     {
                         Authority = authResponse.AuthConfig.Authority,
                         ClientId = authResponse.AuthConfig.ClientId,
-                        ClientSecret = authResponse.AuthConfig.ClientSecret,
+                        ClientSecret = clientSecret,
                         RedirectUri = authResponse.AuthConfig.RedirectUri,
                         Scope = authResponse.AuthConfig.Scope
                     };
@@ -273,6 +294,55 @@ namespace NeoForm_Externe.Services.Authentication
                 _logger.LogError(ex, "Error retrieving OIDC configuration for GUID: {Guid}", guid);
                 return null;
             }
+        }
+
+        // Decrypts a cipherText that was encrypted by the other repository's EncryptionService
+        // Returns decrypted string or null if decryption failed
+        private string? TryDecryptLegacyClientSecret(string cipherText)
+        {
+            if (string.IsNullOrWhiteSpace(cipherText)) return null;
+
+            try
+            {
+                // The other service used a 16-byte key: "YourSecretKey123" and IV: "HR$2pIjHR$2pIj12"
+                var legacyKey = "YourSecretKey123";
+                var legacyIv = "HR$2pIjHR$2pIj12";
+
+                using (Aes aesAlg = Aes.Create())
+                {
+                    aesAlg.Key = Encoding.UTF8.GetBytes(legacyKey);
+                    aesAlg.IV = Encoding.UTF8.GetBytes(legacyIv);
+
+                    ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
+                    var cipherBytes = Convert.FromBase64String(cipherText);
+                    using (var msDecrypt = new MemoryStream(cipherBytes))
+                    using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                    using (var srDecrypt = new StreamReader(csDecrypt))
+                    {
+                        var decrypted = srDecrypt.ReadToEnd();
+                        // Log masked encrypted and decrypted values for debug (masked to avoid leaking secrets)
+                        try
+                        {
+                            _logger.LogDebug("Legacy decrypt - encrypted(masked)={EncryptedMask}, decrypted(masked)={DecryptedMask}", Mask(cipherText), Mask(decrypted));
+                        }
+                        catch { }
+                        return decrypted;
+                    }
+                }
+            }
+            catch
+            {
+                // Return null to indicate decryption failed; caller will use raw value
+                return null;
+            }
+        }
+
+        private static string Mask(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s ?? string.Empty;
+            if (s.Length <= 12) return s;
+            return s.Substring(0, 6) + "..." + s.Substring(s.Length - 4);
         }
 
         private async Task<TokenResponse> ExchangeCodeForTokensAsync(string code, OidcConfiguration oidcConfig)

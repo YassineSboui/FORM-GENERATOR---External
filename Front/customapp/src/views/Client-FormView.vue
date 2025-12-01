@@ -1748,7 +1748,7 @@ export default defineComponent({
     ); /* 60px is the footer height */
     .form-viewer {
       width: 100%;
-      overflow-y: auto;
+      overflow-y: hidden;
       overflow-x: hidden;
     }
 
