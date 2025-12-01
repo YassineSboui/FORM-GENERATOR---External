@@ -27,12 +27,31 @@ export function validateVHtml(content: string): VhtmlValidationResult {
   }
 
   // 1) Balises clairement dangereuses (XSS / injections)
-  const forbiddenTags = ["script", "iframe", "object", "embed", "link", "meta"];
+  // Note: <style> and safe <meta> tags are allowed
+  const forbiddenTags = ["script", "iframe", "object", "embed"];
   for (const tag of forbiddenTags) {
     const tagRegex = new RegExp(`<\\/?\\s*${tag}\\b`, "i");
     if (tagRegex.test(content)) {
       errors.push(`Balise interdite <${tag}> détectée.`);
     }
+  }
+
+  // Check for dangerous <meta> tags (allow charset, viewport, description, etc.)
+  // Block meta with http-equiv="refresh" or http-equiv="set-cookie"
+  const dangerousMetaRegex =
+    /<meta[^>]*http-equiv\s*=\s*["']?(refresh|set-cookie)["']?/i;
+  if (dangerousMetaRegex.test(content)) {
+    errors.push(
+      "Balise <meta> avec http-equiv='refresh' ou 'set-cookie' interdite."
+    );
+  }
+
+  // Block <link> tags that could load external stylesheets or resources
+  const linkTagRegex = /<link\b/i;
+  if (linkTagRegex.test(content)) {
+    errors.push(
+      "Balise <link> interdite (risque de chargement de ressources externes)."
+    );
   }
 
   // 2) Gestionnaires d’événements inline : onclick=, onload=, onerror=, etc.
@@ -57,33 +76,9 @@ export function validateVHtml(content: string): VhtmlValidationResult {
     );
   }
 
-  // 5) (AUCUN contrôle sur style, animations, etc.)
-  //    Tu peux écrire du CSS librement dans style= ou dans des <style>, keyframes, transitions, etc.
-  //    Cependant: block global root selectors inside <style> because they affect the whole app.
-  //    We consider selectors targeting `html`, `body` or `:root` in <style> blocks as unsafe.
-  const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-  let styleMatch: RegExpExecArray | null;
-  while ((styleMatch = styleTagRegex.exec(content))) {
-    const styleContent = styleMatch[1] || "";
-    // Detect use of html, body or :root selectors (as standalone selectors)
-    const globalSelectorRegex =
-      /(^|[^a-zA-Z0-9_-])(:root|html|body)([^a-zA-Z0-9_-]|$)/i;
-    if (globalSelectorRegex.test(styleContent)) {
-      errors.push(
-        "Le contenu CSS contient des sélecteurs globaux (html/body/:root) dans une balise <style> — interdits."
-      );
-      break;
-    }
-    // Also detect selectors that start with these names followed by combinators or commas
-    const globalSelectorStartRegex =
-      /(?:^|\s)(html|body|:root)\s*[\>\+\~\,\{\.\[:]/i;
-    if (globalSelectorStartRegex.test(styleContent)) {
-      errors.push(
-        "Le contenu CSS contient des sélecteurs globaux (html/body/:root) dans une balise <style> — interdits."
-      );
-      break;
-    }
-  }
+  // 5) Allow all CSS styles - Shadow DOM will encapsulate them
+  //    Users can write any CSS freely including html, body, :root selectors
+  //    The Shadow DOM boundary will prevent styles from leaking to the main app
 
   // 6) Optionnel : très gros contenu → juste un warning de perf
   const MAX_LENGTH = 20000;

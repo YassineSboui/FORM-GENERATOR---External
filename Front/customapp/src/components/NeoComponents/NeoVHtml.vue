@@ -2,7 +2,7 @@
   <div class="vhtml" v-show="!isHidden">
     <template v-if="!errorState.errorMessage">
       <div class="input-container" :class="{ 'disabled-wrapper': isDisabled }">
-        <div v-html="internalValue" class="vhtml-wrapper"></div>
+        <div ref="shadowHost" class="vhtml-wrapper"></div>
       </div>
     </template>
     <small class="p-error" id="text-error" v-if="errorState.errorMessage">
@@ -12,7 +12,14 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, reactive, ref, watch } from "vue";
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import { validateVHtml } from "@/utils/vhtmlValidator";
 
 interface OptionConfig {
@@ -63,6 +70,8 @@ export default defineComponent({
   ],
   setup(props, { emit }) {
     const errorState = reactive({ errorMessage: "" });
+    const shadowHost = ref<HTMLElement | null>(null);
+    let shadowRoot: ShadowRoot | null = null;
 
     const setFieldError = (errorMessage: string) => {
       errorState.errorMessage = errorMessage;
@@ -82,6 +91,41 @@ export default defineComponent({
         emit("update:modelValue", value);
       },
     });
+
+    // Initialize Shadow DOM for proper encapsulation
+    onMounted(() => {
+      if (shadowHost.value && !shadowRoot) {
+        try {
+          shadowRoot = shadowHost.value.attachShadow({ mode: "open" });
+          updateShadowContent();
+        } catch (e) {
+          console.error("[NeoVHtml] Failed to attach shadow DOM:", e);
+        }
+      }
+    });
+
+    // Update Shadow DOM content
+    const updateShadowContent = () => {
+      if (!shadowRoot) return;
+
+      const content = internalValue.value || "";
+
+      // Create a wrapper with reset styles to prevent inheritance issues
+      shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: block;
+            contain: layout style;
+            isolation: isolate;
+          }
+          /* Reset and base styles for the shadow content */
+          * {
+            box-sizing: border-box;
+          }
+        </style>
+        <div class="shadow-content">${content}</div>
+      `;
+    };
 
     const runValidation = (html: string | null | undefined) => {
       const content = html || "";
@@ -103,6 +147,7 @@ export default defineComponent({
       ([modelValue, optionsContent]) => {
         const valueToValidate = optionsContent ? optionsContent : modelValue;
         runValidation(valueToValidate);
+        updateShadowContent();
       },
       { immediate: true }
     );
@@ -195,6 +240,7 @@ export default defineComponent({
       getValue,
       updateOptions,
       computedRules,
+      shadowHost,
     };
   },
 });
