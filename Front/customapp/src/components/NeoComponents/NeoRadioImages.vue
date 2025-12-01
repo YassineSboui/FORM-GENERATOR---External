@@ -169,7 +169,6 @@ function emitValue(value: any) {
   justify-content: center;
   font-weight: bold;
   font-size: 14px;
-  color: #165c77;
 }
 .p-card .p-card-content {
   padding: 0px;

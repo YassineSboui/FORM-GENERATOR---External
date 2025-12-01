@@ -777,7 +777,6 @@ export default {
     flex-direction: row;
 
     .label-container {
-      color: #165c77;
       min-width: 150px;
       align-items: center;
       padding-bottom: 5px;

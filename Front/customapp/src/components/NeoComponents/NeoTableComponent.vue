@@ -378,7 +378,6 @@ export default defineComponent({
     height: 20px;
     max-height: 20px;
     .label-container {
-      color: #165c77;
       min-width: 150px;
       align-items: center;
       display: flex;

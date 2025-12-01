@@ -214,7 +214,6 @@ export default defineComponent({
 <style lang="scss">
 .neoRecap {
   .neoRecap-label-container {
-    color: #165c77;
     align-items: center;
     display: flex;
     font-size: 14px;
