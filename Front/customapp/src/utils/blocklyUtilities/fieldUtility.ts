@@ -84,10 +84,26 @@ export class FieldUtility {
       throw new Error("Field name must be a non-empty string");
     }
 
+    // System column names allowed as exception
+    const systemColumns = [
+      "id",
+      "column_name",
+      "description",
+      "taille",
+      "show",
+      "unique",
+      "sortable",
+      "filters",
+      "identifiant",
+    ];
+    if (systemColumns.includes(fieldName)) {
+      return true;
+    }
+
     // Only allow CF_, TBL_, or COL_ prefix + alphanumeric + underscore (case-insensitive)
     if (!/^(ZR_|CF_|CTF_|TBL_|COL_)[A-Z0-9_]+$/i.test(fieldName)) {
       throw new Error(
-        `Invalid field name format: ${fieldName}. Expected format: CF_FIELDNAME, TBL_FIELDNAME, or COL_FIELDNAME`
+        `Invalid field name format: ${fieldName}. Expected format: CF_FIELDNAME, TBL_FIELDNAME, or COL_FIELDNAME, or a system column name.`
       );
     }
 
@@ -103,7 +119,7 @@ export class FieldUtility {
     this.validateFieldName(fieldName);
 
     const app = this.getApp();
-
+    console.log("[FieldUtility] App refs:", app?.refs);
     const fieldRef = app?.refs?.[fieldName];
     if (!fieldRef || !fieldRef[0]) {
       throw new Error(`Field not found: ${fieldName}`);
@@ -457,29 +473,33 @@ export class FieldUtility {
   ): void {
     try {
       this.validateFieldName(fieldName);
-      const app = this.getApp();
-      const field = app.refs[fieldName];
+      const field = this.getFieldRef(fieldName);
 
-      if (!field || !field[0]) {
-        throw new Error(`Field ${fieldName} not found`);
+      // Get current content from the component
+      let currentContent = field.getValue();
+
+      // If no current content, try to get from options
+      if (!currentContent && field.options?.content) {
+        currentContent = field.options.content;
       }
 
-      const el = field[0].$el;
-
-      // Store original template on first use
-      if (!el.hasAttribute("data-template")) {
-        el.setAttribute("data-template", el.innerHTML);
+      // Store original template on first use (in component's options)
+      if (!field.options.originalTemplate) {
+        field.options.originalTemplate = currentContent || "";
       }
 
       // Replace all variables in template
-      el.innerHTML = variables.reduce(
+      const updatedContent = variables.reduce(
         (content, variable) =>
           content.replace(
             new RegExp("\\{\\{" + variable.key + "\\}\\}", "g"),
             variable.value
           ),
-        el.getAttribute("data-template")
+        field.options.originalTemplate
       );
+
+      // Update the component using its setValue method
+      field.setValue(updatedContent);
 
       logger.debug(
         `[FieldUtility] Replaced variables in ${fieldName} vhtml template`
@@ -526,6 +546,41 @@ export class FieldUtility {
         )}`
       );
       return null;
+    }
+  }
+
+  /**
+   * Change thesaurus ID for a NeoThesaurus field and launch search
+   * @param fieldName - Field identifier for the NeoThesaurus component
+   * @param newThesaurusId - New thesaurus ID to set
+   */
+  changeThesaurusId(fieldName: string, newThesaurusId: string): void {
+    try {
+      this.validateFieldName(fieldName);
+
+      if (!newThesaurusId || typeof newThesaurusId !== "string") {
+        throw new Error("Thesaurus ID must be a non-empty string");
+      }
+
+      const field = this.getFieldRef(fieldName);
+
+      if (!field.changeThesaurusId) {
+        throw new Error(
+          `Field ${fieldName} does not support changeThesaurusId() method (not a NeoThesaurus component)`
+        );
+      }
+
+      field.changeThesaurusId(newThesaurusId);
+      logger.debug(
+        `[FieldUtility] Changed thesaurus ID for ${fieldName} to: ${newThesaurusId}`
+      );
+    } catch (error) {
+      logger.error(
+        `[FieldUtility] Error changing thesaurus ID for ${fieldName}: ${this.stringifyForLog(
+          error
+        )}`
+      );
+      throw error;
     }
   }
 }

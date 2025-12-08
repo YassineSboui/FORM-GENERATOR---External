@@ -87,9 +87,9 @@ export default defineComponent({
           : props.modelValue;
       },
       set(value: string) {
-        updateShadowContent();
         if (props.options) props.options.content = value;
         emit("update:modelValue", value);
+        updateShadowContent();
       },
     });
 
@@ -165,11 +165,15 @@ export default defineComponent({
     const hideField = () => updateOptions({ hidden: true });
     const showField = () => updateOptions({ hidden: false });
     const setValue = (value: string) => {
-      internalValue.value = value;
-      props.options.content = value;
-      updateShadowContent();
+      // Update options content first
+      if (props.options) {
+        props.options.content = value;
+      }
+      // Emit updates
       emit("update:options", props.options);
       emit("update:modelValue", value);
+      // Force update shadow content with the new value
+      updateShadowContent();
     };
     const getValue = () => internalValue.value;
     const updateOptions = (newOptions: Partial<OptionConfig>) => {
