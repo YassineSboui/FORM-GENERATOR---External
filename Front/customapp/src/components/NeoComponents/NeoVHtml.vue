@@ -87,6 +87,7 @@ export default defineComponent({
           : props.modelValue;
       },
       set(value: string) {
+        updateShadowContent();
         if (props.options) props.options.content = value;
         emit("update:modelValue", value);
       },
@@ -152,25 +153,23 @@ export default defineComponent({
       { immediate: true }
     );
 
-    const isDisabled = computed(() => !!props.options?.disabled);
-    const isHidden = computed(() => !!props.options?.hidden);
     const localOptions = reactive<OptionConfig>({
       ...(props.options as OptionConfig),
     });
+    const isDisabled = computed(() => localOptions.disabled);
+    const isHidden = computed(() => localOptions.hidden);
     const content = ref(localOptions.content || "");
     const isHTML = ref(!!localOptions.codeHTML);
-
-    const updateField = () =>
-      emit("updateField", {
-        name: localOptions.name,
-        value: internalValue.value,
-      });
     const disableField = () => updateOptions({ disabled: true });
     const enableField = () => updateOptions({ disabled: false });
     const hideField = () => updateOptions({ hidden: true });
     const showField = () => updateOptions({ hidden: false });
     const setValue = (value: string) => {
       internalValue.value = value;
+      props.options.content = value;
+      updateShadowContent();
+      emit("update:options", props.options);
+      emit("update:modelValue", value);
     };
     const getValue = () => internalValue.value;
     const updateOptions = (newOptions: Partial<OptionConfig>) => {
@@ -232,7 +231,7 @@ export default defineComponent({
       enableField,
       hideField,
       showField,
-      updateField,
+      // updateField,
       errorState,
       setFieldError,
       clearFieldError,
@@ -288,6 +287,7 @@ export default defineComponent({
     height: 20px;
     max-height: 20px;
     .label-container {
+      color: #165c77;
       min-width: 150px;
       align-items: center;
       display: flex;
