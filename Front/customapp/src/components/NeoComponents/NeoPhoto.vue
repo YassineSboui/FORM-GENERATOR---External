@@ -287,7 +287,7 @@ import {
   onMounted,
 } from "vue";
 import { logger } from "@/api/api";
-import { fileUpload, getFileByGuid } from "@/api/api";
+import { fileUpload } from "@/api/api";
 import { useI18n } from "vue-i18n";
 interface OptionConfig {
   label_AR: string;
@@ -329,7 +329,7 @@ export default defineComponent({
         required: false,
         hidden: false,
         readonly: false,
-        showType: "Les deux",
+        showType: "Both",
         rules: [],
         events: [],
         position: "center",
@@ -707,29 +707,8 @@ export default defineComponent({
       }
     };
 
-    // const loadImages = async () => {
-    //   try {
-    //     const images = await Promise.all(
-    //       internalValue.value.map(async (photo: any) => {
-    //         const response = await getFileByGuid(photo.Guid);
-    //         return {
-    //           FileB64: response.fileB64,
-    //           Guid: photo.Guid,
-    //           FileName: response.fileName,
-    //         };
-    //       })
-    //     );
-    //     internalValue.value = images;
-    //     galleryImages.value = images;
-    //   } catch (error) {
-    //     console.error("Error loading images:", error);
-    //     logger.error(error);
-    //   }
-    // };
-
     onMounted(() => {
-      loadDevices(); // Load devices when the component is mounted
-      // loadImages(); // Load images when the component is mounted
+      loadDevices();
     });
 
     return {

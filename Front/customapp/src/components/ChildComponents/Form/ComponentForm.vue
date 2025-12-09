@@ -1027,34 +1027,38 @@ const processFieldData = (element: string, options: any) => {
   switch (fieldType) {
     case "Upload":
       console.log("Processing Upload field");
-      if (!options.useAILise && !options.returnBase64) {
-        const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
-        filesArr.forEach((file) => {
-          NoticeAttachements.value.push({
-            guid: file.guid,
-            fileName: file.fileName,
-          });
-        });
-      }
-
       if (options.returnBase64) {
         NoticeData.value[element] = mapFileField(fieldValue, true);
+      } else {
+        if (!options.useAILise) {
+          const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
+          filesArr.forEach((file) => {
+            NoticeAttachements.value.push({
+              guid: file.guid,
+              fileName: file.fileName,
+            });
+          });
+        } else if (options.useAILise && options.relatedToElise) {
+          const arr = Array.isArray(fieldValue) ? fieldValue : [];
+          arr.forEach((file) => {
+            NoticeAttachements.value.push({
+              guid: file.elise.guid,
+              fileName: file.elise.fileName,
+            });
+          });
+        }
       }
       break;
 
     case "PHOTO":
       console.log("Processing PHOTO field");
-      if (!options.returnBase64) {
-        const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
-        filesArr.forEach((file) => {
-          NoticeAttachements.value.push({
-            guid: file.guid,
-            fileName: file.fileName,
-          });
-        });
+      let isBase64 = options?.returnBase64 ?? false;
+      if (isBase64) {
+        NoticeData.value[element] = mapFileField(fieldValue ?? "", isBase64);
       } else {
-        NoticeData.value[element] = mapFileField(fieldValue, true);
+        NoticeFiles.value = mapFileField(fieldValue ?? "", isBase64);
       }
+
       break;
 
     case "Editor":
@@ -1489,14 +1493,14 @@ const mapFileField = (field: any, base64Only?: boolean) => {
     const files = [];
     for (let i = 0; i < field.length; i++) {
       const file = field[i];
-      files.push(file.base64);
+      files.push(file.base64 || file.FileB64 || "");
     }
     return { File: files };
   }
   for (let i = 0; i < field.length; i++) {
     const file = field[i];
     mappedFiles.push({
-      FileB64: file.base64,
+      FileB64: "",
       Guid: file.guid,
       fileName: file.fileName,
     });
