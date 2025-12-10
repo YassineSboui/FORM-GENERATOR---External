@@ -30,6 +30,7 @@
         ></i
       ></label>
     </div>
+
     <div
       class="neoThesaurus-container input-container"
       :class="{ 'disabled-wrapper': isDisabled, 'readOnly-wrapper': readOnly }"
@@ -76,6 +77,9 @@
         </template>
       </AutoComplete>
     </div>
+    <small class="p-error" id="text-error" v-if="errorState.errorMessage">
+      {{ errorState.errorMessage || "&nbsp;" }}
+    </small>
     <OverlayPanel
       ref="op"
       class="thesaurus-frame"
@@ -180,17 +184,31 @@
     </OverlayPanel>
   </div>
   <!-- Error message display -->
-  <small class="p-error" id="text-error" v-if="errorState.errorMessage">
-    {{ errorState.errorMessage || "&nbsp;" }}
-  </small>
 </template>
 
 <script lang="ts">
-import { eliseLevelThesaurus, eliseSearchThesaurus } from "@/api/api";
+import { eliseLevelThesaurus, eliseSearchThesaurus, logger } from "@/api/api";
 import { computed, ref, watch, Teleport, type Ref, reactive } from "vue";
 import _ from "lodash";
 import { useI18n } from "vue-i18n";
-
+interface OptionConfig {
+  label_AR: string;
+  label_ENG: string;
+  name: string;
+  label: string;
+  tooltip: string;
+  prefix: string;
+  thesaurusId: string | null;
+  showStars: boolean | null;
+  required: boolean | null;
+  readonly: boolean | null;
+  disabled: boolean | null;
+  hidden: boolean | null;
+  relatedToElise: boolean | null;
+  rules: { expression: string }[];
+  events: any[];
+  termLimit: number | null;
+}
 export default {
   props: {
     label: String,
@@ -291,6 +309,16 @@ export default {
     const showCurrentPath = ref(false);
     const currentPath = ref([]);
     const truncatedCurrentPath: Ref<Term[]> = ref([]);
+    const localOptions = reactive({ ...props.options });
+
+    // Keep localOptions synchronized with props.options
+    watch(
+      () => props.options,
+      (newOptions) => {
+        Object.assign(localOptions, newOptions);
+      },
+      { deep: true, immediate: true }
+    );
 
     const isDisabled = computed({
       get(): boolean {
@@ -302,15 +330,7 @@ export default {
       },
     });
 
-    const isHidden = computed({
-      get(): boolean {
-        return props.options.hidden;
-      },
-      set(value: boolean) {
-        props.options.hidden = value;
-        emit("update:options", props.options);
-      },
-    });
+    const isHidden = computed(() => localOptions.hidden);
     const readOnly = computed({
       get(): boolean {
         return props.options.readonly;
@@ -323,9 +343,104 @@ export default {
     const termLimitConfig = computed(() => {
       return +props.options.termLimit;
     });
-    const thesaurusIdConfig = computed(() => {
-      return props.options.thesaurusId;
+    const thesaurusIdConfig = computed({
+      get(): string {
+        console.log("Getting thesaurusId:", localOptions.thesaurusId);
+        return localOptions.thesaurusId;
+      },
+      set(value: string) {
+        localOptions.thesaurusId = value;
+        props.options.thesaurusId = value;
+        emit("update:options", props.options);
+
+        // Clear current terms and search
+        terms.value = [];
+        searchTermValue.value = "";
+        logger.info(
+          `Thesaurus ID changed to ${value}. Terms cleared and ready to load new thesaurus data.`
+        );
+        // Load root level if overlay is open and new value is provided
+        if (value) {
+          logger.info(`Loading root term level for thesaurus ID: ${value}`);
+          loadRootTermLevel();
+        }
+        console.log("Set thesaurusId to:", value);
+      },
     });
+
+    // Function to change thesaurusIdConfig and launch search
+    const changeThesaurusId = (newThesaurusId: string) => {
+      // Use the computed property setter which handles all the logic
+      thesaurusIdConfig.value = newThesaurusId;
+    };
+
+    // Function to set value from lexicon format
+    const setValue = async (lexiconValue: string) => {
+      try {
+        // Validate lexicon format
+        if (!lexiconValue || !lexiconValue.startsWith("LEXICON_")) {
+          logger.warn(
+            `Invalid lexicon format: ${lexiconValue}. Expected format: LEXICON_...`
+          );
+          return;
+        }
+
+        // Extract term ID from lexicon format (remove LEXICON_ prefix)
+        const termId = lexiconValue;
+
+        if (!termId) {
+          logger.warn("No term ID found in lexicon value");
+          return;
+        }
+
+        logger.info(
+          `Setting thesaurus value from lexicon: ${lexiconValue}, term ID: ${termId}`
+        );
+
+        // Load term data using the thesaurus API
+        const termData = await eliseLevelThesaurus(
+          thesaurusIdConfig.value,
+          termId
+        );
+
+        if (termData && termData.length > 0) {
+          // Find the specific term by ID or use the first result
+          const targetTerm =
+            termData.find((term: Term) => term.termId === termId) ||
+            termData[0];
+
+          if (targetTerm) {
+            // Clear existing terms and set the new one
+            terms.value = [targetTerm];
+            logger.info(
+              `Successfully set thesaurus value: ${targetTerm.label}`
+            );
+          } else {
+            logger.warn(`Term not found for ID: ${termId}`);
+          }
+        } else {
+          logger.warn(`No term data returned for ID: ${termId}`);
+        }
+      } catch (error) {
+        logger.error(`Error setting thesaurus value from lexicon: ${error}`);
+      }
+    };
+
+    // Watch for thesaurusId changes to automatically reload data
+    // watch(
+    //   () => props.options.thesaurusId,
+    //   (newThesaurusId, oldThesaurusId) => {
+    //     if (newThesaurusId !== oldThesaurusId && newThesaurusId) {
+    //       // Clear current data and reload if overlay is open
+    //       terms.value = [];
+    //       searchTermValue.value = "";
+
+    //       if (op.value?.visible) {
+    //         loadRootTermLevel();
+    //       }
+    //     }
+    //   }
+    // );
     const showFullPathConfig = computed(() => {
       return props.options.showFullPath;
     });
@@ -530,6 +645,11 @@ const trySearchThesaurusTerm = (event: any) => {
         });
       }
       thesaurusStateIsLoading.value = true;
+      console.log(
+        "Loading children for thesaurusIdConfig.value:",
+        thesaurusIdConfig.value
+      );
+      console.log("Loading children for parentTermId:", parentTermId);
       thesaurusTerms.value = await eliseLevelThesaurus(
         thesaurusIdConfig.value,
         parentTermId
@@ -591,7 +711,11 @@ const trySearchThesaurusTerm = (event: any) => {
     const isTermSelected = (term: Term) => {
       return isTermInArray(term, selectedTerms.value);
     };
-
+    // Function to update options
+    const updateOptions = (updates: Partial<OptionConfig>) => {
+      Object.assign(localOptions, updates);
+      emit("update:options", localOptions);
+    };
     const isLeaf = (term: Term) => {
       if (!term) {
         return false;
@@ -605,12 +729,11 @@ const trySearchThesaurusTerm = (event: any) => {
     function enableField() {
       isDisabled.value = false;
     }
-    function hideField() {
-      isHidden.value = true;
-    }
-    function showField() {
-      isHidden.value = false;
-    }
+    // Function to hide field
+    const hideField = () => updateOptions({ hidden: true });
+
+    // Function to show field
+    const showField = () => updateOptions({ hidden: false });
     const isRequired = computed({
       get(): boolean {
         return props.options.required;
@@ -620,13 +743,7 @@ const trySearchThesaurusTerm = (event: any) => {
         emit("update:options", props.options);
       },
     });
-    function manageProperties(opt: any) {
-      if (opt) {
-        isDisabled.value = opt.disabled;
-        isHidden.value = opt.hidden;
-        isRequired.value = opt.required;
-      }
-    }
+
     function normalizeAndCompare(str1: string, str2: string) {
       const normalizeString = (str: string) =>
         str
@@ -730,12 +847,13 @@ const trySearchThesaurusTerm = (event: any) => {
       enableField,
       hideField,
       showField,
-      manageProperties,
       normalizeAndCompare,
       removeItem,
       setFieldError,
       clearFieldError,
       showOnTop,
+      changeThesaurusId,
+      setValue,
     };
   },
 };

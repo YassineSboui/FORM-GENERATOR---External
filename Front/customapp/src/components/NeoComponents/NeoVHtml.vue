@@ -82,9 +82,8 @@ export default defineComponent({
 
     const internalValue = computed({
       get(): string {
-        return props.options?.content
-          ? props.options.content
-          : props.modelValue;
+        // Always prioritize options.content over modelValue for vhtml components
+        return props.options?.content || props.modelValue || "";
       },
       set(value: string) {
         if (props.options) props.options.content = value;
@@ -106,10 +105,20 @@ export default defineComponent({
     });
 
     // Update Shadow DOM content
-    const updateShadowContent = () => {
-      if (!shadowRoot) return;
+    const updateShadowContent = (forceContent?: string) => {
+      if (!shadowRoot) {
+        console.warn(
+          "[NeoVHtml] updateShadowContent called but shadowRoot not available"
+        );
+        return;
+      }
 
-      const content = internalValue.value || "";
+      // Use forced content if provided, otherwise get from internalValue
+      const content =
+        forceContent !== undefined
+          ? forceContent
+          : props.options?.content || props.modelValue || "";
+      console.log("[NeoVHtml] Updating shadow content:", content);
 
       // Create a wrapper with reset styles to prevent inheritance issues
       shadowRoot.innerHTML = `
@@ -126,6 +135,11 @@ export default defineComponent({
         </style>
         <div class="shadow-content">${content}</div>
       `;
+
+      console.log(
+        "[NeoVHtml] Shadow DOM updated, current innerHTML:",
+        shadowRoot.innerHTML
+      );
     };
 
     const runValidation = (html: string | null | undefined) => {
@@ -165,15 +179,20 @@ export default defineComponent({
     const hideField = () => updateOptions({ hidden: true });
     const showField = () => updateOptions({ hidden: false });
     const setValue = (value: string) => {
+      console.log("[NeoVHtml] setValue called with:", value);
       // Update options content first
       if (props.options) {
         props.options.content = value;
+        console.log(
+          "[NeoVHtml] Updated props.options.content to:",
+          props.options.content
+        );
       }
       // Emit updates
       emit("update:options", props.options);
       emit("update:modelValue", value);
-      // Force update shadow content with the new value
-      updateShadowContent();
+      // Force update shadow content with the exact value we just set
+      updateShadowContent(value);
     };
     const getValue = () => internalValue.value;
     const updateOptions = (newOptions: Partial<OptionConfig>) => {

@@ -287,7 +287,7 @@ import {
   onMounted,
 } from "vue";
 import { logger } from "@/api/api";
-import { fileUpload } from "@/api/api";
+import { uploadFile } from "@/api/api";
 import { useI18n } from "vue-i18n";
 interface OptionConfig {
   label_AR: string;
@@ -449,6 +449,32 @@ export default defineComponent({
     // Function to show field
     const showField = () => updateOptions({ hidden: false });
 
+    // Helper function to process photo file
+    const processPhotoFile = async (file: File, base64String: string) => {
+      const base64Data = base64String.split(",")[1];
+      const fileData: any = {
+        fileName: file.name,
+      };
+
+      // If returnBase64 is true, only store base64 data without uploading
+      if (props.options.returnBase64) {
+        fileData.fileB64 = base64Data;
+      } else {
+        // Call the uploadFile API with base64 and fileName
+        const response = await uploadFile(base64Data, file.name);
+        if (response) {
+          fileData.guid = response;
+          fileData.fileB64 = base64Data;
+        } else {
+          throw new Error(
+            "Failed to upload photo: API response was not successful."
+          );
+        }
+      }
+
+      return fileData;
+    };
+
     // Function to take a snapshot
     const takeSnapshot = async () => {
       try {
@@ -456,7 +482,7 @@ export default defineComponent({
           console.log(
             "[NeoPhoto] takeSnapshot - Initiating camera snapshot..."
           );
-          isUploading.value = true; // Start loading
+          isUploading.value = true;
 
           const blob = await camera.value.snapshot({
             width: props.options.width,
@@ -468,56 +494,31 @@ export default defineComponent({
           reader.onload = async () => {
             if (reader.result) {
               const base64String = reader.result as string;
-
-              // Convert blob to File object for fileUpload API
-              const file = new File(
-                [blob],
-                `NeoForm_Photo_${new Date().getTime()}.png`,
-                {
-                  type: "image/png",
-                }
-              );
+              const fileName = `NeoForm_Photo_${new Date().getTime()}.png`;
+              const file = new File([blob], fileName, { type: "image/png" });
 
               try {
-                const response = await fileUpload(file);
-                if (response) {
-                  const fileData: any = {
-                    fileName: file.name,
-                    fileB64: base64String.split(",")[1],
-                    guid: response,
-                  };
-
-                  // Add base64 data if returnBase64 option is true
-                  if (props.options.returnBase64) {
-                    fileData.base64 = base64String.split(",")[1];
-                  }
-
-                  const newValue = [...internalValue.value, fileData];
-                  internalValue.value = newValue; // This will trigger the setter and emit the event
-                } else {
-                  console.error(
-                    "Failed to upload photo: API response was not successful."
-                  );
-                }
+                const fileData = await processPhotoFile(file, base64String);
+                internalValue.value = [...internalValue.value, fileData];
               } catch (uploadError) {
                 console.error("Failed to upload photo:", uploadError);
                 logger.error(uploadError);
               } finally {
-                isUploading.value = false; // Stop loading
+                isUploading.value = false;
               }
             } else {
               console.error("Failed to read file as FileB64 string.");
-              isUploading.value = false; // Stop loading
+              isUploading.value = false;
             }
           };
 
-          setTimeout(() => URL.revokeObjectURL(blob), 1000); // Revoke URL after use
+          setTimeout(() => URL.revokeObjectURL(blob), 1000);
         }
       } catch (error) {
         setFieldError("Failed to capture photo. Please try again.");
         console.error("Snapshot error:", error);
         logger.error(error);
-        isUploading.value = false; // Stop loading on error
+        isUploading.value = false;
       }
     };
 
@@ -529,7 +530,7 @@ export default defineComponent({
       const target = event.target as HTMLInputElement;
       const file = target.files?.[0];
       if (file) {
-        isUploading.value = true; // Start loading
+        isUploading.value = true;
 
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -537,37 +538,18 @@ export default defineComponent({
           if (reader.result) {
             const base64String = reader.result as string;
 
-            // Call the fileUpload API
             try {
-              const response = await fileUpload(file);
-              if (response) {
-                const fileData: any = {
-                  fileName: file.name,
-                  fileB64: base64String.split(",")[1],
-                  guid: response,
-                };
-
-                // Add base64 data if returnBase64 option is true
-                if (props.options.returnBase64) {
-                  fileData.base64 = base64String.split(",")[1];
-                }
-
-                const newValue = [...internalValue.value, fileData];
-                internalValue.value = newValue; // This will trigger the setter and emit the event
-              } else {
-                console.error(
-                  "Failed to upload photo: API response was not successful."
-                );
-              }
+              const fileData = await processPhotoFile(file, base64String);
+              internalValue.value = [...internalValue.value, fileData];
             } catch (uploadError) {
               console.error("Failed to upload photo:", uploadError);
               logger.error(uploadError);
             } finally {
-              isUploading.value = false; // Stop loading
+              isUploading.value = false;
             }
           } else {
             console.error("Failed to read file as FileB64 string.");
-            isUploading.value = false; // Stop loading
+            isUploading.value = false;
           }
         };
       }

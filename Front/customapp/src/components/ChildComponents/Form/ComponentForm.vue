@@ -495,9 +495,6 @@ import {
   fileUpload,
   generateXMLModel,
   generateModel,
-  fetchNotice,
-  fetchMetadata,
-  updateNotice,
   fetchDataByTableGuid,
   logger,
   logBlockly,
@@ -1030,35 +1027,33 @@ const processFieldData = (element: string, options: any) => {
       if (options.returnBase64) {
         NoticeData.value[element] = mapFileField(fieldValue, true);
       } else {
-        if (!options.useAILise) {
-          const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
-          filesArr.forEach((file) => {
-            NoticeAttachements.value.push({
-              guid: file.guid,
-              fileName: file.fileName,
-            });
-          });
-        } else if (options.useAILise && options.relatedToElise) {
-          const arr = Array.isArray(fieldValue) ? fieldValue : [];
-          arr.forEach((file) => {
-            NoticeAttachements.value.push({
-              guid: file.elise.guid,
-              fileName: file.elise.fileName,
-            });
-          });
-        }
+        const filesArr = Array.isArray(fieldValue) ? fieldValue : [];
+        const useEliseFiles = options.useAILise && options.relatedToElise;
+
+        filesArr.forEach((file) => {
+          const fileData = useEliseFiles
+            ? { guid: file.elise?.guid, fileName: file.elise?.fileName }
+            : { guid: file.guid, fileName: file.fileName };
+
+          if (fileData.guid && fileData.fileName) {
+            NoticeAttachements.value.push(fileData);
+          }
+        });
+        NoticeData.value[element] = fieldValue;
       }
       break;
 
     case "PHOTO":
       console.log("Processing PHOTO field");
-      let isBase64 = options?.returnBase64 ?? false;
-      if (isBase64) {
-        NoticeData.value[element] = mapFileField(fieldValue ?? "", isBase64);
-      } else {
-        NoticeFiles.value = mapFileField(fieldValue ?? "", isBase64);
-      }
+      const isBase64 = options?.returnBase64 ?? false;
+      const mappedData = mapFileField(fieldValue ?? "", isBase64);
 
+      if (isBase64) {
+        NoticeData.value[element] = mappedData;
+      } else {
+        NoticeFiles.value = mappedData;
+        NoticeData.value[element] = mappedData;
+      }
       break;
 
     case "Editor":
@@ -1392,10 +1387,8 @@ const handleNoticeSaveUpdate = async () => {
       });
     }
   } else {
-    obj = await updateNotice({
-      ...noticePayload,
-      noticeId: store.currentNotice.id,
-    });
+    // Update notice logic removed
+    obj = null;
   }
 
   if (obj) {
@@ -1721,104 +1714,7 @@ onMounted(async () => {
       logger.error(`[ComponentForm] Delay error: ${error}`);
     }
     console.log("[ComponentForm] QueryParameters:", QueryParameters.value);
-    if (QueryParameters.value.fromDoc) {
-      try {
-        const n = await fetchNotice(QueryParameters.value.noticeType);
-        const {
-          id,
-          noticeJson: { data, mapping, html, files },
-        } = n;
-        store.setNotice(n);
-        Object.keys(data)?.forEach((v) => {
-          // Check if this is a Table field that needs proper structure
-          const fieldRef = app.refs[v]?.[0];
-          if (fieldRef?.options?.type === "Table" && Array.isArray(data[v])) {
-            // Wrap array data in the expected "row" structure for Table fields
-            Fields.value[v] = { row: data[v] };
-          } else {
-            Fields.value[v] = data[v];
-          }
-
-          if (Array.isArray(Fields.value[v]) && Fields.value[v].length > 0) {
-            repeatableZoneChildrens.value[v] = Fields.value[v].length;
-          } else if (
-            Fields.value[v]?.row &&
-            Array.isArray(Fields.value[v].row) &&
-            Fields.value[v].row.length > 0
-          ) {
-            repeatableZoneChildrens.value[v] = Fields.value[v].row.length;
-          }
-        });
-        itemRefs.value.forEach((elem) => {
-          const key = elem.dataset.key;
-          Fields.value[key] = data[key]?.row || [];
-          if (
-            Array.isArray(Fields.value[key]) &&
-            Fields.value[key].length > 0
-          ) {
-            repeatableZoneChildrens.value[key] = Fields.value[key].length;
-          } else {
-            repeatableZoneChildrens.value[key] = 0;
-          }
-        });
-        Object.keys(mapping)?.forEach((v) => {
-          Fields.value[v] = mapping[v];
-        });
-        Object.keys(html)?.forEach((v) => {
-          Fields.value[v] = html[v];
-        });
-        // Object.keys(files)?.forEach((v) => {
-        //   Fields.value[v] = files[v];
-        // });
-        // get the fiels with type file from app.refs
-        for (let element in app.refs) {
-          const options = app.refs[element][0]?.options;
-          if (options?.type == "PHOTO") {
-            Fields.value[element] = files;
-          }
-        }
-        try {
-          const { eliseDocument, metadatas } = await fetchMetadata(
-            route.params.guid + ""
-          );
-          store.setEliseDocument(eliseDocument);
-          if (metadatas && metadatas !== undefined) {
-            metadatas?.forEach((v: any) => {
-              Fields.value[v.key] = v.value;
-            });
-            isLoadingComponent.value = false;
-          }
-        } catch (error) {
-          console.error("error", error);
-          logger.error(error);
-        }
-        isLoadingComponent.value = false;
-      } catch (e) {
-        try {
-          const { eliseDocument, metadatas } = await fetchMetadata(
-            route.params.guid + ""
-          );
-          store.setEliseDocument(eliseDocument);
-          if (metadatas && metadatas !== undefined) {
-            metadatas?.forEach((v: any) => {
-              Fields.value[v.key] = v.value;
-            });
-            isLoadingComponent.value = false;
-          }
-        } catch (error) {
-          console.error(
-            "[ComponentForm] Failed to fetch metadata (retry) for guid:",
-            route.params.guid,
-            error
-          );
-          logger.error(`[ComponentForm] fetchMetadata retry error: ${error}`);
-          isLoadingComponent.value = false;
-        }
-        isLoadingComponent.value = false;
-      } finally {
-        isLoadingComponent.value = false;
-      }
-    }
+    // Fetch notice and metadata logic removed
   }
   internalFormConfig.value?.variables?.forEach((element: any) => {
     Variables.value[element.key] = element.value;

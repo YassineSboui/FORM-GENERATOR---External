@@ -286,18 +286,9 @@ export default {
       },
     });
     async function onAdvancedUpload(event: any) {
-      emit("update:modelValue", event.files);
-
       for (let file of event.files) {
         const reader = new FileReader();
-        reader.onload = async () => {
-          return reader.result;
-        };
 
-        reader.onerror = (error) => {
-          throw error;
-        };
-        await reader.readAsDataURL(file);
         reader.onload = () => {
           const fileData: any = {
             fileName: file.name,
@@ -313,8 +304,13 @@ export default {
           }
 
           files.value.push(fileData);
-          // emit("update:modelValue", files.value);
         };
+
+        reader.onerror = (error) => {
+          console.error("Error reading file:", error);
+        };
+
+        reader.readAsDataURL(file);
       }
     }
     const selectedFile = ref("" as any);
@@ -334,88 +330,83 @@ export default {
       emit("update:modelValue", event);
       uploadedFiles.value = event;
     };
+
+    // Helper function to convert file to base64
+    const convertToBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64 = result.split(",")[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    };
+
+    // Helper function to process a single file based on options
+    const processFile = async (file: File) => {
+      // If returnBase64 is true, only store base64 data without uploading
+      if (props.options.returnBase64) {
+        const base64Data = await convertToBase64(file);
+        return {
+          fileName: file.name,
+          base64: base64Data,
+        };
+      }
+      // Case where the file is related to Elise (handle both API calls)
+      else if (props.options.relatedToElise && props.options.useAILise) {
+        const [ecsAiResult, eliseResult] = await Promise.all([
+          AifileUpload(file),
+          fileUpload(file),
+        ]);
+
+        return {
+          ecsAi: ecsAiResult,
+          elise: {
+            guid: eliseResult,
+            isLinked: false,
+            fileName: file.name,
+          },
+        };
+      }
+      // Case where only AI upload is needed
+      else if (props.options.useAILise && !props.options.relatedToElise) {
+        return await AifileUpload(file);
+      }
+      // Default case: standard file upload
+      else {
+        return {
+          guid: await fileUpload(file),
+          isLinked: false,
+          fileName: file.name,
+        };
+      }
+    };
+
     async function onFileChange(event: any) {
       loading.value = true;
-      // If multiple files are not allowed, clear the files array before adding the new file
+
+      // If multiple files are not allowed, clear the files array
       if (!props.options.multiple) {
         files.value = [];
       }
 
       // Iterate through the selected files
       for (let file of event.target.files) {
-        // Check if the file already exists in the array by comparing the name
+        // Check if the file already exists and remove it
         const existingFileIndex = files.value.findIndex(
           (existingFile: any) => existingFile.fileName === file.name
         );
 
-        // If the file already exists, replace it (remove the old file)
         if (existingFileIndex !== -1) {
           files.value.splice(existingFileIndex, 1);
         }
 
-        // Helper function to convert file to base64
-        const convertToBase64 = (file: File): Promise<string> => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const result = reader.result as string;
-              // Remove the data URL prefix (e.g., "data:image/png;base64,")
-              const base64 = result.split(",")[1];
-              resolve(base64);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        };
-
-        // Get base64 if returnBase64 option is true
-        const base64Data = props.options.returnBase64
-          ? await convertToBase64(file)
-          : null;
-
-        // Case where the file is related to Elise (handle both API calls)
-        if (props.options.relatedToElise && props.options.useAILise) {
-          const ecsAiResult = await AifileUpload(file);
-          const eliseResult = await fileUpload(file);
-
-          const fileData: any = {
-            ecsAi: ecsAiResult,
-            elise: {
-              guid: eliseResult,
-              isLinked: false,
-              fileName: file.name,
-            },
-          };
-
-          if (props.options.returnBase64) {
-            fileData.base64 = base64Data;
-          }
-
-          files.value.push(fileData);
-        }
-        // Case where the file is related to Elise (handle upload via fileUpload API)
-        else if (props.options.useAILise && !props.options.relatedToElise) {
-          const result = await AifileUpload(file);
-          const fileData: any = result;
-
-          if (props.options.returnBase64) {
-            fileData.base64 = base64Data;
-          }
-
-          files.value.push(fileData);
-        } else {
-          const fileData: any = {
-            guid: await fileUpload(file),
-            isLinked: false,
-            fileName: file.name,
-          };
-
-          if (props.options.returnBase64) {
-            fileData.base64 = base64Data;
-          }
-
-          files.value.push(fileData);
-        }
+        // Process the file and add to array
+        const fileData = await processFile(file);
+        files.value.push(fileData);
       }
 
       // Emit the updated files array

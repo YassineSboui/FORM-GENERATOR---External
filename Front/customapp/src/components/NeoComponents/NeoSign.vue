@@ -156,7 +156,12 @@ export default {
     };
 
     const setValue = (value: any) => {
-      signatureCanvas.value.fromDataURL(value);
+      if (!value) return;
+      // Check if value already has data URL prefix
+      const dataUrl = value.startsWith("data:")
+        ? value
+        : `data:image/jpeg;base64,${value}`;
+      signatureCanvas.value.fromDataURL(dataUrl);
     };
 
     const updateOptions = (updates: Partial<OptionConfig>) => {
