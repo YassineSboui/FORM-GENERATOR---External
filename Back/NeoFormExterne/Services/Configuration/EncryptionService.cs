@@ -40,6 +40,9 @@ namespace NeoForm_Externe.Services.Configuration
 
         public string Encrypt(string plainText)
         {
+            if (string.IsNullOrEmpty(plainText))
+                return plainText ?? string.Empty;
+
             using (Aes aesAlg = Aes.Create())
             {
                 aesAlg.Key = Encoding.UTF8.GetBytes(key);
@@ -48,14 +51,12 @@ namespace NeoForm_Externe.Services.Configuration
                 ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
 
                 using (MemoryStream msEncrypt = new MemoryStream())
+                using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
                 {
-                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                    {
-                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                        {
-                            swEncrypt.Write(plainText);
-                        }
-                    }
+                    swEncrypt.Write(plainText);
+                    swEncrypt.Flush();
+                    csEncrypt.FlushFinalBlock();
                     return Convert.ToBase64String(msEncrypt.ToArray());
                 }
             }
@@ -63,24 +64,59 @@ namespace NeoForm_Externe.Services.Configuration
 
         public string Decrypt(string cipherText)
         {
-            using (Aes aesAlg = Aes.Create())
+            // Handle null/empty safely
+            if (string.IsNullOrWhiteSpace(cipherText))
+                return cipherText ?? string.Empty;
+
+            cipherText = cipherText.Trim();
+
+            // If it's clearly not Base64, treat it as already-plain text
+            if (!IsBase64(cipherText))
             {
-                aesAlg.Key = Encoding.UTF8.GetBytes(key);
-                aesAlg.IV = Encoding.UTF8.GetBytes(iv);
+                // Optional: you can add logging here if you inject an ILogger
+                // e.g. _logger.LogWarning("Decrypt called with non-Base64 value. Returning raw text.");
+                return cipherText;
+            }
 
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+            try
+            {
+                byte[] cipherBytes = Convert.FromBase64String(cipherText);
 
-                using (MemoryStream msDecrypt = new MemoryStream(Convert.FromBase64String(cipherText)))
+                using (Aes aesAlg = Aes.Create())
                 {
+                    aesAlg.Key = Encoding.UTF8.GetBytes(key);
+                    aesAlg.IV = Encoding.UTF8.GetBytes(iv);
+
+                    ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
+                    using (MemoryStream msDecrypt = new MemoryStream(cipherBytes))
                     using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                    using (StreamReader srDecrypt = new StreamReader(csDecrypt))
                     {
-                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
-                        {
-                            return srDecrypt.ReadToEnd();
-                        }
+                        return srDecrypt.ReadToEnd();
                     }
                 }
             }
+            catch (FormatException)
+            {
+                // If somehow still not valid Base64, fall back to original
+                return cipherText;
+            }
+            catch (CryptographicException)
+            {
+                // If key/IV mismatch or corrupt data, also fall back
+                return cipherText;
+            }
+        }
+
+        private static bool IsBase64(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return false;
+
+            // Quick safe check that doesn't throw
+            Span<byte> buffer = stackalloc byte[input.Length];
+            return Convert.TryFromBase64String(input, buffer, out _);
         }
     }
 }
