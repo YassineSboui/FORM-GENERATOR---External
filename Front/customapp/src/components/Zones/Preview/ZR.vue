@@ -24,12 +24,12 @@
   </div>
   <div v-else>
     <div
-      class="grid mt-3"
-      style="width: 100%"
       v-if="
         internalValue.isSection == false ||
         typeof internalValue.section == undefined
       "
+      class="grid mt-3"
+      style="width: 100%"
     >
       <div class="ml-3" style="width: 100%">
         <div class="duplicatable-zone">
@@ -86,6 +86,7 @@
       </div>
     </div>
     <Panel
+      ref="panelRef"
       @update:collapsed="handleCollapsed"
       :collapsed="panelCollapsed"
       toggleable
@@ -171,16 +172,21 @@ const emit = defineEmits([
   "mouseleave",
   "mouseenter",
 ]);
+
+const panelRef = ref<any>(null);
+
 onMounted(() => {
-  const panelElement = document.querySelector(".p-panel-header");
-  if (panelElement) {
-    panelElement.addEventListener("click", (event) => {
-      const target = event.target as HTMLElement;
-      const isActionsClick = target?.closest(".p-panel-header-actions");
-      if (!isActionsClick) {
-        panelCollapsed.value = !panelCollapsed.value;
-      }
-    });
+  if (panelRef.value?.$el) {
+    const panelElement = panelRef.value.$el.querySelector(".p-panel-header");
+    if (panelElement) {
+      panelElement.addEventListener("click", (event: Event) => {
+        const target = event.target as HTMLElement;
+        const isActionsClick = target?.closest(".p-panel-header-actions");
+        if (!isActionsClick) {
+          panelCollapsed.value = !panelCollapsed.value;
+        }
+      });
+    }
   }
 });
 const internalValue = computed({
