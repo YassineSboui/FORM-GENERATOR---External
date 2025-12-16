@@ -73,13 +73,12 @@
           class="p-error"
           id="text-error"
           v-if="
-            (errorMessage !== 'true' && errorMessage) || errorState.errorMessage
+            errorState.errorMessage || (errorMessage !== 'true' && errorMessage)
           "
         >
           {{
-            errorMessage !== "true"
-              ? errorMessage
-              : errorState.errorMessage || "&nbsp;"
+            errorState.errorMessage ||
+            (errorMessage !== "true" ? errorMessage : "&nbsp;")
           }}
         </small>
       </Field>
