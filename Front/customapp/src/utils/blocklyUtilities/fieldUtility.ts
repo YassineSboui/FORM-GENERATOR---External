@@ -275,6 +275,8 @@ export class FieldUtility {
         if (setter) {
           // Call the discovered setter on the component
           setter.call(field, processedValue);
+          const store = this.getStore();
+          store.Fields[fieldName] = processedValue;
           logger.debug(
             `[FieldUtility] Set value for ${fieldName} using ${
               setter.name

@@ -47,6 +47,7 @@ import { storeToRefs } from "pinia";
 import { localize } from "@vee-validate/i18n";
 import { useI18n } from "vue-i18n";
 import { executeCodeAsync } from "@/utils/codeExecutor";
+import Loader from "@/components/BasicComponents/Loader.vue";
 import {
   fieldUtility,
   stringUtility,

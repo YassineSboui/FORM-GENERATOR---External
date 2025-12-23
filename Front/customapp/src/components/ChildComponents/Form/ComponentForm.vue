@@ -2679,6 +2679,7 @@ defineExpose({
   initFields,
   executeWebService,
   showConfirmationDialog,
+  handleCodeselected,
 });
 </script>
 <style lang="scss">
