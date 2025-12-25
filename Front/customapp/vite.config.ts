@@ -10,14 +10,28 @@ import { PrimeVueResolver } from "unplugin-vue-components/resolvers";
 export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
-    Components({ resolvers: [PrimeVueResolver()] }),
-    svgLoader({ svgo: false, defaultImport: "component" }),
+    Components({
+      resolvers: [PrimeVueResolver()],
+      directoryAsNamespace: true,
+      include: [/\.vue$/, /\.vue\?vue/],
+      exclude: [
+        /[\\/]node_modules[\\/]/,
+        /[\\/]\.git[\\/]/,
+        /[\\/]\.nuxt[\\/]/,
+      ],
+      dts: true,
+    }),
+    svgLoader({
+      svgo: false,
+      defaultImport: "component",
+    }),
   ],
   resolve: {
-    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
   },
   build: {
-    target: "es2022", // ✅ add this
     rollupOptions: {
       output: {
         entryFileNames: `assets/[name].js`,
@@ -26,16 +40,34 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  optimizeDeps: {
-    esbuildOptions: { target: "es2022" }, // ✅ add this
-  },
   base: "/neoformext/front/",
   esbuild: {
-    pure: mode === "client" ? ["logger.error"] : [],
+    pure: [
+      "logger.error",
+      "logger.warn",
+      "logger.info",
+      "logger.debug",
+      "logger.log",
+      "console.log",
+      "console.warn",
+      "console.info",
+      "console.debug",
+      "console.error",
+    ],
   },
   css: {
     preprocessorOptions: {
-      scss: { silenceDeprecations: ["legacy-js-api"] },
+      scss: {
+        silenceDeprecations: [
+          "legacy-js-api",
+          "import",
+          "global-builtin",
+          "mixed-decls",
+          "color-functions",
+          "slash-div",
+        ],
+        quietDeps: true,
+      },
     },
   },
 }));

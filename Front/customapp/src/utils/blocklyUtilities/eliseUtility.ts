@@ -1,23 +1,24 @@
 ﻿/**
  * Elise Utility Functions
- * 
+ *
  * Provides safe Elise-specific operations for Blockly-generated code.
  * Handles workflows, contacts, documents, and other Elise system operations.
- * 
+ *
  * All API calls are made directly through this utility - no need to pass functions from ComponentForm.
- * 
+ *
  * @module eliseUtility
  */
 
-import { 
-  logger, 
-  callEliseWebService, 
-  executeWorkflow as apiExecuteWorkflow, 
-  executeStandalone as apiExecuteStandalone, 
-  executeAsyncWorkflow as apiExecuteAsyncWorkflow, 
-  executeAsyncStandalone as apiExecuteAsyncStandalone, 
+import {
+  logger,
+  callEliseWebService,
+  executeWorkflow as apiExecuteWorkflow,
+  executeStandalone as apiExecuteStandalone,
+  executeAsyncWorkflow as apiExecuteAsyncWorkflow,
+  executeAsyncStandalone as apiExecuteAsyncStandalone,
   generateModelWithoutNotice,
-  publishFiles as apiPublishFiles
+  publishFiles as apiPublishFiles,
+  getNoticesByCourriesId,
 } from "@/api/api";
 
 /**
@@ -105,7 +106,7 @@ export class EliseUtility {
    */
   async generateModel(parameters: any): Promise<any> {
     try {
-      logger.debug('Generating model without notice');
+      logger.debug("Generating model without notice");
       return await generateModelWithoutNotice(parameters);
     } catch (error) {
       logger.error(`Error generating model: ${error}`);
@@ -154,10 +155,10 @@ export class EliseUtility {
       if (this.store && this.store.eliseUrl) {
         return this.store.eliseUrl;
       }
-      return '';
+      return "";
     } catch (error) {
       logger.error(`Error getting Elise URL: ${error}`);
-      return '';
+      return "";
     }
   }
 
@@ -170,10 +171,10 @@ export class EliseUtility {
       if (this.store && this.store.instance) {
         return this.store.instance;
       }
-      return '';
+      return "";
     } catch (error) {
       logger.error(`Error getting instance name: ${error}`);
-      return '';
+      return "";
     }
   }
 
@@ -215,7 +216,9 @@ export class EliseUtility {
    */
   hasDocument(): boolean {
     try {
-      return this.store && this.store.document && this.store.document.id != null;
+      return (
+        this.store && this.store.document && this.store.document.id != null
+      );
     } catch (error) {
       logger.error(`Error checking document existence: ${error}`);
       return false;
@@ -231,10 +234,10 @@ export class EliseUtility {
       if (this.store && this.store.document && this.store.document.status) {
         return this.store.document.status;
       }
-      return '';
+      return "";
     } catch (error) {
       logger.error(`Error getting document status: ${error}`);
-      return '';
+      return "";
     }
   }
 
@@ -262,14 +265,14 @@ export class EliseUtility {
    */
   formatDate(date: Date | string): string {
     try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      const dateObj = typeof date === "string" ? new Date(date) : date;
       if (isNaN(dateObj.getTime())) {
-        throw new Error('Invalid date');
+        throw new Error("Invalid date");
       }
       return dateObj.toISOString();
     } catch (error) {
       logger.error(`Error formatting date: ${error}`);
-      return '';
+      return "";
     }
   }
 
@@ -303,11 +306,11 @@ export class EliseUtility {
     addressBook: string;
   }): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Getting Elise contacts');
+      logger.debug("Getting Elise contacts");
       return await this.store.eliseGetContacts(payload);
     } catch (error) {
       logger.error(`Error getting contacts: ${error}`);
@@ -322,11 +325,11 @@ export class EliseUtility {
    */
   async addContactPerson(payload: any): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Adding contact person');
+      logger.debug("Adding contact person");
       return await this.store.eliseAddContactPerson(payload);
     } catch (error) {
       logger.error(`Error adding contact person: ${error}`);
@@ -341,11 +344,11 @@ export class EliseUtility {
    */
   async updateContactPerson(payload: any): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Updating contact person');
+      logger.debug("Updating contact person");
       return await this.store.eliseUpdateContactPerson(payload);
     } catch (error) {
       logger.error(`Error updating contact person: ${error}`);
@@ -360,11 +363,11 @@ export class EliseUtility {
    */
   async addContactOrganization(payload: any): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Adding contact organization');
+      logger.debug("Adding contact organization");
       return await this.store.eliseAddContactOrganization(payload);
     } catch (error) {
       logger.error(`Error adding contact organization: ${error}`);
@@ -379,11 +382,11 @@ export class EliseUtility {
    */
   async updateContactOrganization(payload: any): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Updating contact organization');
+      logger.debug("Updating contact organization");
       return await this.store.eliseUpdateContactOrganization(payload);
     } catch (error) {
       logger.error(`Error updating contact organization: ${error}`);
@@ -396,11 +399,15 @@ export class EliseUtility {
    * @param payload - Search parameters
    * @returns Search results
    */
-  async xmlSearch(payload: { limit: string; guid: string; parameters: any[] }): Promise<any> {
+  async xmlSearch(payload: {
+    limit: string;
+    guid: string;
+    parameters: any[];
+  }): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       logger.debug(`Executing XML search: ${payload.guid}`);
       return await this.store.eliseXmlSearch(payload);
@@ -416,11 +423,14 @@ export class EliseUtility {
    * @param termName - Optional term name
    * @returns Thesaurus data
    */
-  async getFullThesaurus(thesaurusName: string, termName?: string): Promise<any> {
+  async getFullThesaurus(
+    thesaurusName: string,
+    termName?: string
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       logger.debug(`Getting full thesaurus: ${thesaurusName}`);
       return await this.store.eliseGetFullThesaurus(thesaurusName, termName);
@@ -441,9 +451,9 @@ export class EliseUtility {
     Parameters: any[];
   }): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       logger.debug(`Sending email by template: ${template.Guid}`);
       return await this.store.sendEliseMailByTemplate(template);
@@ -469,11 +479,11 @@ export class EliseUtility {
     attachments?: any[];
   }): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Sending email');
+      logger.debug("Sending email");
       return await this.store.eliseSendEmail(emailPayload);
     } catch (error) {
       logger.error(`Error sending email: ${error}`);
@@ -494,11 +504,11 @@ export class EliseUtility {
     searchType: string;
   }): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Getting flowchart items');
+      logger.debug("Getting flowchart items");
       return await this.store.eliseGetFlowchartItems(payload);
     } catch (error) {
       logger.error(`Error getting flowchart items: ${error}`);
@@ -517,11 +527,11 @@ export class EliseUtility {
     trackingPathMotherId: string;
   }): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Applying tracking path');
+      logger.debug("Applying tracking path");
       return await this.store.eliseApplyTrackingPath(payload);
     } catch (error) {
       logger.error(`Error applying tracking path: ${error}`);
@@ -535,9 +545,9 @@ export class EliseUtility {
    */
   getCurrentNotice(): any {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       return this.store.currentNotice;
     } catch (error) {
@@ -552,9 +562,9 @@ export class EliseUtility {
    */
   getCurrentEliseDocument(): any {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       return this.store.currentEliseDocument;
     } catch (error) {
@@ -574,11 +584,11 @@ export class EliseUtility {
     reference: string;
   }): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Generating documents');
+      logger.debug("Generating documents");
       return await this.store.businessGenerateDocuments(payload);
     } catch (error) {
       logger.error(`Error generating documents: ${error}`);
@@ -591,13 +601,16 @@ export class EliseUtility {
    * @param payload - Message payload
    * @returns AI response
    */
-  async postAiChatMessage(payload: { Prompt: string; Files: any[] }): Promise<any> {
+  async postAiChatMessage(payload: {
+    Prompt: string;
+    Files: any[];
+  }): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
-      logger.debug('Posting AI chat message');
+      logger.debug("Posting AI chat message");
       return await this.store.storePostAiChatMessage(payload);
     } catch (error) {
       logger.error(`Error posting AI message: ${error}`);
@@ -612,9 +625,9 @@ export class EliseUtility {
    */
   async getObjectByLexicon(lexiconId: string): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       logger.debug(`Getting object by lexicon: ${lexiconId}`);
       return await this.store.getObjectByLexicon(lexiconId);
@@ -630,13 +643,16 @@ export class EliseUtility {
    * @param parameters - Web service parameters
    * @returns Web service result
    */
-  async executeWebService(webServiceName: string, parameters: any): Promise<any> {
+  async executeWebService(
+    webServiceName: string,
+    parameters: any
+  ): Promise<any> {
     try {
       const payload = {
         eliseWsInputType: webServiceName,
         objet: parameters,
       };
-      
+
       logger.debug(`Executing web service: ${webServiceName}`);
       const result = await callEliseWebService(payload);
       return result;
@@ -653,7 +669,7 @@ export class EliseUtility {
    */
   async publishFiles(parameters: any): Promise<any> {
     try {
-      logger.debug('Publishing files');
+      logger.debug("Publishing files");
       return await apiPublishFiles(parameters);
     } catch (error) {
       logger.error(`Error publishing files: ${error}`);
@@ -675,18 +691,20 @@ export class EliseUtility {
         console.warn("Object is null or undefined:", object);
         return undefined;
       }
-      
+
       // Handle array notation like datas[0].COL_VALEUR
-      const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
-      const keys = normalizedPath.split('.');
+      const normalizedPath = path.replace(/\[(\d+)\]/g, ".$1");
+      const keys = normalizedPath.split(".");
       let current = object;
-      
+
       for (const key of keys) {
         if (current == null) {
-          console.warn("Cannot access property '" + key + "' of null or undefined");
+          console.warn(
+            "Cannot access property '" + key + "' of null or undefined"
+          );
           return undefined;
         }
-        
+
         // Check if key is numeric (array index)
         const numericKey = parseInt(key, 10);
         if (!isNaN(numericKey) && Array.isArray(current)) {
@@ -696,18 +714,36 @@ export class EliseUtility {
           }
           current = current[numericKey];
         } else {
-          if (typeof current !== 'object' || !(key in current)) {
-            console.warn("Property '" + key + "' does not exist in object:", current);
+          if (typeof current !== "object" || !(key in current)) {
+            console.warn(
+              "Property '" + key + "' does not exist in object:",
+              current
+            );
             return undefined;
           }
           current = current[key];
         }
       }
-      
+
       return current;
     } catch (error) {
       console.error("Error accessing nested property:", error);
       return undefined;
+    }
+  }
+
+  /**
+   * Get notices by courries ID
+   * @param courriesId - The courries ID to search for
+   * @returns List of notices
+   */
+  async getNoticesByCourriesId(courriesId: string): Promise<any> {
+    try {
+      logger.debug(`Getting notices by courries ID: ${courriesId}`);
+      return await getNoticesByCourriesId(courriesId);
+    } catch (error) {
+      logger.error(`Error getting notices by courries ID: ${error}`);
+      throw error;
     }
   }
 
@@ -717,11 +753,14 @@ export class EliseUtility {
    * @param parameters - Array of parameters with key/value pairs
    * @returns Function execution result
    */
-  async executeFunctionByName(functionName: string, parameters: Array<{ key: string; value: any }>): Promise<any> {
+  async executeFunctionByName(
+    functionName: string,
+    parameters: Array<{ key: string; value: any }>
+  ): Promise<any> {
     if (!this.store) {
-      throw new Error('Elise utility not initialized');
+      throw new Error("Elise utility not initialized");
     }
-    
+
     try {
       logger.debug(`Executing function by name: ${functionName}`);
       return await this.store.executeFunctionByName(functionName, parameters);

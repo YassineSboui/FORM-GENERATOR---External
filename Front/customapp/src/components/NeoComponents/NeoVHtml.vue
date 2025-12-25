@@ -118,7 +118,6 @@ export default defineComponent({
         forceContent !== undefined
           ? forceContent
           : props.options?.content || props.modelValue || "";
-      console.log("[NeoVHtml] Updating shadow content:", content);
 
       // Create a wrapper with reset styles to prevent inheritance issues
       shadowRoot.innerHTML = `
@@ -135,11 +134,6 @@ export default defineComponent({
         </style>
         <div class="shadow-content">${content}</div>
       `;
-
-      console.log(
-        "[NeoVHtml] Shadow DOM updated, current innerHTML:",
-        shadowRoot.innerHTML
-      );
     };
 
     const runValidation = (html: string | null | undefined) => {

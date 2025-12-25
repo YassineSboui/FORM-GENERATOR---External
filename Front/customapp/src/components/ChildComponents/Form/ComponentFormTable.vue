@@ -114,6 +114,7 @@ const emit = defineEmits([
   "update:isSubmit",
   "emitXml",
   "done",
+  "update-app-refs",
 ]);
 const { t } = useI18n();
 const store = useAppStore();
@@ -460,6 +461,7 @@ const handleRefs = (event: any) => {
     return result;
   }, {});
   app.refs = mergedObject;
+  emit("update-app-refs", mergedObject);
 };
 
 const executeFun = async (code: string) => {

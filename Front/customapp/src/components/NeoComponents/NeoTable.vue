@@ -567,6 +567,7 @@
         :configForm="configForm"
         :myWatchedVariable="myWatchedVariable"
         @fieldsValueChanged="handleFieldsValue"
+        @update-app-refs="handleUpdateAppRefs"
         :tableFields="tableFields"
         :isRTL="isRTL"
       ></component-form-table>
@@ -856,6 +857,23 @@ let form = ref<any>(null);
 // Event emitters
 const emit = defineEmits(["update:modelValue", "column", "selectedObjects"]);
 const app = getCurrentInstance() as any;
+
+// Store the latest refs received from child forms/tables
+const latestChildRefs = ref<any>(null);
+
+// Handler for update-app-refs event from child
+function handleUpdateAppRefs(newRefs: any) {
+  latestChildRefs.value = newRefs;
+  if (app.refs && typeof app.refs === "object") {
+    for (const key in newRefs) {
+      if (Object.prototype.hasOwnProperty.call(newRefs, key)) {
+        app.refs[key] = newRefs[key];
+      }
+    }
+  } else {
+    app.refs = { ...newRefs };
+  }
+}
 const selectedObjects = ref([] as any);
 // Computed properties
 
@@ -1288,6 +1306,10 @@ const areObjectAttributesValid = (obj: Record<string, any>): boolean => {
             if (messages.length > 0) {
               app.refs[options.name]?.[0]?.setFieldError(messages.join("\n"));
             }
+          }
+          let errMsg = app.refs[options.name][0]?.errorState?.errorMessage;
+          if (errMsg && errMsg !== "") {
+            fieldValid = false;
           }
         }
       });

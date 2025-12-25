@@ -79,7 +79,6 @@ export class FieldUtility {
    * @private
    */
   private validateFieldName(fieldName: string): boolean {
-    console.log("[FieldUtility] Validating field name:", fieldName);
     if (!fieldName || typeof fieldName !== "string") {
       throw new Error("Field name must be a non-empty string");
     }
@@ -101,7 +100,9 @@ export class FieldUtility {
     }
 
     // Only allow CF_, TBL_, or COL_ prefix + alphanumeric + underscore (case-insensitive)
-    if (!/^(ZR_|CF_|CTF_|TBL_|COL_)[A-Z0-9_]+$/i.test(fieldName)) {
+    if (
+      !/^(ZR_|CF_|CTF_|TBL_|COL_|newData\.COL_)[A-Z0-9_]+$/i.test(fieldName)
+    ) {
       throw new Error(
         `Invalid field name format: ${fieldName}. Expected format: CF_FIELDNAME, TBL_FIELDNAME, or COL_FIELDNAME, or a system column name.`
       );

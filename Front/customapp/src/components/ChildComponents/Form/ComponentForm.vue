@@ -2285,12 +2285,6 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
           Array.isArray(options.rules) &&
           !isEmpty(Fields.value[options.name])
         ) {
-          console.log(
-            "[ComponentForm] Validating rules for field:",
-            options.name,
-            options.rules
-          );
-
           const val = Fields.value[options.name];
           let messages: string[] = [];
           for (const rule of options.rules) {
@@ -2300,11 +2294,6 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
               options.label || options.name,
               props.isRTL ? "ar" : "fr"
             );
-            console.log(
-              "[ComponentForm] Validation result for rule:",
-              rule.code,
-              result
-            );
             if (!result.valid && result.msg) {
               messages.push(result.msg);
               fieldValid = false;
@@ -2313,6 +2302,10 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
           if (messages.length > 0) {
             app.refs[options.name]?.[0]?.setFieldError(messages.join("\n"));
           }
+        }
+        let errMsg = app.refs[options.name][0]?.errorState?.errorMessage;
+        if (errMsg && errMsg !== "") {
+          fieldValid = false;
         }
       }
     }
@@ -2330,6 +2323,65 @@ const validateFieldRepeatableZone = (
 
   if (pageItem.show === false) {
     return true;
+  } else if (pageItem.isSection) {
+    for (let k = 0; k < itemCol.length; k++) {
+      for (let z = 0; z < pageItem.rows[columnName].length; z++) {
+        const columnNames = ["column1", "column2", "column3", "column4"];
+        columnNames.forEach((columnNameZ) => {
+          Object.values(pageItem.rows[columnName][z].rows[columnNameZ]).forEach(
+            (field: any) => {
+              const options = field.options;
+              if (options && options.hidden !== true) {
+                // Required check
+                if (options.required && isEmpty(Fields.value[options.name])) {
+                  app.refs[options.name]?.[0]?.setFieldError(
+                    props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+                  );
+                  fieldValid = false;
+                }
+                // Rules check: use validateByRule for each rule
+                if (
+                  Array.isArray(options.rules) &&
+                  !isEmpty(Fields.value[options.name])
+                ) {
+                  const val = Fields.value[options.name];
+                  let messages: string[] = [];
+                  for (const rule of options.rules) {
+                    const result = validateByRule(
+                      val,
+                      rule,
+                      options.label || options.name,
+                      props.isRTL ? "ar" : "fr"
+                    );
+                    if (!result.valid && result.msg) {
+                      messages.push(result.msg);
+                      fieldValid = false;
+                    }
+                  }
+                  if (messages.length > 0) {
+                    app.refs[options.name]?.[0]?.setFieldError(
+                      messages.join("\n")
+                    );
+                  }
+                }
+                let errMsg =
+                  app.refs[options.name][0]?.errorState?.errorMessage;
+                if (errMsg && errMsg !== "") {
+                  fieldValid = false;
+                }
+              }
+            }
+          );
+        });
+        if (!fieldValid) {
+          break;
+        }
+      }
+      if (!fieldValid) {
+        break;
+      }
+    }
+    return fieldValid;
   } else {
     // Get the number of repeatable zone items
     const repeatableCount = repeatableZoneChildrens.value[pageItem.code] || 0;
@@ -2417,6 +2469,9 @@ const validateFieldSplitterZone = (
   valid: boolean
 ) => {
   let fieldValid = valid;
+  if (pageItem.show === false) {
+    return true;
+  }
   for (let z = 0; z < pageItem.rows[columnName].length; z++) {
     const row = pageItem.rows[columnName][z];
     if (row.zone === "ZR") {
@@ -2456,6 +2511,10 @@ const validateFieldSplitterZone = (
             if (messages.length > 0) {
               app.refs[options.name]?.[0]?.setFieldError(messages.join("\n"));
             }
+          }
+          let errMsg = app.refs[options.name][0]?.errorState?.errorMessage;
+          if (errMsg && errMsg !== "") {
+            fieldValid = false;
           }
         }
       });
