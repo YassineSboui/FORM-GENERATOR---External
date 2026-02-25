@@ -117,7 +117,7 @@
             :class="{
               'm-2':
                 !itemsFormCopy[0].pages[`page${pg}`][i - 1].code?.includes(
-                  'FIXED_HEADER'
+                  'FIXED_HEADER',
                 ),
             }"
             ref="itemRefs"
@@ -156,7 +156,7 @@
               <div
                 v-for="j in Math.max(
                   itemsFormCopy[0].pages[`page${pg}`][i - 1].rows.column1
-                    .length || 0
+                    .length || 0,
                 )"
                 :key="j"
               >
@@ -197,6 +197,8 @@
                     @blur="handleBlur($event)"
                     @mouseenter="handleMouseenter($event)"
                     @mouseleave="handleMouseleave($event)"
+                    @itemSelected="handleCodeselected($event)"
+                    @searchItem="searchItemFunc($event)"
                     :language="language"
                   ></P-ZR>
                 </div>
@@ -235,7 +237,7 @@
               <div
                 v-for="j in Math.max(
                   itemsFormCopy[0].pages[`page${pg}`][i - 1].rows.column2
-                    .length || 0
+                    .length || 0,
                 )"
                 :key="j"
               >
@@ -276,6 +278,8 @@
                     @blur="handleBlur($event)"
                     @mouseenter="handleMouseenter($event)"
                     @mouseleave="handleMouseleave($event)"
+                    @itemSelected="handleCodeselected($event)"
+                    @searchItem="searchItemFunc($event)"
                     :language="language"
                   ></P-ZR>
                 </div>
@@ -356,6 +360,8 @@
             @blur="handleBlur($event)"
             @mouseenter="handleMouseenter($event)"
             @mouseleave="handleMouseleave($event)"
+            @itemSelected="handleCodeselected($event)"
+            @searchItem="searchItemFunc($event)"
             :language="language"
           ></P-ZR>
         </div>
@@ -388,6 +394,8 @@
                   @blur="handleBlur($event)"
                   @mouseenter="handleMouseenter($event)"
                   @mouseleave="handleMouseleave($event)"
+                  @itemSelected="handleCodeselected($event)"
+                  @searchItem="searchItemFunc($event)"
                   :language="language"
                 ></P-ZR>
               </div>
@@ -435,6 +443,8 @@
                   @blur="handleBlur($event)"
                   @mouseenter="handleMouseenter($event)"
                   @mouseleave="handleMouseleave($event)"
+                  @itemSelected="handleCodeselected($event)"
+                  @searchItem="searchItemFunc($event)"
                   :language="language"
                 ></P-ZR>
               </div>
@@ -542,7 +552,7 @@ class QueryParameterDecryptor {
       const combined = new Uint8Array(
         atob(encryptedData)
           .split("")
-          .map((c) => c.charCodeAt(0))
+          .map((c) => c.charCodeAt(0)),
       );
 
       // Extract IV and encrypted data
@@ -555,14 +565,14 @@ class QueryParameterDecryptor {
         encoder.encode(this.SECRET_KEY.padEnd(32, "0").substring(0, 32)),
         { name: "AES-GCM" },
         false,
-        ["decrypt"]
+        ["decrypt"],
       );
 
       // Decrypt the data
       const decrypted = await crypto.subtle.decrypt(
         { name: "AES-GCM", iv },
         key,
-        encrypted
+        encrypted,
       );
 
       return decoder.decode(decrypted);
@@ -586,7 +596,7 @@ class QueryParameterDecryptor {
         } catch (error) {
           console.warn(
             `Failed to decrypt parameter ${key}, using original value:`,
-            error
+            error,
           );
           // If decryption fails, use the original value
           decryptedParams[key] = value;
@@ -817,7 +827,7 @@ watch(
       newNotice.mappingName = newMappingName;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(
@@ -828,7 +838,7 @@ watch(
       newNotice.rackCode = newRackCode;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // Remove the duplicate watch statements that appear later
@@ -838,12 +848,12 @@ watch(
     if (newMappingName !== undefined) {
       console.log(
         "[ComponentForm] MAPPING_NAME updated (duplicate):",
-        newMappingName
+        newMappingName,
       );
       newNotice.mappingName = newMappingName;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(
@@ -852,12 +862,12 @@ watch(
     if (newRackCode !== undefined) {
       console.log(
         "[ComponentForm] RACK_CODE watcher - newRackCode:",
-        newRackCode
+        newRackCode,
       );
       newNotice.rackCode = newRackCode;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const router = useRouter();
@@ -895,7 +905,7 @@ function showSection(sectionCode: string) {
       const sect = page.find((pageItem: any) =>
         pageItem.zone === "ZS" && pageItem.code !== sectionCode
           ? toggleVisibility(pageItem, sectionCode, true)
-          : pageItem.code === sectionCode
+          : pageItem.code === sectionCode,
       );
       if (sect) {
         sect.show = true;
@@ -906,7 +916,7 @@ function showSection(sectionCode: string) {
     itemsFormCopy.value.some((section: any) =>
       section.code === "ZS" && section.code !== sectionCode
         ? toggleVisibility(section, sectionCode, true)
-        : section.code === sectionCode && (section.show = true)
+        : section.code === sectionCode && (section.show = true),
     );
   }
 }
@@ -918,7 +928,7 @@ function hideSection(sectionCode: string) {
       const sect = page.find((pageItem: any) =>
         pageItem.zone === "ZS" && pageItem.code !== sectionCode
           ? toggleVisibility(pageItem, sectionCode, false)
-          : pageItem.code === sectionCode
+          : pageItem.code === sectionCode,
       );
       if (sect) {
         sect.show = false;
@@ -929,7 +939,7 @@ function hideSection(sectionCode: string) {
     itemsFormCopy.value.some((section: any) =>
       section.code === "ZS" && section.code !== sectionCode
         ? toggleVisibility(section, sectionCode, false)
-        : section.code === sectionCode && (section.show = false)
+        : section.code === sectionCode && (section.show = false),
     );
   }
 }
@@ -975,7 +985,7 @@ watch(myWatchedVariable, (newVal) => {
       Object.keys(localFields.value).reduce((a, k) => {
         a[k] = Fields.value[k];
         return a;
-      }, {} as any)
+      }, {} as any),
     ); // Emit Fields.value to the parent
     // Fields.value = {};
     // setFields(itemsFormCopy.value, 0)
@@ -1146,7 +1156,7 @@ const processFieldData = (element: string, options: any) => {
 // Helper function to execute before save code
 const executeBeforeSaveCode = async () => {
   const beforeSaveCode = internalFormConfig.value?.events.find(
-    (evnt: any) => evnt.rule.code == "beforeSave"
+    (evnt: any) => evnt.rule.code == "beforeSave",
   )?.code;
 
   if (beforeSaveCode) {
@@ -1155,7 +1165,7 @@ const executeBeforeSaveCode = async () => {
       await executeCodeAsync(beforeSaveCode, context);
       console.log(
         "[ComponentForm] Before Save Code executed successfully.",
-        context
+        context,
       );
     } catch (error) {
       console.error("error", error);
@@ -1167,7 +1177,7 @@ const executeBeforeSaveCode = async () => {
 // Helper function to execute after save code
 const executeAfterSaveCode = async (obj: any) => {
   const afterSaveCode = internalFormConfig.value?.events.find(
-    (evnt: any) => evnt.rule.code == "afterSave"
+    (evnt: any) => evnt.rule.code == "afterSave",
   )?.code;
 
   if (afterSaveCode) {
@@ -1306,7 +1316,7 @@ watch(
   async () => {
     await _triggerPrepareNoticeData();
   },
-  { deep: true, immediate: true }
+  { deep: true, immediate: true },
 );
 
 watch(
@@ -1320,7 +1330,7 @@ watch(
     };
     await _triggerPrepareNoticeData();
   },
-  { deep: true, immediate: false }
+  { deep: true, immediate: false },
 );
 
 watch(
@@ -1334,7 +1344,7 @@ watch(
     };
     await _triggerPrepareNoticeData();
   },
-  { deep: true, immediate: false }
+  { deep: true, immediate: false },
 );
 
 // Helper function to handle model generation
@@ -1519,7 +1529,7 @@ const handleFieldSettingSplitterZone = (pageItem: any) => {
         } else {
           repeatableZoneChildrens.value[row.code] = Math.max(
             1,
-            localFields.value[row.code].length
+            localFields.value[row.code].length,
           );
         }
       } else if (row.zone === "ZR" && row.isSection) {
@@ -1586,7 +1596,7 @@ const handleFieldSetting = (pageItem: any, clear = false) => {
     } else {
       repeatableZoneChildrens.value[pageItem.code] = Math.max(
         1,
-        localFields.value[pageItem.code].length
+        localFields.value[pageItem.code].length,
       );
     }
   } else if (pageItem.zone === "ZR" && pageItem.isSection) {
@@ -1728,7 +1738,7 @@ onMounted(async () => {
       } catch (error) {
         console.error(
           "[ComponentForm] beforeLoad event execution failed:",
-          error
+          error,
         );
         logger.error(`[ComponentForm] beforeLoad error: ${error}`);
       }
@@ -1748,7 +1758,7 @@ onMounted(async () => {
     }
   }
   const headerElement = document.querySelector(
-    ".zone-page-header"
+    ".zone-page-header",
   ) as HTMLElement;
 
   if (headerElement) {
@@ -1823,7 +1833,7 @@ const handleMouseenter = async (item: any) => {
   if (!item) return;
   await nextTick();
   const selectedEvent = item.find(
-    (event: any) => event.rule.code === "mouseenter"
+    (event: any) => event.rule.code === "mouseenter",
   );
   if (selectedEvent) {
     try {
@@ -1832,7 +1842,7 @@ const handleMouseenter = async (item: any) => {
     } catch (error) {
       console.error(
         "[ComponentForm] mouseenter event execution failed:",
-        error
+        error,
       );
       logger.error(`[ComponentForm] mouseenter event error: ${error}`);
     }
@@ -1842,7 +1852,7 @@ const handleMouseleave = async (item: any) => {
   if (!item) return;
   await nextTick();
   const selectedEvent = item.find(
-    (event: any) => event.rule.code === "mouseleave"
+    (event: any) => event.rule.code === "mouseleave",
   );
   if (selectedEvent) {
     try {
@@ -1851,7 +1861,7 @@ const handleMouseleave = async (item: any) => {
     } catch (error) {
       console.error(
         "[ComponentForm] mouseleave event execution failed:",
-        error
+        error,
       );
       logger.error(`[ComponentForm] mouseleave event error: ${error}`);
     }
@@ -1896,13 +1906,13 @@ const executeFun = async (event: any) => {
   app.refs[event.id][0].enableLoading();
   try {
     await eval(
-      "(async () => { const store = useAppStore(); " + event.code + "})()"
+      "(async () => { const store = useAppStore(); " + event.code + "})()",
     );
   } catch (error) {
     console.error(
       "[ComponentForm] executeFun execution failed for event:",
       event.id,
-      error
+      error,
     );
     logger.error(`[ComponentForm] executeFun error for ${event.id}: ${error}`);
   } finally {
@@ -1915,7 +1925,7 @@ const handleCodeselected = async (code: string) => {
   } catch (error) {
     console.error(
       "[ComponentForm] handleCodeselected execution failed:",
-      error
+      error,
     );
     logger.error(`[ComponentForm] handleCodeselected error: ${error}`);
   }
@@ -1964,7 +1974,7 @@ watch(
       }
     });
   },
-  { deep: true, immediate: false }
+  { deep: true, immediate: false },
 );
 
 const duplicate = (event: any) => {
@@ -2047,7 +2057,7 @@ const navigatePrevious = (page: any) => {
 };
 const navigateNext = (page: any) => {
   const codeBefore = itemsFormCopy.value[0].config.events[`page${page}`].find(
-    (evnt: any) => evnt.rule.code == "beforeFollowing"
+    (evnt: any) => evnt.rule.code == "beforeFollowing",
   )?.code;
   calculatePagesStyle();
   if (codeBefore) {
@@ -2057,10 +2067,10 @@ const navigateNext = (page: any) => {
       console.error(
         "[ComponentForm] navigateNext beforeFollowing event failed for page:",
         page,
-        error
+        error,
       );
       logger.error(
-        `[ComponentForm] beforeFollowing error for page ${page}: ${error}`
+        `[ComponentForm] beforeFollowing error for page ${page}: ${error}`,
       );
     }
   } else {
@@ -2276,7 +2286,7 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
           isEmpty(Fields.value[options.name])
         ) {
           app.refs[options.name]?.[0]?.setFieldError(
-            props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+            props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis.",
           );
           fieldValid = false;
         }
@@ -2292,7 +2302,7 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
               val ?? "",
               rule,
               options.label || options.name,
-              props.isRTL ? "ar" : "fr"
+              props.isRTL ? "ar" : "fr",
             );
             if (!result.valid && result.msg) {
               messages.push(result.msg);
@@ -2316,7 +2326,7 @@ const validateField = (pageItem: any, columnName: string, valid: boolean) => {
 const validateFieldRepeatableZone = (
   pageItem: any,
   columnName: string,
-  valid: boolean
+  valid: boolean,
 ) => {
   const itemCol = pageItem.rows.column1;
   let fieldValid = valid;
@@ -2335,7 +2345,7 @@ const validateFieldRepeatableZone = (
                 // Required check
                 if (options.required && isEmpty(Fields.value[options.name])) {
                   app.refs[options.name]?.[0]?.setFieldError(
-                    props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+                    props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis.",
                   );
                   fieldValid = false;
                 }
@@ -2351,7 +2361,7 @@ const validateFieldRepeatableZone = (
                       val,
                       rule,
                       options.label || options.name,
-                      props.isRTL ? "ar" : "fr"
+                      props.isRTL ? "ar" : "fr",
                     );
                     if (!result.valid && result.msg) {
                       messages.push(result.msg);
@@ -2360,7 +2370,7 @@ const validateFieldRepeatableZone = (
                   }
                   if (messages.length > 0) {
                     app.refs[options.name]?.[0]?.setFieldError(
-                      messages.join("\n")
+                      messages.join("\n"),
                     );
                   }
                 }
@@ -2370,7 +2380,7 @@ const validateFieldRepeatableZone = (
                   fieldValid = false;
                 }
               }
-            }
+            },
           );
         });
         if (!fieldValid) {
@@ -2393,7 +2403,7 @@ const validateFieldRepeatableZone = (
           const columnNames = ["column1", "column2", "column3", "column4"];
           columnNames.forEach((columnNameZ) => {
             Object.values(
-              pageItem.rows[columnName][z].rows[columnNameZ]
+              pageItem.rows[columnName][z].rows[columnNameZ],
             ).forEach((field: any) => {
               const options = field.options;
               if (options && options.hidden !== true) {
@@ -2418,7 +2428,7 @@ const validateFieldRepeatableZone = (
                 // Required check
                 if (options.required && isEmpty(fieldValue)) {
                   app.refs[options.name]?.[repeatIndex]?.setFieldError(
-                    props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+                    props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis.",
                   );
                   fieldValid = false;
                 }
@@ -2431,7 +2441,7 @@ const validateFieldRepeatableZone = (
                       fieldValue,
                       rule,
                       options.label || options.name,
-                      props.isRTL ? "ar" : "fr"
+                      props.isRTL ? "ar" : "fr",
                     );
                     if (!result.valid && result.msg) {
                       messages.push(result.msg);
@@ -2440,7 +2450,7 @@ const validateFieldRepeatableZone = (
                   }
                   if (messages.length > 0) {
                     app.refs[options.name]?.[repeatIndex]?.setFieldError(
-                      messages.join("\n")
+                      messages.join("\n"),
                     );
                   }
                 }
@@ -2466,7 +2476,7 @@ const validateFieldRepeatableZone = (
 const validateFieldSplitterZone = (
   pageItem: any,
   columnName: string,
-  valid: boolean
+  valid: boolean,
 ) => {
   let fieldValid = valid;
   if (pageItem.show === false) {
@@ -2485,7 +2495,7 @@ const validateFieldSplitterZone = (
           // Required check
           if (options.required && isEmpty(Fields.value[options.name])) {
             app.refs[options.name]?.[0]?.setFieldError(
-              props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis."
+              props.isRTL ? "هذا الحقل مطلوب." : "Ce champ est requis.",
             );
             fieldValid = false;
           }
@@ -2501,7 +2511,7 @@ const validateFieldSplitterZone = (
                 val,
                 rule,
                 options.label || options.name,
-                props.isRTL ? "ar" : "fr"
+                props.isRTL ? "ar" : "fr",
               );
               if (!result.valid && result.msg) {
                 messages.push(result.msg);
@@ -2535,7 +2545,7 @@ const fetchTableData = async (code: string) => {
 const toggleSectionStatus = (
   section: any,
   sectionCode: any,
-  toggled: boolean
+  toggled: boolean,
 ) => {
   const { column1, column2 } = section.rows;
   const column =
@@ -2554,7 +2564,7 @@ function toggleSection(sectionCode: string, toggled: boolean) {
       const sect = page.find((pageItem: any) =>
         pageItem.zone === "ZS" && pageItem.code !== sectionCode
           ? toggleSectionStatus(pageItem, sectionCode, toggled)
-          : pageItem.code === sectionCode
+          : pageItem.code === sectionCode,
       );
       if (sect) {
         sect.toggled = toggled;
@@ -2565,7 +2575,7 @@ function toggleSection(sectionCode: string, toggled: boolean) {
     itemsFormCopy.value.some((section: any) =>
       section.code === "ZS" && section.code !== sectionCode
         ? toggleSectionStatus(section, sectionCode, toggled)
-        : section.code === sectionCode && (section.toggled = toggled)
+        : section.code === sectionCode && (section.toggled = toggled),
     );
   }
 }
@@ -2615,7 +2625,7 @@ async function calculatePagesStyle() {
     }
     const zones = page.filter((zone: any) => zone.zone === "ZR");
     const zonesWithFixedHeader = zones.filter((zone: any) =>
-      zone.code.includes("FIXED_HEADER")
+      zone.code.includes("FIXED_HEADER"),
     );
     await nextTick();
     const height = zonesWithFixedHeader.reduce((acc: number, zone: any) => {
@@ -2627,7 +2637,7 @@ async function calculatePagesStyle() {
 
 const calculateHeight = (zoneCode: string) => {
   const zone = document.querySelector(
-    `[data-key="${zoneCode}"]`
+    `[data-key="${zoneCode}"]`,
   ) as HTMLElement;
   if (zone) {
     (zone.firstChild as HTMLElement).style.top = props.stepper.showPageNames
@@ -2650,17 +2660,17 @@ async function executeWebService(webServiceName: String, parameters: any) {
   try {
     const result = await eliseUtility.executeWebService(
       webServiceName as string,
-      parameters
+      parameters,
     );
     return result;
   } catch (error) {
     console.error(
       "[ComponentForm] executeWebService failed for service:",
       webServiceName,
-      error
+      error,
     );
     logger.error(
-      `[ComponentForm] executeWebService error for ${webServiceName}: ${error}`
+      `[ComponentForm] executeWebService error for ${webServiceName}: ${error}`,
     );
     return error;
   }
@@ -2670,7 +2680,7 @@ async function executeWebService(webServiceName: String, parameters: any) {
 function validateFieldAllRules(
   value: any,
   rules: { code: string; expression: string }[],
-  fieldLabel?: string
+  fieldLabel?: string,
 ) {
   let valid = true;
   let messages: string[] = [];
@@ -2679,7 +2689,7 @@ function validateFieldAllRules(
       value,
       rule,
       fieldLabel,
-      props.isRTL ? "ar" : "fr"
+      props.isRTL ? "ar" : "fr",
     );
     if (!result.valid && result.msg) {
       valid = false;
@@ -2695,7 +2705,7 @@ async function showConfirmationDialog(
   acceptLabel: string,
   rejectLabel: string,
   acceptFn: Function,
-  rejectFn: Function
+  rejectFn: Function,
 ) {
   confirm.require({
     message: message,

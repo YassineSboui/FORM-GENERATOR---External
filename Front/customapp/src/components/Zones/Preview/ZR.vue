@@ -17,6 +17,8 @@
             @blur="handleBlur($event)"
             @mouseenter="handleMouseenter($event)"
             @mouseleave="handleMouseleave($event)"
+            @itemSelected="itemSelectedFunc($event)"
+            @searchItem="searchItemFunc($event)"
           ></zone-component>
         </div>
       </div>
@@ -72,6 +74,8 @@
                   @blur="handleBlur($event)"
                   @mouseenter="handleMouseenter($event)"
                   @mouseleave="handleMouseleave($event)"
+                  @itemSelected="itemSelectedFunc($event)"
+                  @searchItem="searchItemFunc($event)"
                   style="min-height: 60px"
                 ></zone-component>
               </div>
@@ -121,6 +125,8 @@
               @blur="handleBlur($event)"
               @mouseenter="handleMouseenter($event)"
               @mouseleave="handleMouseleave($event)"
+              @itemSelected="itemSelectedFunc($event)"
+              @searchItem="searchItemFunc($event)"
               :language="language"
             ></zone-component>
           </div>
@@ -171,6 +177,8 @@ const emit = defineEmits([
   "blur",
   "mouseleave",
   "mouseenter",
+  "itemSelected",
+  "searchItem",
 ]);
 
 const panelRef = ref<any>(null);
@@ -228,6 +236,12 @@ const handleMouseenter = (e: any) => {
 };
 const handleMouseleave = (e: any) => {
   emit("mouseleave", e);
+};
+const itemSelectedFunc = (e: any) => {
+  emit("itemSelected", e);
+};
+const searchItemFunc = (e: any) => {
+  emit("searchItem", e);
 };
 const internalrepeatableZone = computed(() => props.repeatableZoneChildrens);
 const isRTL = ref(props.isRTL);
