@@ -266,14 +266,14 @@ export default {
       async (newValue) => {
         emit("update:modelValue", JSON.stringify(newValue));
       },
-      { deep: true }
+      { deep: true },
     );
     watch(
       () => props.modelValue,
       async (newValue, oldValue) => {
         terms.value = JSON.parse(newValue || "[]");
         // emit("update:modelValue", JSON.stringify(newValue));
-      }
+      },
     );
     const { t } = useI18n();
     const maxWidth = ref(100);
@@ -317,7 +317,7 @@ export default {
       (newOptions) => {
         Object.assign(localOptions, newOptions);
       },
-      { deep: true, immediate: true }
+      { deep: true, immediate: true },
     );
 
     const isDisabled = computed({
@@ -357,7 +357,7 @@ export default {
         terms.value = [];
         searchTermValue.value = "";
         logger.info(
-          `Thesaurus ID changed to ${value}. Terms cleared and ready to load new thesaurus data.`
+          `Thesaurus ID changed to ${value}. Terms cleared and ready to load new thesaurus data.`,
         );
         // Load root level if overlay is open and new value is provided
         if (value) {
@@ -380,7 +380,7 @@ export default {
         // Validate lexicon format
         if (!lexiconValue || !lexiconValue.startsWith("LEXICON_")) {
           logger.warn(
-            `Invalid lexicon format: ${lexiconValue}. Expected format: LEXICON_...`
+            `Invalid lexicon format: ${lexiconValue}. Expected format: LEXICON_...`,
           );
           return;
         }
@@ -394,14 +394,11 @@ export default {
         }
 
         logger.info(
-          `Setting thesaurus value from lexicon: ${lexiconValue}, term ID: ${termId}`
+          `Setting thesaurus value from lexicon: ${lexiconValue}, term ID: ${termId}`,
         );
 
         // Load term data using the thesaurus API
-        const termData = await eliseLevelThesaurus(
-          thesaurusIdConfig.value,
-          termId
-        );
+        const termData = await eliseLevelThesaurus(thesaurusIdConfig.value);
 
         if (termData && termData.length > 0) {
           // Find the specific term by ID or use the first result
@@ -413,7 +410,7 @@ export default {
             // Clear existing terms and set the new one
             terms.value = [targetTerm];
             logger.info(
-              `Successfully set thesaurus value: ${targetTerm.label}`
+              `Successfully set thesaurus value: ${targetTerm.label}`,
             );
           } else {
             logger.warn(`Term not found for ID: ${termId}`);
@@ -607,7 +604,7 @@ const trySearchThesaurusTerm = (event: any) => {
 
       thesaurusTerms.value = await eliseSearchThesaurus(
         thesaurusIdConfig.value,
-        searchTermValueTrimmed
+        searchTermValueTrimmed,
       );
       // sort by alphabetical order thesaurusTerms
       thesaurusTerms.value.sort((a, b) => a.label.localeCompare(b.label));
@@ -647,12 +644,12 @@ const trySearchThesaurusTerm = (event: any) => {
       thesaurusStateIsLoading.value = true;
       console.log(
         "Loading children for thesaurusIdConfig.value:",
-        thesaurusIdConfig.value
+        thesaurusIdConfig.value,
       );
       console.log("Loading children for parentTermId:", parentTermId);
       thesaurusTerms.value = await eliseLevelThesaurus(
         thesaurusIdConfig.value,
-        parentTermId
+        parentTermId,
       );
       thesaurusTerms.value.sort((a, b) => a.label.localeCompare(b.label));
       thesaurusTerms.value = thesaurusTerms.value.filter((term) => {
@@ -759,7 +756,7 @@ const trySearchThesaurusTerm = (event: any) => {
     }
     const removeItem = (item: Term) => {
       const index = terms.value.findIndex(
-        (term) => term.termId === item.termId
+        (term) => term.termId === item.termId,
       );
       if (index !== -1) {
         terms.value.splice(index, 1);
@@ -797,7 +794,7 @@ const trySearchThesaurusTerm = (event: any) => {
             clearFieldError();
           }
         }
-      }
+      },
     );
 
     // Add this watcher for required validation
@@ -810,7 +807,7 @@ const trySearchThesaurusTerm = (event: any) => {
           clearFieldError();
         }
       },
-      { immediate: true, deep: true }
+      { immediate: true, deep: true },
     );
 
     return {
