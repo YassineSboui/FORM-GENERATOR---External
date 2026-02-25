@@ -42,12 +42,14 @@
         v-model="internalValue"
         :disabled="isDisabled"
         id="calendar-timeonly"
-        timeOnly
-        @change="onChange($event)"
+        :time-only="true"
+        :hour-format="'24'"
+        :update-model-type="'string'"
+        @update:model-value="onChange($event)"
         :class="{ 'p-invalid': errorMessage || errorState.errorMessage }"
         aria-describedby="text-error"
-        :minDate="minDate"
-        :maxDate="maxDate"
+        :min-date="minDate"
+        :max-date="maxDate"
         @focus="$emit('focus', $event)"
         @blur="$emit('blur', $event)"
         @mouseenter="$emit('mouseenter', $event)"
@@ -71,9 +73,8 @@
 </template>
 
 <script lang="ts">
-import { computed, reactive, watch, ref, onMounted } from "vue";
+import { computed, reactive, watch, ref } from "vue";
 import { useMyRules, type MyRules } from "@/data/rules";
-import { format } from "date-fns";
 import { useI18n } from "vue-i18n";
 interface OptionConfig {
   label_AR: string;
@@ -145,7 +146,7 @@ export default {
 
       // Recherche de la règle 'required'
       const requiredRuleIndex = props.options.rules.findIndex(
-        (r: any) => r.code === "required"
+        (r: any) => r.code === "required",
       );
       const hasRequiredRule = requiredRuleIndex !== -1;
 
@@ -177,7 +178,7 @@ export default {
 
     const minDate = computed(() => {
       const existingMinDateRule = props.options.rules.find(
-        (r: any) => r.code === "timeAfter"
+        (r: any) => r.code === "timeAfter",
       );
       if (existingMinDateRule) {
         return existingMinDateRule.params[0];
@@ -185,7 +186,7 @@ export default {
     });
     const maxDate = computed(() => {
       const existingMinDateRule = props.options.rules.find(
-        (r: any) => r.code === "timeBefore"
+        (r: any) => r.code === "timeBefore",
       );
       if (existingMinDateRule) {
         return existingMinDateRule.params[0];
@@ -205,18 +206,19 @@ export default {
       });
       return returnMessage;
     }
-    const onChange = async (event: any) => {
-      internalValue.value = event.target.value;
+    const onChange = async (value: any) => {
+      internalValue.value = value;
     };
-    // Replace computed with ref
-    const internalValue = ref(props.modelValue) as any; // Use 'as any' to avoid type issues with Date or string
+    // Initialize internalValue with prop value
+    const initialValue = props.modelValue;
+    const internalValue = ref(initialValue) as any;
 
     // Sync internalValue with modelValue prop
     watch(
       () => props.modelValue,
       (newValue) => {
         internalValue.value = newValue;
-      }
+      },
     );
 
     // When internalValue changes, emit update
@@ -224,27 +226,10 @@ export default {
       emit("update:modelValue", newValue);
     });
 
-    // Update setValue to only set internalValue
+    // Update setValue
     const setValue = (value: any) => {
-      // Check if value matches hh:mm format
-      if (typeof value === "string" && /^\d{2}:\d{2}$/.test(value)) {
-        const [hours, minutes] = value.split(":").map(Number);
-        const now = new Date();
-        now.setHours(hours, minutes, 0, 0); // set hours, minutes, seconds, ms
-        value = new Date(now);
-      }
-      const dateStr = typeof value === "string" ? value : value.toISOString(); // Handle potential type mismatch
-      const date = new Date(dateStr);
-
-      if (!isNaN(date.getTime())) {
-        // Check for valid date
-        date.setHours(date.getHours()); // Access hours correctly (remove accidental extra parentheses)
-        date.setMinutes(date.getMinutes());
-        internalValue.value = date; // Consider using a more robust format
-        emit("update:modelValue", date);
-      } else {
-        console.error("Invalid date provided:", value); // Handle invalid date
-      }
+      internalValue.value = value;
+      emit("update:modelValue", value);
     };
     // Create a local copy of options to manage mutability
     const localOptions = reactive({ ...props.options });
@@ -254,41 +239,15 @@ export default {
 
     // Function to update field
     const updateField = (value: any) => {
-      // Check if value matches hh:mm format
-      if (typeof value === "string" && /^\d{2}:\d{2}$/.test(value)) {
-        const [hours, minutes] = value.split(":").map(Number);
-        const now = new Date();
-        now.setHours(hours, minutes, 0, 0); // set hours, minutes, seconds, ms
-        value = new Date(now);
-      }
-      const dateStr = typeof value === "string" ? value : value.toISOString(); // Handle potential type mismatch
-      const date = new Date(dateStr);
-
-      if (!isNaN(date.getTime())) {
-        // Check for valid date
-        date.setHours(date.getHours()); // Access hours correctly (remove accidental extra parentheses)
-        date.setMinutes(date.getMinutes());
-        internalValue.value = date; // Consider using a more robust format
-        emit("update:modelValue", date);
-      } else {
-        console.error("Invalid date provided:", value); // Handle invalid date
-      }
+      internalValue.value = value;
+      emit("update:modelValue", value);
     };
 
     // Function to get current value
     const getValue = () => {
       const modelValue = props.modelValue as any; // Use your type as necessary
 
-      // If modelValue is a Date object, return formatted time
-      if (modelValue instanceof Date) {
-        return format(modelValue, "HH:mm"); // Format Date to HH:mm
-      }
-      // If modelValue is a string and valid time, return it as is
-      else if (typeof modelValue === "string" && modelValue.includes(":")) {
-        return modelValue; // Return the string time directly
-      }
-
-      return ""; // Return an empty string for invalid cases
+      return modelValue; // Return the modelValue directly
     };
 
     // Function to update options
@@ -315,7 +274,7 @@ export default {
       (newOptions) => {
         Object.assign(localOptions, newOptions);
       },
-      { deep: true }
+      { deep: true },
     );
 
     // Validation rules computation
@@ -364,23 +323,9 @@ export default {
             clearFieldError();
           }
         }
-      }
+      },
     );
 
-    // Handle initial modelValue if it's in hh:mm format
-    onMounted(() => {
-      if (
-        typeof props.modelValue === "string" &&
-        /^\d{2}:\d{2}$/.test(props.modelValue)
-      ) {
-        const [hours, minutes] = props.modelValue.split(":").map(Number);
-        const now = new Date();
-        now.setHours(hours, minutes, 0, 0);
-        internalValue.value = new Date(now);
-        // Emit the updated value
-        emit("update:modelValue", new Date(now));
-      }
-    });
     return {
       isDisabled,
       isHidden,
