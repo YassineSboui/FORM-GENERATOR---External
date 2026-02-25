@@ -2749,6 +2749,7 @@ defineExpose({
   executeWebService,
   showConfirmationDialog,
   handleCodeselected,
+  AifileUpload,
 });
 </script>
 <style lang="scss">
