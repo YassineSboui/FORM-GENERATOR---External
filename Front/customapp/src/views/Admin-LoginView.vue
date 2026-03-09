@@ -19,14 +19,14 @@
           <p>Générateur de Formulaires</p>
         </div>
 
-        <div v-if="defaultCredentialsInfo" class="info-box">
+        <!-- <div v-if="defaultCredentialsInfo" class="info-box">
           <i class="pi pi-info-circle"></i>
           <div>
             <strong>Identifiants SuperAdmin par défaut:</strong>
             <div>Nom d'utilisateur: <code>superadmin</code></div>
             <div>Mot de passe: <code>SuperAdmin@123</code></div>
           </div>
-        </div>
+        </div> -->
 
         <form @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
